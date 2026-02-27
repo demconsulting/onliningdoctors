@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import ReviewForm from "@/components/reviews/ReviewForm";
+import DocumentSharingToggle from "@/components/patient/DocumentSharingToggle";
 
 interface AppointmentListProps {
   user: SupaUser;
@@ -116,12 +117,21 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                       <Video className="h-3.5 w-3.5" /> Join Call
                     </Button>
                   )}
-                  {(apt.status === "pending" || apt.status === "confirmed") && (
+                   {(apt.status === "pending" || apt.status === "confirmed") && (
                     <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
                       Cancel
                     </Button>
                   )}
                 </div>
+                {/* Document sharing toggle for active appointments */}
+                {(apt.status === "pending" || apt.status === "confirmed" || apt.status === "completed") && (
+                  <DocumentSharingToggle
+                    patientId={user.id}
+                    doctorId={apt.doctor_id}
+                    appointmentId={apt.id}
+                    doctorName={apt.doctor?.full_name || "Doctor"}
+                  />
+                )}
                 {/* Review form for completed, un-reviewed appointments */}
                 {apt.status === "completed" && !reviewedIds.has(apt.id) && (
                   <div className="mt-3 pt-3 border-t border-border">
