@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Loader2 } from "lucide-react";
+import { Calendar, Clock, User, Loader2, Video } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,7 @@ const statusColors: Record<string, string> = {
 const AppointmentList = ({ user }: AppointmentListProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
@@ -100,6 +102,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                   <Badge variant="outline" className={statusColors[apt.status] || ""}>
                     {apt.status}
                   </Badge>
+                  {(apt.status === "confirmed") && (
+                    <Button variant="outline" size="sm" className="gap-1 text-primary" onClick={() => navigate(`/call/${apt.id}`)}>
+                      <Video className="h-3.5 w-3.5" /> Join Call
+                    </Button>
+                  )}
                   {(apt.status === "pending" || apt.status === "confirmed") && (
                     <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
                       Cancel

@@ -467,6 +467,36 @@ export type Database = {
         }
         Relationships: []
       }
+      webrtc_signaling_messages: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          id: string
+          payload: Json
+          receiver_id: string
+          sender_id: string
+          type: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          receiver_id: string
+          sender_id: string
+          type: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          receiver_id?: string
+          sender_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

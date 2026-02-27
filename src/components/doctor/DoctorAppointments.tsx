@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, User, Loader2, FileText } from "lucide-react";
+import { Calendar, Clock, User, Loader2, FileText, Video } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [filter, setFilter] = useState("all");
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<string | null>(null);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
@@ -128,7 +130,12 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                       </>
                     )}
                     {apt.status === "confirmed" && (
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "completed")} className="text-success">Complete</Button>
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/call/${apt.id}`)} className="gap-1 text-primary">
+                          <Video className="h-3.5 w-3.5" /> Call
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "completed")} className="text-success">Complete</Button>
+                      </>
                     )}
                   </div>
                 </div>
