@@ -6,6 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Stethoscope, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import SortableItem from "./SortableItem";
 
 const AdminSpecialties = () => {
   const [specialties, setSpecialties] = useState<any[]>([]);
@@ -16,13 +32,18 @@ const AdminSpecialties = () => {
   const [adding, setAdding] = useState(false);
   const { toast } = useToast();
 
-  const fetch = async () => {
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const fetchSpecialties = async () => {
     const { data } = await supabase.from("specialties").select("*").order("name");
     if (data) setSpecialties(data);
     setLoading(false);
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { fetchSpecialties(); }, []);
 
   const addSpecialty = async () => {
     if (!newName.trim()) return;
@@ -37,14 +58,22 @@ const AdminSpecialties = () => {
     else {
       toast({ title: "Specialty added" });
       setNewName(""); setNewDesc(""); setNewIcon("");
-      fetch();
+      fetchSpecialties();
     }
   };
 
   const deleteSpecialty = async (id: string) => {
     await supabase.from("specialties").delete().eq("id", id);
     toast({ title: "Specialty deleted" });
-    fetch();
+    fetchSpecialties();
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = specialties.findIndex((s) => s.id === active.id);
+    const newIdx = specialties.findIndex((s) => s.id === over.id);
+    setSpecialties(arrayMove(specialties, oldIdx, newIdx));
   };
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -69,19 +98,25 @@ const AdminSpecialties = () => {
           </Button>
         </div>
 
-        <div className="divide-y divide-border">
-          {specialties.map((s) => (
-            <div key={s.id} className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-sm font-medium text-foreground">{s.name}</p>
-                {s.description && <p className="text-xs text-muted-foreground">{s.description}</p>}
-              </div>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteSpecialty(s.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={specialties.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {specialties.map((s) => (
+                <SortableItem key={s.id} id={s.id}>
+                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{s.name}</p>
+                      {s.description && <p className="text-xs text-muted-foreground">{s.description}</p>}
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteSpecialty(s.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </SortableItem>
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       </CardContent>
     </Card>
   );
