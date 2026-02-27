@@ -8,17 +8,33 @@ import type { User } from "@supabase/supabase-js";
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isDoctor, setIsDoctor] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) checkDoctorRole(session.user.id);
+      else setIsDoctor(false);
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) checkDoctorRole(session.user.id);
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkDoctorRole = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "doctor");
+    setIsDoctor(!!data && data.length > 0);
+  };
+
+  const dashboardPath = isDoctor ? "/doctor-dashboard" : "/dashboard";
+  const dashboardLabel = isDoctor ? "Doctor Dashboard" : "Dashboard";
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -53,8 +69,8 @@ const Navbar = () => {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-                Dashboard
+              <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
+                {dashboardLabel}
               </Button>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 Log out
@@ -88,7 +104,7 @@ const Navbar = () => {
             <div className="flex gap-2 pt-2">
               {user ? (
                 <>
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate("/dashboard"); setIsOpen(false); }}>Dashboard</Button>
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
                   <Button variant="outline" size="sm" className="flex-1" onClick={handleLogout}>Log out</Button>
                 </>
               ) : (
