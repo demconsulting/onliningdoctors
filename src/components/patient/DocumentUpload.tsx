@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Upload, Trash2, Loader2, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FileText, Upload, Trash2, Loader2, Download, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { User } from "@supabase/supabase-js";
@@ -12,10 +13,19 @@ interface DocumentUploadProps {
   user: User;
 }
 
+const DOCUMENT_TYPES = [
+  { value: "id_copy", label: "ID Copy" },
+  { value: "medical_record", label: "Medical Record" },
+  { value: "prescription", label: "Prescription" },
+  { value: "test_result", label: "Test Result" },
+  { value: "other", label: "Other" },
+];
+
 const DocumentUpload = ({ user }: DocumentUploadProps) => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [selectedType, setSelectedType] = useState("other");
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -58,6 +68,7 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
       file_path: filePath,
       mime_type: file.type,
       file_size: file.size,
+      document_type: selectedType,
     });
 
     setUploading(false);
@@ -107,7 +118,17 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
         <CardTitle className="flex items-center gap-2 font-display">
           <FileText className="h-5 w-5 text-primary" /> Documents
         </CardTitle>
-        <div>
+        <div className="flex items-center gap-2">
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {DOCUMENT_TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             ref={fileRef}
             type="file"
@@ -141,7 +162,15 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
                 <div className="flex items-center gap-3 overflow-hidden">
                   <FileText className="h-5 w-5 shrink-0 text-primary" />
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-medium text-foreground">{doc.file_name}</p>
+                      {doc.document_type && doc.document_type !== "other" && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          <Tag className="h-3 w-3" />
+                          {DOCUMENT_TYPES.find((t) => t.value === doc.document_type)?.label || doc.document_type}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {formatSize(doc.file_size || 0)} · {format(new Date(doc.created_at), "MMM d, yyyy")}
                     </p>
