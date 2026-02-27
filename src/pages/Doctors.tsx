@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -134,7 +135,8 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
   const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
+    <Link to={`/doctors/${doctor.profile_id}`} className="block">
+    <Card className="group overflow-hidden transition-shadow hover:shadow-lg cursor-pointer">
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
           {/* Avatar */}
@@ -218,6 +220,7 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
         </div>
       </CardContent>
     </Card>
+    </Link>
   );
 };
 
