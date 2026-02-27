@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, BarChart3, Plus, Trash2, Save } from "lucide-react";
+import { Loader2, BarChart3, Plus, Trash2, Save, Pencil, X, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   DndContext,
@@ -30,6 +30,10 @@ const AdminStats = () => {
   const [newIcon, setNewIcon] = useState("");
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
+  const [editValue, setEditValue] = useState("");
+  const [editIcon, setEditIcon] = useState("");
   const { toast } = useToast();
 
   const sensors = useSensors(
@@ -67,6 +71,32 @@ const AdminStats = () => {
     await supabase.from("hero_stats").delete().eq("id", id);
     toast({ title: "Stat deleted" });
     fetchStats();
+  };
+
+  const startEdit = (s: any) => {
+    setEditingId(s.id);
+    setEditLabel(s.label);
+    setEditValue(s.value);
+    setEditIcon(s.icon || "");
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = async () => {
+    if (!editingId || !editLabel.trim() || !editValue.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.from("hero_stats").update({
+      label: editLabel.trim(),
+      value: editValue.trim(),
+      icon: editIcon.trim() || null,
+    }).eq("id", editingId);
+    setSaving(false);
+    if (error) toast({ variant: "destructive", title: "Error", description: error.message });
+    else {
+      toast({ title: "Stat updated" });
+      setEditingId(null);
+      fetchStats();
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -114,15 +144,38 @@ const AdminStats = () => {
             <div className="space-y-2">
               {stats.map((s) => (
                 <SortableItem key={s.id} id={s.id}>
-                  <div className="flex items-center justify-between rounded-lg border border-border p-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{s.value} — {s.label}</p>
-                      {s.icon && <p className="text-xs text-muted-foreground">Icon: {s.icon}</p>}
+                  {editingId === s.id ? (
+                    <div className="rounded-lg border border-primary p-3 space-y-2">
+                      <div className="grid gap-2 sm:grid-cols-3">
+                        <Input value={editLabel} onChange={(e) => setEditLabel(e.target.value)} placeholder="Label" />
+                        <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} placeholder="Value" />
+                        <Input value={editIcon} onChange={(e) => setEditIcon(e.target.value)} placeholder="Icon" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={saveEdit} disabled={saving} className="gap-1">
+                          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Save
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={cancelEdit} className="gap-1">
+                          <X className="h-3 w-3" /> Cancel
+                        </Button>
+                      </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteStat(s.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{s.value} — {s.label}</p>
+                        {s.icon && <p className="text-xs text-muted-foreground">Icon: {s.icon}</p>}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => startEdit(s)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteStat(s.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </SortableItem>
               ))}
             </div>
