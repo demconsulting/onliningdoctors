@@ -53,7 +53,7 @@ const Navbar = () => {
             <Stethoscope className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="font-display text-xl font-bold text-foreground">
-            Doco<span className="text-primary">.</span>
+            Onlining Doctors
           </span>
         </Link>
 

@@ -10,7 +10,7 @@ const Footer = () => (
             <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
               <Stethoscope className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-display text-lg font-bold">Doco<span className="text-primary">.</span></span>
+            <span className="font-display text-lg font-bold">Onlining Doctors</span>
           </Link>
           <p className="text-sm text-muted-foreground">
             Connect with qualified doctors online. Secure, convenient healthcare at your fingertips.
@@ -39,7 +39,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-8 border-t border-border pt-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Doco. All rights reserved.
+        © {new Date().getFullYear()} Onlining Doctors. All rights reserved.
       </div>
     </div>
   </footer>
