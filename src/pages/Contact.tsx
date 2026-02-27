@@ -87,20 +87,20 @@ const Contact = () => {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label>Name *</Label>
-                        <Input value={name} onChange={(e) => setName(e.target.value)} required />
+                        <Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} />
                       </div>
                       <div className="space-y-2">
                         <Label>Email *</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Subject</Label>
-                      <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
+                      <Input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} />
                     </div>
                     <div className="space-y-2">
                       <Label>Message *</Label>
-                      <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} required />
+                      <Textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} required maxLength={5000} />
                     </div>
                     <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
                       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
