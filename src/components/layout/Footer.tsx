@@ -19,9 +19,8 @@ const Footer = () => (
         <div>
           <h4 className="mb-3 font-display font-semibold text-foreground">Platform</h4>
           <div className="flex flex-col gap-2">
-            <Link to="/doctors" className="text-sm text-muted-foreground hover:text-foreground">Find Doctors</Link>
-            <Link to="/specialties" className="text-sm text-muted-foreground hover:text-foreground">Specialties</Link>
-            <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground">FAQ</Link>
+            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link>
+            <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</Link>
           </div>
         </div>
         <div>
@@ -34,8 +33,8 @@ const Footer = () => (
         <div>
           <h4 className="mb-3 font-display font-semibold text-foreground">Legal</h4>
           <div className="flex flex-col gap-2">
-            <span className="text-sm text-muted-foreground">Privacy Policy</span>
-            <span className="text-sm text-muted-foreground">Terms of Service</span>
+            <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</Link>
+            <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</Link>
           </div>
         </div>
       </div>
