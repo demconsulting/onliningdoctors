@@ -265,6 +265,55 @@ export type Database = {
           },
         ]
       }
+      document_sharing: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          doctor_id: string
+          id: string
+          is_active: boolean
+          patient_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          doctor_id: string
+          id?: string
+          is_active?: boolean
+          patient_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          is_active?: boolean
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_sharing_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_sharing_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_sharing_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faqs: {
         Row: {
           answer: string

@@ -10,6 +10,7 @@ import { Calendar, Clock, User, Loader2, FileText, Video } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import PatientDocuments from "@/components/doctor/PatientDocuments";
 
 interface DoctorAppointmentsProps {
   user: SupaUser;
@@ -29,24 +30,38 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [filter, setFilter] = useState("all");
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<string | null>(null);
+  const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
+  const [sharingMap, setSharingMap] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
-    const query = supabase
-      .from("appointments")
-      .select("*, patient:patient_id(full_name, avatar_url, phone)")
-      .eq("doctor_id", user.id)
-      .order("scheduled_at", { ascending: false });
+    const [aptRes, sharingRes] = await Promise.all([
+      supabase
+        .from("appointments")
+        .select("*, patient:patient_id(full_name, avatar_url, phone)")
+        .eq("doctor_id", user.id)
+        .order("scheduled_at", { ascending: false }),
+      supabase
+        .from("document_sharing")
+        .select("appointment_id, is_active")
+        .eq("doctor_id", user.id)
+        .eq("is_active", true),
+    ]);
 
-    const { data, error } = await query;
-    if (data) {
-      setAppointments(data);
+    if (aptRes.data) {
+      setAppointments(aptRes.data);
       const notes: Record<string, string> = {};
-      data.forEach(a => { notes[a.id] = a.notes || ""; });
+      aptRes.data.forEach(a => { notes[a.id] = a.notes || ""; });
       setNotesMap(notes);
     }
-    if (error) console.error(error);
+    if (aptRes.error) console.error(aptRes.error);
+
+    if (sharingRes.data) {
+      const map: Record<string, boolean> = {};
+      sharingRes.data.forEach((s: any) => { map[s.appointment_id] = true; });
+      setSharingMap(map);
+    }
     setLoading(false);
   };
 
@@ -139,6 +154,30 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                     )}
                   </div>
                 </div>
+
+                {/* Patient Documents (if shared) */}
+                {sharingMap[apt.id] && (
+                  <div className="pt-2 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs text-primary"
+                      onClick={() => setExpandedDocs(prev => {
+                        const next = new Set(prev);
+                        next.has(apt.id) ? next.delete(apt.id) : next.add(apt.id);
+                        return next;
+                      })}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      {expandedDocs.has(apt.id) ? "Hide Documents" : "View Patient Documents"}
+                    </Button>
+                    {expandedDocs.has(apt.id) && (
+                      <div className="mt-2">
+                        <PatientDocuments patientId={apt.patient_id} patientName={apt.patient?.full_name || "Patient"} />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Consultation Notes */}
                 <div className="space-y-1 pt-2 border-t border-border">
