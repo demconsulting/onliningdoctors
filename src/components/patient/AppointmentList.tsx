@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Loader2, Video } from "lucide-react";
+import { Calendar, Clock, User, Loader2, Video, Star } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import ReviewForm from "@/components/reviews/ReviewForm";
 
 interface AppointmentListProps {
   user: SupaUser;
@@ -24,18 +25,26 @@ const statusColors: Record<string, string> = {
 const AppointmentList = ({ user }: AppointmentListProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*, doctor:doctor_id(full_name, avatar_url)")
-      .eq("patient_id", user.id)
-      .order("scheduled_at", { ascending: false });
+    const [aptRes, reviewRes] = await Promise.all([
+      supabase
+        .from("appointments")
+        .select("*, doctor:doctor_id(full_name, avatar_url)")
+        .eq("patient_id", user.id)
+        .order("scheduled_at", { ascending: false }),
+      supabase
+        .from("reviews")
+        .select("appointment_id")
+        .eq("patient_id", user.id),
+    ]);
 
-    if (data) setAppointments(data);
-    if (error) console.error(error);
+    if (aptRes.data) setAppointments(aptRes.data);
+    if (aptRes.error) console.error(aptRes.error);
+    if (reviewRes.data) setReviewedIds(new Set(reviewRes.data.map((r: any) => r.appointment_id)));
     setLoading(false);
   };
 
@@ -113,6 +122,22 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                     </Button>
                   )}
                 </div>
+                {/* Review form for completed, un-reviewed appointments */}
+                {apt.status === "completed" && !reviewedIds.has(apt.id) && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <ReviewForm
+                      user={user}
+                      appointmentId={apt.id}
+                      doctorId={apt.doctor_id}
+                      onSubmitted={fetchAppointments}
+                    />
+                  </div>
+                )}
+                {apt.status === "completed" && reviewedIds.has(apt.id) && (
+                  <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+                    <Star className="h-3 w-3 fill-warning text-warning" /> Reviewed
+                  </p>
+                )}
               </div>
             ))}
           </div>

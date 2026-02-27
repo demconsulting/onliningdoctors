@@ -4,33 +4,37 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isDoctor, setIsDoctor] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) checkDoctorRole(session.user.id);
-      else setIsDoctor(false);
+      if (session?.user) checkRole(session.user.id);
+      else { setIsDoctor(false); setIsAdmin(false); }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) checkDoctorRole(session.user.id);
+      if (session?.user) checkRole(session.user.id);
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkDoctorRole = async (userId: string) => {
+  const checkRole = async (userId: string) => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .eq("role", "doctor");
-    setIsDoctor(!!data && data.length > 0);
+      .eq("user_id", userId);
+    if (data) {
+      setIsDoctor(data.some(r => r.role === "doctor"));
+      setIsAdmin(data.some(r => r.role === "admin"));
+    }
   };
 
   const dashboardPath = isDoctor ? "/doctor-dashboard" : "/dashboard";
@@ -55,35 +59,26 @@ const Navbar = () => {
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
-          <Link to="/doctors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Find Doctors
-          </Link>
-          <Link to="/specialties" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Specialties
-          </Link>
-          <Link to="/faq" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            FAQ
-          </Link>
+          <Link to="/about" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">About</Link>
+          <Link to="/contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Contact</Link>
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              <NotificationBell />
+              {isAdmin && (
+                <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>Admin</Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
                 {dashboardLabel}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Log out
-              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>Log out</Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
-                Log in
-              </Button>
-              <Button size="sm" onClick={() => navigate("/signup")}>
-                Sign up
-              </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>Log in</Button>
+              <Button size="sm" onClick={() => navigate("/signup")}>Sign up</Button>
             </>
           )}
         </div>
@@ -98,12 +93,14 @@ const Navbar = () => {
       {isOpen && (
         <div className="border-t border-border bg-card p-4 md:hidden">
           <div className="flex flex-col gap-3">
-            <Link to="/doctors" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Find Doctors</Link>
-            <Link to="/specialties" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Specialties</Link>
-            <Link to="/faq" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>FAQ</Link>
+            <Link to="/about" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>About</Link>
+            <Link to="/contact" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Contact</Link>
             <div className="flex gap-2 pt-2">
               {user ? (
                 <>
+                  {isAdmin && (
+                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate("/admin"); setIsOpen(false); }}>Admin</Button>
+                  )}
                   <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
                   <Button variant="outline" size="sm" className="flex-1" onClick={handleLogout}>Log out</Button>
                 </>
