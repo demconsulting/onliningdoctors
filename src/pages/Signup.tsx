@@ -47,13 +47,13 @@ const Signup = () => {
               <Stethoscope className="h-6 w-6 text-primary-foreground" />
             </div>
             <CardTitle className="font-display text-2xl">Create your account</CardTitle>
-            <CardDescription>Join Doco for online healthcare</CardDescription>
+            <CardDescription>Join Onlining Doctors for online healthcare</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="Dr. Jane Smith" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+                <Input id="name" placeholder="Jane Smith" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
