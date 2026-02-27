@@ -200,6 +200,7 @@ export type Database = {
           hospital_affiliation: string | null
           id: string
           is_available: boolean | null
+          is_verified: boolean
           languages: string[] | null
           license_number: string | null
           profile_id: string
@@ -218,6 +219,7 @@ export type Database = {
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
+          is_verified?: boolean
           languages?: string[] | null
           license_number?: string | null
           profile_id: string
@@ -236,6 +238,7 @@ export type Database = {
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
+          is_verified?: boolean
           languages?: string[] | null
           license_number?: string | null
           profile_id?: string
