@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
+  { title: "Hero Section", key: "hero", icon: Layout },
+  { title: "Stats", key: "stats", icon: BarChart3 },
+  { title: "Specialties", key: "specialties", icon: Stethoscope },
+  { title: "FAQs", key: "faqs", icon: HelpCircle },
   { title: "Users", key: "users", icon: Users },
   { title: "Appointments", key: "appointments", icon: Calendar },
   { title: "Reviews", key: "reviews", icon: Star },
-  { title: "Specialties", key: "specialties", icon: Stethoscope },
-  { title: "FAQs", key: "faqs", icon: HelpCircle },
   { title: "Contact Messages", key: "contacts", icon: Mail },
 ];
 

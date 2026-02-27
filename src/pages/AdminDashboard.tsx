@@ -9,12 +9,14 @@ import AdminReviews from "@/components/admin/AdminReviews";
 import AdminSpecialties from "@/components/admin/AdminSpecialties";
 import AdminContacts from "@/components/admin/AdminContacts";
 import AdminFaqs from "@/components/admin/AdminFaqs";
+import AdminHero from "@/components/admin/AdminHero";
+import AdminStats from "@/components/admin/AdminStats";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeSection, setActiveSection] = useState("users");
+  const [activeSection, setActiveSection] = useState("hero");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,13 +51,15 @@ const AdminDashboard = () => {
 
   const renderSection = () => {
     switch (activeSection) {
+      case "hero": return <AdminHero />;
+      case "stats": return <AdminStats />;
       case "users": return <AdminUsers />;
       case "appointments": return <AdminAppointments />;
       case "reviews": return <AdminReviews />;
       case "specialties": return <AdminSpecialties />;
       case "contacts": return <AdminContacts />;
       case "faqs": return <AdminFaqs />;
-      default: return <AdminUsers />;
+      default: return <AdminHero />;
     }
   };
 
