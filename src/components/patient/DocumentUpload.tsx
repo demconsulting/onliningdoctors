@@ -112,7 +112,7 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
             ref={fileRef}
             type="file"
             className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp,.heic,.bmp"
             onChange={handleUpload}
           />
           <Button
@@ -132,7 +132,7 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
           <div className="py-10 text-center text-muted-foreground">
             <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p>No documents uploaded</p>
-            <p className="text-sm">Upload medical records, test results, or prescriptions</p>
+            <p className="text-sm">Upload your ID copy, medical records, test results, or prescriptions</p>
           </div>
         ) : (
           <div className="space-y-2">
