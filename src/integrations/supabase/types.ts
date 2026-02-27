@@ -78,6 +78,36 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_read: boolean
+          message: string
+          name: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_read?: boolean
+          message: string
+          name: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          name?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
       doctor_availability: {
         Row: {
           created_at: string
@@ -286,6 +316,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       patient_documents: {
         Row: {
           created_at: string
@@ -418,6 +481,45 @@ export type Database = {
           gender?: string | null
           id?: string
           phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          admin_notes: string | null
+          appointment_id: string
+          comment: string | null
+          created_at: string
+          doctor_id: string
+          id: string
+          is_visible: boolean
+          patient_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          appointment_id: string
+          comment?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: string
+          is_visible?: boolean
+          patient_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          appointment_id?: string
+          comment?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          is_visible?: boolean
+          patient_id?: string
+          rating?: number
           updated_at?: string
         }
         Relationships: []
