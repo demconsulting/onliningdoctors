@@ -1,7 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { getCountries, getStates, getCities } from "@/data/locations";
 
 interface LocationSelectProps {
@@ -12,6 +16,76 @@ interface LocationSelectProps {
   onStateChange: (value: string) => void;
   onCityChange: (value: string) => void;
 }
+
+interface SearchableSelectProps {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+}
+
+const SearchableSelect = ({ label, value, options, onChange, placeholder, disabled }: SearchableSelectProps) => {
+  const [open, setOpen] = useState(false);
+
+  if (options.length === 0) {
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className="w-full justify-between font-normal"
+          >
+            <span className="truncate">{value || placeholder}</span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              <CommandGroup>
+                {options.map((opt) => (
+                  <CommandItem
+                    key={opt}
+                    value={opt}
+                    onSelect={() => {
+                      onChange(opt);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check className={cn("mr-2 h-4 w-4", value === opt ? "opacity-100" : "opacity-0")} />
+                    {opt}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
 const LocationSelect = ({
   country,
@@ -25,7 +99,6 @@ const LocationSelect = ({
   const states = getStates(country);
   const cities = getCities(country, state);
 
-  // Reset dependent fields when parent changes
   useEffect(() => {
     if (country && states.length > 0 && state && !states.includes(state)) {
       onStateChange("");
@@ -41,59 +114,29 @@ const LocationSelect = ({
 
   return (
     <>
-      <div className="space-y-2">
-        <Label>Country</Label>
-        <Select value={country} onValueChange={(v) => { onCountryChange(v); onStateChange(""); onCityChange(""); }}>
-          <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
-          <SelectContent>
-            {countries.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Province / State</Label>
-        {states.length > 0 ? (
-          <Select value={state} onValueChange={(v) => { onStateChange(v); onCityChange(""); }} disabled={!country}>
-            <SelectTrigger><SelectValue placeholder="Select province/state" /></SelectTrigger>
-            <SelectContent>
-              {states.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            value={state}
-            onChange={(e) => onStateChange(e.target.value)}
-            placeholder="Enter province/state"
-            disabled={!country}
-          />
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label>City / Suburb</Label>
-        {cities.length > 0 ? (
-          <Select value={city} onValueChange={onCityChange} disabled={!state}>
-            <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
-            <SelectContent>
-              {cities.map((c) => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input
-            value={city}
-            onChange={(e) => onCityChange(e.target.value)}
-            placeholder="Enter city/suburb"
-            disabled={!state}
-          />
-        )}
-      </div>
+      <SearchableSelect
+        label="Country"
+        value={country}
+        options={countries}
+        onChange={(v) => { onCountryChange(v); onStateChange(""); onCityChange(""); }}
+        placeholder="Select country"
+      />
+      <SearchableSelect
+        label="Province / State"
+        value={state}
+        options={states}
+        onChange={(v) => { onStateChange(v); onCityChange(""); }}
+        placeholder={states.length > 0 ? "Select province/state" : "Enter province/state"}
+        disabled={!country}
+      />
+      <SearchableSelect
+        label="City / Suburb"
+        value={city}
+        options={cities}
+        onChange={onCityChange}
+        placeholder={cities.length > 0 ? "Select city/suburb" : "Enter city/suburb"}
+        disabled={!state}
+      />
     </>
   );
 };
