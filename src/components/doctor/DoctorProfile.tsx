@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Save, Stethoscope } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import LocationSelect from "@/components/shared/LocationSelect";
 
 interface DoctorProfileProps {
   user: User;
@@ -26,6 +27,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     gender: "",
     address: "",
     city: "",
+    state: "",
     country: "",
   });
   const [doctor, setDoctor] = useState({
@@ -58,6 +60,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           gender: profileRes.data.gender || "",
           address: profileRes.data.address || "",
           city: profileRes.data.city || "",
+          state: (profileRes.data as any).state || "",
           country: profileRes.data.country || "",
         });
       }
@@ -139,6 +142,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <LocationSelect
+              country={profile.country}
+              state={profile.state}
+              city={profile.city}
+              onCountryChange={(v) => setProfile({ ...profile, country: v, state: "", city: "" })}
+              onStateChange={(v) => setProfile({ ...profile, state: v, city: "" })}
+              onCityChange={(v) => setProfile({ ...profile, city: v })}
+            />
           </div>
         </CardContent>
       </Card>

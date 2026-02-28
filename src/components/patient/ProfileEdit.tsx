@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import LocationSelect from "@/components/shared/LocationSelect";
 
 interface ProfileEditProps {
   user: User;
@@ -25,6 +26,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
     gender: "",
     address: "",
     city: "",
+    state: "",
     country: "",
   });
 
@@ -43,6 +45,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
             gender: data.gender || "",
             address: data.address || "",
             city: data.city || "",
+            state: data.state || "",
             country: data.country || "",
           });
         }
@@ -101,15 +104,15 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
           <Label>Address</Label>
           <Textarea value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} rows={2} />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>City</Label>
-            <Input value={profile.city} onChange={(e) => setProfile({ ...profile, city: e.target.value })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Country</Label>
-            <Input value={profile.country} onChange={(e) => setProfile({ ...profile, country: e.target.value })} />
-          </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <LocationSelect
+            country={profile.country}
+            state={profile.state}
+            city={profile.city}
+            onCountryChange={(v) => setProfile({ ...profile, country: v, state: "", city: "" })}
+            onStateChange={(v) => setProfile({ ...profile, state: v, city: "" })}
+            onCityChange={(v) => setProfile({ ...profile, city: v })}
+          />
         </div>
         <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
