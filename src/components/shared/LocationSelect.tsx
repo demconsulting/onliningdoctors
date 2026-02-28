@@ -69,8 +69,13 @@ const SearchableSelect = ({ label, value, options, onChange, placeholder, disabl
                   <CommandItem
                     key={opt}
                     value={opt}
-                    onSelect={() => {
-                      onChange(opt);
+                    onSelect={(currentValue) => {
+                      const selected = options.find(
+                        (o) => o.toLowerCase() === currentValue.toLowerCase()
+                      );
+                      if (selected) {
+                        onChange(selected);
+                      }
                       setOpen(false);
                     }}
                   >
