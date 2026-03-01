@@ -2,3 +2,6 @@ project_id = "ufgbavxidpmikiwicifv"
 
 [functions.detect-country]
 verify_jwt = false
+
+[functions.send-doctor-email]
+verify_jwt = false
