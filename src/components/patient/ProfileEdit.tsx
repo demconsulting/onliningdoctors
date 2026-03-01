@@ -60,9 +60,13 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
 
   const handleSave = async () => {
     setSaving(true);
+    const payload = {
+      ...profile,
+      date_of_birth: profile.date_of_birth || null,
+    };
     const { error } = await supabase
       .from("profiles")
-      .update(profile)
+      .update(payload)
       .eq("id", user.id);
     setSaving(false);
     if (error) {

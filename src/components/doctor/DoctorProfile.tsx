@@ -10,6 +10,8 @@ import { Loader2, Save, Stethoscope } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { countryCodeToName } from "@/data/countryMappings";
 
 interface DoctorProfileProps {
   user: User;
@@ -43,6 +45,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     is_available: true,
   });
   const [languagesInput, setLanguagesInput] = useState("");
+  const { geo } = useGeoLocation();
 
   useEffect(() => {
     const load = async () => {
@@ -53,6 +56,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       ]);
 
       if (profileRes.data) {
+        const detectedCountry = geo?.countryCode ? (countryCodeToName[geo.countryCode] || "") : "";
         setProfile({
           full_name: profileRes.data.full_name || "",
           phone: profileRes.data.phone || "",
@@ -61,7 +65,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           address: profileRes.data.address || "",
           city: profileRes.data.city || "",
           state: (profileRes.data as any).state || "",
-          country: profileRes.data.country || "",
+          country: profileRes.data.country || detectedCountry,
         });
       }
 
@@ -85,14 +89,18 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       setLoading(false);
     };
     load();
-  }, [user.id]);
+  }, [user.id, geo]);
 
   const handleSave = async () => {
     setSaving(true);
     const langs = languagesInput.split(",").map(l => l.trim()).filter(Boolean);
 
+    const profilePayload = {
+      ...profile,
+      date_of_birth: profile.date_of_birth || null,
+    };
     const [profileRes, doctorRes] = await Promise.all([
-      supabase.from("profiles").update(profile).eq("id", user.id),
+      supabase.from("profiles").update(profilePayload).eq("id", user.id),
       supabase.from("doctors").update({
         ...doctor,
         languages: langs,
