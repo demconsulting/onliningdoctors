@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, DollarSign, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { countryCurrency } from "@/data/countryMappings";
 
 interface PricingTiersProps {
   user: User;
@@ -28,6 +30,10 @@ const PricingTiers = ({ user }: PricingTiersProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { geo } = useGeoLocation();
+  const currencySymbol = geo?.countryCode && countryCurrency[geo.countryCode]
+    ? countryCurrency[geo.countryCode].symbol
+    : "$";
 
   const fetchTiers = async () => {
     const { data } = await supabase
@@ -120,7 +126,7 @@ const PricingTiers = ({ user }: PricingTiersProps) => {
                 <Input value={tier.name} onChange={(e) => updateTier(i, { name: e.target.value })} placeholder="e.g. Standard" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Price ($)</Label>
+                <Label className="text-xs">Price ({currencySymbol})</Label>
                 <Input type="number" min={0} value={tier.price} onChange={(e) => updateTier(i, { price: Number(e.target.value) })} />
               </div>
               <div className="space-y-1">
