@@ -48,7 +48,7 @@ const HeroSection = () => {
         className="absolute inset-0 h-full w-full object-cover"
         src={heroBgVideo}
       />
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-background/40" />
       <div className="container relative z-10 mx-auto px-4 py-20 lg:py-28">
         <div className="mx-auto max-w-3xl text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
