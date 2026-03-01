@@ -10,6 +10,7 @@ import { Stethoscope, Loader2, ShieldCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import { countryCodeToName } from "@/data/countryMappings";
 
 const DoctorSignup = () => {
   const [fullName, setFullName] = useState("");
@@ -17,6 +18,7 @@ const DoctorSignup = () => {
   const [password, setPassword] = useState("");
   const [title, setTitle] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
+  const [country, setCountry] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -26,6 +28,10 @@ const DoctorSignup = () => {
     e.preventDefault();
     if (!licenseNumber.trim()) {
       toast({ variant: "destructive", title: "License number is required" });
+      return;
+    }
+    if (!country) {
+      toast({ variant: "destructive", title: "Country of operation is required" });
       return;
     }
     setLoading(true);
@@ -38,6 +44,7 @@ const DoctorSignup = () => {
           signup_as_doctor: "true",
           license_number: licenseNumber,
           title,
+          country,
         },
         emailRedirectTo: window.location.origin,
       },
@@ -88,6 +95,17 @@ const DoctorSignup = () => {
                 <Input id="license" placeholder="e.g. MED-2024-12345" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="country">Country of Operation <span className="text-destructive">*</span></Label>
+                <Select value={country} onValueChange={setCountry}>
+                  <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(countryCodeToName).map(([code, name]) => (
+                      <SelectItem key={code} value={name}>{name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
@@ -112,7 +130,7 @@ const DoctorSignup = () => {
                   <Link to="/privacy" target="_blank" className="font-medium text-primary hover:underline">Privacy Policy</Link>
                 </label>
               </div>
-              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground" disabled={loading || !acceptedTerms}>
+              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground" disabled={loading || !acceptedTerms || !country}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
               </Button>
             </form>
