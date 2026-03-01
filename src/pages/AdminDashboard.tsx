@@ -12,6 +12,7 @@ import AdminFaqs from "@/components/admin/AdminFaqs";
 import AdminHero from "@/components/admin/AdminHero";
 import AdminStats from "@/components/admin/AdminStats";
 import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
+import AdminDoctorVerification from "@/components/admin/AdminDoctorVerification";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -61,6 +62,7 @@ const AdminDashboard = () => {
       case "contacts": return <AdminContacts />;
       case "faqs": return <AdminFaqs />;
       case "audit-logs": return <AdminAuditLogs />;
+      case "doctor-verification": return <AdminDoctorVerification />;
       default: return <AdminHero />;
     }
   };
