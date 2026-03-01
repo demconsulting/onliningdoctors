@@ -19,13 +19,20 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       toast({ variant: "destructive", title: "Login failed", description: error.message });
-    } else {
-      navigate("/dashboard");
+      return;
     }
+    // Check if user is a doctor and redirect accordingly
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.user.id);
+    setLoading(false);
+    const isDoctor = roles?.some(r => r.role === "doctor");
+    navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
   };
 
   const handleForgotPassword = async () => {
