@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,7 @@ const Doctors = () => {
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [loading, setLoading] = useState(true);
+  const { geo } = useGeoLocation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -118,7 +120,7 @@ const Doctors = () => {
             <p className="mb-6 text-sm text-muted-foreground">{filtered.length} doctor{filtered.length !== 1 ? "s" : ""} found</p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((doc) => (
-                <DoctorCard key={doc.id} doctor={doc} />
+                <DoctorCard key={doc.id} doctor={doc} currencySymbol={geo?.currencySymbol ?? "$"} />
               ))}
             </div>
           </>
@@ -130,7 +132,7 @@ const Doctors = () => {
   );
 };
 
-const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
+const DoctorCard = ({ doctor, currencySymbol }: { doctor: Doctor; currencySymbol: string }) => {
   const name = doctor.profile?.full_name || "Doctor";
   const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
@@ -189,7 +191,7 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
           {doctor.consultation_fee != null && (
             <span className="flex items-center gap-1">
               <DollarSign className="h-3.5 w-3.5" />
-              ${Number(doctor.consultation_fee).toFixed(0)}
+              {currencySymbol}{Number(doctor.consultation_fee).toFixed(0)}
             </span>
           )}
         </div>
