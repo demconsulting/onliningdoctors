@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ReviewList from "@/components/reviews/ReviewList";
@@ -56,6 +57,8 @@ const DoctorDetail = () => {
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [tiers, setTiers] = useState<PricingTier[]>([]);
   const [loading, setLoading] = useState(true);
+  const { geo } = useGeoLocation();
+  const cs = geo?.currencySymbol ?? "$";
 
   useEffect(() => {
     if (!id) return;
@@ -272,7 +275,7 @@ const DoctorDetail = () => {
                 {tiers.length === 0 ? (
                   <div>
                     {doctor.consultation_fee != null ? (
-                      <p className="text-sm text-muted-foreground">Standard consultation: <span className="font-semibold text-foreground">${Number(doctor.consultation_fee).toFixed(0)}</span></p>
+                      <p className="text-sm text-muted-foreground">Standard consultation: <span className="font-semibold text-foreground">{cs}{Number(doctor.consultation_fee).toFixed(0)}</span></p>
                     ) : (
                       <p className="text-sm text-muted-foreground">No pricing info available.</p>
                     )}
@@ -283,7 +286,7 @@ const DoctorDetail = () => {
                       <div key={tier.id} className="rounded-lg border border-border p-3 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-semibold text-foreground">{tier.name}</span>
-                          <span className="text-sm font-bold text-primary">${tier.price}</span>
+                          <span className="text-sm font-bold text-primary">{cs}{tier.price}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock className="h-3 w-3" /> {tier.duration_minutes} min
