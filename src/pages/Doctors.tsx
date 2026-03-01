@@ -22,7 +22,7 @@ interface Doctor {
   title: string | null;
   languages: string[] | null;
   hospital_affiliation: string | null;
-  profile: { full_name: string | null; avatar_url: string | null; city: string | null } | null;
+  profile: { full_name: string | null; avatar_url: string | null; city: string | null; country: string | null } | null;
   specialty: { name: string; icon: string | null } | null;
 }
 
@@ -45,7 +45,7 @@ const Doctors = () => {
       const [docRes, specRes] = await Promise.all([
         supabase
           .from("doctors")
-          .select("*, profile:profile_id(full_name, avatar_url, city), specialty:specialty_id(name, icon)")
+          .select("*, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
           .order("rating", { ascending: false }),
         supabase.from("specialties").select("*").order("name"),
       ]);
@@ -60,7 +60,8 @@ const Doctors = () => {
     const name = d.profile?.full_name?.toLowerCase() || "";
     const matchesSearch = name.includes(search.toLowerCase()) || (d.specialty?.name?.toLowerCase().includes(search.toLowerCase()));
     const matchesSpecialty = selectedSpecialty === "all" || d.specialty?.name === specialties.find(s => s.id === selectedSpecialty)?.name;
-    return matchesSearch && matchesSpecialty;
+    const matchesCountry = !geo?.countryName || !d.profile?.country || d.profile.country === geo.countryName;
+    return matchesSearch && matchesSpecialty && matchesCountry;
   });
 
   return (
