@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
 import { motion } from "framer-motion";
+import heroBgVideo from "@/assets/hero-bg.mp4";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
@@ -38,8 +39,17 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden gradient-hero">
-      <div className="container mx-auto px-4 py-20 lg:py-28">
+    <section className="relative overflow-hidden">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+        src={heroBgVideo}
+      />
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" />
+      <div className="container relative z-10 mx-auto px-4 py-20 lg:py-28">
         <div className="mx-auto max-w-3xl text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <span className="mb-4 inline-block rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-foreground">
