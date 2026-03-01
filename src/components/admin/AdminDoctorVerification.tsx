@@ -40,7 +40,7 @@ const AdminDoctorVerification = () => {
 
   useEffect(() => { fetchDoctors(); }, []);
 
-  const handleVerify = async (doctorId: string, verify: boolean) => {
+  const handleVerify = async (doctorId: string, profileId: string, verify: boolean) => {
     setUpdating(doctorId);
     const { error } = await supabase
       .from("doctors")
@@ -51,6 +51,14 @@ const AdminDoctorVerification = () => {
       toast({ variant: "destructive", title: "Update failed", description: error.message });
     } else {
       toast({ title: verify ? "Doctor verified" : "Doctor unverified" });
+      // Send email notification
+      try {
+        await supabase.functions.invoke("send-doctor-email", {
+          body: { doctorProfileId: profileId, verified: verify },
+        });
+      } catch (emailErr) {
+        console.error("Email notification failed:", emailErr);
+      }
       fetchDoctors();
     }
     setUpdating(null);
@@ -115,7 +123,7 @@ const AdminDoctorVerification = () => {
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            onClick={() => handleVerify(d.id, true)}
+                            onClick={() => handleVerify(d.id, d.profile_id, true)}
                             disabled={updating === d.id || !d.profile?.country}
                             title={!d.profile?.country ? "Country is required before approval" : "Approve doctor"}
                           >
@@ -172,7 +180,7 @@ const AdminDoctorVerification = () => {
                         <Button
                           size="sm"
                           variant="destructive"
-                          onClick={() => handleVerify(d.id, false)}
+                          onClick={() => handleVerify(d.id, d.profile_id, false)}
                           disabled={updating === d.id}
                         >
                           {updating === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Revoke"}
