@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, Loader2, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 
@@ -16,6 +17,7 @@ const DoctorSignup = () => {
   const [password, setPassword] = useState("");
   const [title, setTitle] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -101,7 +103,16 @@ const DoctorSignup = () => {
                 </p>
               </div>
 
-              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground" disabled={loading}>
+              <div className="flex items-start gap-2">
+                <Checkbox id="terms" checked={acceptedTerms} onCheckedChange={(v) => setAcceptedTerms(v === true)} className="mt-0.5" />
+                <label htmlFor="terms" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+                  I agree to the{" "}
+                  <Link to="/terms" target="_blank" className="font-medium text-primary hover:underline">Terms &amp; Conditions</Link>
+                  {" "}and{" "}
+                  <Link to="/privacy" target="_blank" className="font-medium text-primary hover:underline">Privacy Policy</Link>
+                </label>
+              </div>
+              <Button type="submit" className="w-full gradient-primary border-0 text-primary-foreground" disabled={loading || !acceptedTerms}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
               </Button>
             </form>
