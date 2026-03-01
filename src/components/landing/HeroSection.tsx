@@ -39,7 +39,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
       <video
         autoPlay
         loop
@@ -48,23 +48,20 @@ const HeroSection = () => {
         className="absolute inset-0 h-full w-full object-cover"
         src={heroBgVideo}
       />
-      <div className="absolute inset-0 bg-background/40" />
-      <div className="container relative z-10 mx-auto px-4 py-20 lg:py-28">
-        <div className="mx-auto max-w-3xl text-center">
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
+        <div className="max-w-2xl text-left">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="mb-4 inline-block rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-foreground">
-              {hero.badge}
-            </span>
-            <h1 className="mb-6 font-display text-4xl font-extrabold tracking-tight text-foreground md:text-6xl">
+            <h1 className="mb-6 font-display text-4xl font-extrabold tracking-tight text-white md:text-6xl lg:text-7xl">
               {hero.title}{" "}
               <span className="text-gradient">{hero.highlight}</span>
             </h1>
-            <p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">{hero.subtitle}</p>
-            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <p className="mb-8 max-w-lg text-base text-white/80 md:text-lg">{hero.subtitle}</p>
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="gap-2 gradient-primary border-0 text-primary-foreground" onClick={() => navigate("/doctors")}>
                 {hero.cta_primary} <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/signup")}>
+              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => navigate("/signup")}>
                 {hero.cta_secondary}
               </Button>
             </div>
@@ -72,7 +69,7 @@ const HeroSection = () => {
 
           {hero.features.length > 0 && (
             <motion.div
-              className="mt-14 grid grid-cols-3 gap-6"
+              className="mt-14 flex flex-wrap gap-8"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
@@ -80,12 +77,14 @@ const HeroSection = () => {
               {hero.features.map((item) => {
                 const Icon = iconMap[item.icon] || Video;
                 return (
-                  <div key={item.label} className="flex flex-col items-center gap-2">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                      <Icon className="h-5 w-5 text-primary" />
+                  <div key={item.label} className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                      <Icon className="h-5 w-5 text-white" />
                     </div>
-                    <span className="text-sm font-semibold text-foreground">{item.label}</span>
-                    <span className="text-xs text-muted-foreground">{item.sub}</span>
+                    <div>
+                      <span className="block text-sm font-semibold text-white">{item.label}</span>
+                      <span className="text-xs text-white/60">{item.sub}</span>
+                    </div>
                   </div>
                 );
               })}
