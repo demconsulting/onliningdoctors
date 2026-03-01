@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { countryCodeToName } from "@/data/countryMappings";
+import { countryCodeToName, countryCurrency } from "@/data/countryMappings";
 
 interface DoctorProfileProps {
   user: User;
@@ -47,6 +47,10 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [languagesInput, setLanguagesInput] = useState("");
   const { geo } = useGeoLocation();
 
+  const currencySymbol = geo?.countryCode && countryCurrency[geo.countryCode]
+    ? countryCurrency[geo.countryCode].symbol
+    : "$";
+
   useEffect(() => {
     const load = async () => {
       const [profileRes, doctorRes, specRes] = await Promise.all([
@@ -56,6 +60,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       ]);
 
       if (profileRes.data) {
+        const savedCountry = profileRes.data.country || "";
         const detectedCountry = geo?.countryCode ? (countryCodeToName[geo.countryCode] || "") : "";
         setProfile({
           full_name: profileRes.data.full_name || "",
@@ -65,7 +70,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           address: profileRes.data.address || "",
           city: profileRes.data.city || "",
           state: (profileRes.data as any).state || "",
-          country: profileRes.data.country || detectedCountry,
+          country: savedCountry || detectedCountry,
         });
       }
 
@@ -89,7 +94,18 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       setLoading(false);
     };
     load();
-  }, [user.id, geo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
+
+  // Apply geo-detected country if profile has none saved
+  useEffect(() => {
+    if (geo?.countryCode && !profile.country) {
+      const detectedCountry = countryCodeToName[geo.countryCode] || "";
+      if (detectedCountry) {
+        setProfile(prev => ({ ...prev, country: detectedCountry }));
+      }
+    }
+  }, [geo, profile.country]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -188,7 +204,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               <Input type="number" min={0} value={doctor.experience_years} onChange={(e) => setDoctor({ ...doctor, experience_years: Number(e.target.value) })} />
             </div>
             <div className="space-y-2">
-              <Label>Consultation Fee ($)</Label>
+              <Label>Consultation Fee ({currencySymbol})</Label>
               <Input type="number" min={0} value={doctor.consultation_fee} onChange={(e) => setDoctor({ ...doctor, consultation_fee: Number(e.target.value) })} />
             </div>
           </div>
