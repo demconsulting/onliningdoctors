@@ -1,0 +1,13 @@
+
+-- Enable RLS on all 11 affected tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.specialties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.faqs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hero_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctor_availability ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctor_pricing_tiers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patient_medical_info ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.patient_documents ENABLE ROW LEVEL SECURITY;
