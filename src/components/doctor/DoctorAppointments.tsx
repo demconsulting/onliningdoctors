@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import PatientDocuments from "@/components/doctor/PatientDocuments";
+import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
 
 interface DoctorAppointmentsProps {
   user: SupaUser;
@@ -177,6 +178,15 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                       </div>
                     )}
                   </div>
+                )}
+
+                {/* Past Consultation Notes (if patient shared documents / gave permission) */}
+                {sharingMap[apt.id] && (
+                  <PastConsultationNotes
+                    patientId={apt.patient_id}
+                    currentAppointmentId={apt.id}
+                    doctorId={user.id}
+                  />
                 )}
 
                 {/* Consultation Notes */}
