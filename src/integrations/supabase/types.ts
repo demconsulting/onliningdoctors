@@ -111,6 +111,41 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_notes: {
+        Row: {
+          appointment_id: string
+          content: string
+          created_at: string
+          doctor_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          content?: string
+          created_at?: string
+          doctor_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          content?: string
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_notes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_submissions: {
         Row: {
           created_at: string

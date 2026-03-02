@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import VideoCall from "@/components/call/VideoCall";
+import ConsultationNotes from "@/components/call/ConsultationNotes";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +14,8 @@ const CallPage = () => {
   const [userId, setUserId] = useState("");
   const [remoteUserId, setRemoteUserId] = useState("");
   const [isInitiator, setIsInitiator] = useState(false);
+  const [isDoctor, setIsDoctor] = useState(false);
+  const [doctorId, setDoctorId] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -37,7 +40,9 @@ const CallPage = () => {
 
       const remote = uid === apt.doctor_id ? apt.patient_id : apt.doctor_id;
       setRemoteUserId(remote);
-      setIsInitiator(uid === apt.doctor_id); // Doctor initiates
+      setIsInitiator(uid === apt.doctor_id);
+      setIsDoctor(uid === apt.doctor_id);
+      setDoctorId(apt.doctor_id);
       setLoading(false);
     };
     init();
@@ -72,13 +77,24 @@ const CallPage = () => {
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 gap-1">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
-        <VideoCall
-          appointmentId={appointmentId!}
-          localUserId={userId}
-          remoteUserId={remoteUserId}
-          isInitiator={isInitiator}
-          onEnd={() => navigate(-1)}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <VideoCall
+              appointmentId={appointmentId!}
+              localUserId={userId}
+              remoteUserId={remoteUserId}
+              isInitiator={isInitiator}
+              onEnd={() => navigate(-1)}
+            />
+          </div>
+          <div className="lg:col-span-1">
+            <ConsultationNotes
+              appointmentId={appointmentId!}
+              doctorId={doctorId}
+              isDoctor={isDoctor}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );
