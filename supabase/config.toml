@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.send-doctor-email]
 verify_jwt = false
+
+[functions.license-renewal-reminder]
+verify_jwt = false

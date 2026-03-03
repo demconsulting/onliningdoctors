@@ -270,6 +270,7 @@ export type Database = {
           is_available: boolean | null
           is_verified: boolean
           languages: string[] | null
+          license_document_path: string | null
           license_number: string | null
           profile_id: string
           rating: number | null
@@ -289,6 +290,7 @@ export type Database = {
           is_available?: boolean | null
           is_verified?: boolean
           languages?: string[] | null
+          license_document_path?: string | null
           license_number?: string | null
           profile_id: string
           rating?: number | null
@@ -308,6 +310,7 @@ export type Database = {
           is_available?: boolean | null
           is_verified?: boolean
           languages?: string[] | null
+          license_document_path?: string | null
           license_number?: string | null
           profile_id?: string
           rating?: number | null
