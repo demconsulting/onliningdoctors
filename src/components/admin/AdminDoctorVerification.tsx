@@ -3,13 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, ShieldCheck, ShieldX, MapPin, FileText } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldX, MapPin, FileText, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DoctorRow {
   id: string;
   profile_id: string;
   license_number: string | null;
+  license_document_path: string | null;
   title: string | null;
   is_verified: boolean;
   is_available: boolean | null;
@@ -27,10 +28,16 @@ const AdminDoctorVerification = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const viewLicenseDoc = async (path: string) => {
+    const { data } = await supabase.storage.from("doctor-licenses").createSignedUrl(path, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else toast({ variant: "destructive", title: "Could not load license document" });
+  };
+
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, title, is_verified, is_available, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
+      .select("id, profile_id, license_number, license_document_path, title, is_verified, is_available, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
       .order("created_at", { ascending: false });
 
     if (data) setDoctors(data as unknown as DoctorRow[]);
@@ -112,7 +119,14 @@ const AdminDoctorVerification = () => {
                       </td>
                       <td className="py-3 pr-4">
                         {d.license_number ? (
-                          <span className="flex items-center gap-1"><FileText className="h-3 w-3 text-muted-foreground" />{d.license_number}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1"><FileText className="h-3 w-3 text-muted-foreground" />{d.license_number}</span>
+                            {d.license_document_path && (
+                              <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewLicenseDoc(d.license_document_path!)}>
+                                <Eye className="h-3 w-3" /> View
+                              </Button>
+                            )}
+                          </div>
                         ) : (
                           <Badge variant="destructive" className="text-xs">Missing</Badge>
                         )}
@@ -174,7 +188,16 @@ const AdminDoctorVerification = () => {
                           {d.profile?.country || "—"}
                         </Badge>
                       </td>
-                      <td className="py-3 pr-4">{d.license_number || "—"}</td>
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center gap-2">
+                          {d.license_number || "—"}
+                          {d.license_document_path && (
+                            <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewLicenseDoc(d.license_document_path!)}>
+                              <Eye className="h-3 w-3" /> View
+                            </Button>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 pr-4"><Badge className="bg-green-600/10 text-green-600 border-green-600/20">Verified</Badge></td>
                       <td className="py-3">
                         <Button
