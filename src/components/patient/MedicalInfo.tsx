@@ -149,6 +149,28 @@ const MedicalInfo = ({ user }: MedicalInfoProps) => {
             <Label>Weight (kg)</Label>
             <Input type="number" value={info.weight_kg} onChange={(e) => setInfo({ ...info, weight_kg: e.target.value })} placeholder="e.g. 70" />
           </div>
+          <div className="space-y-2">
+            <Label>BMI</Label>
+            {(() => {
+              const h = parseFloat(info.height_cm);
+              const w = parseFloat(info.weight_kg);
+              if (!h || !w || h <= 0) return <p className="text-sm text-muted-foreground pt-2">Enter height & weight</p>;
+              const bmi = w / ((h / 100) ** 2);
+              const rounded = bmi.toFixed(1);
+              let category = "";
+              let colorClass = "text-muted-foreground";
+              if (bmi < 18.5) { category = "Underweight"; colorClass = "text-amber-500"; }
+              else if (bmi < 25) { category = "Normal"; colorClass = "text-green-600"; }
+              else if (bmi < 30) { category = "Overweight"; colorClass = "text-amber-500"; }
+              else { category = "Obese"; colorClass = "text-destructive"; }
+              return (
+                <div className="flex items-baseline gap-2 pt-2">
+                  <span className="text-lg font-semibold">{rounded}</span>
+                  <span className={`text-sm font-medium ${colorClass}`}>{category}</span>
+                </div>
+              );
+            })()}
+          </div>
         </div>
         <div className="space-y-2">
           <Label>Allergies</Label>
