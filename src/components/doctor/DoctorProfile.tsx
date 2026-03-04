@@ -10,12 +10,25 @@ import { Loader2, Save, Stethoscope, Upload, FileCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
+import TagInput from "@/components/shared/TagInput";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { countryCodeToName, countryCurrency } from "@/data/countryMappings";
 
 interface DoctorProfileProps {
   user: User;
 }
+
+const COMMON_LANGUAGES = [
+  "English", "French", "Arabic", "Swahili", "Portuguese", "Zulu",
+  "Afrikaans", "Yoruba", "Hausa", "Amharic", "Igbo", "Xhosa",
+  "Sotho", "Tswana", "Shona", "Spanish", "Mandarin", "Hindi"
+];
+
+const EDUCATION_SUGGESTIONS = [
+  "MBChB", "MBBS", "MD", "DO", "PhD", "MMed",
+  "FCS (SA)", "FCOG (SA)", "FCP (SA)", "DCH", "Dip Allergy (SA)",
+  "MPH", "MSc Medicine", "Fellowship"
+];
 
 const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [loading, setLoading] = useState(true);
@@ -44,7 +57,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     languages: [] as string[],
     is_available: true,
   });
-  const [languagesInput, setLanguagesInput] = useState("");
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +102,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           languages: doctorRes.data.languages || [],
           is_available: doctorRes.data.is_available ?? true,
         });
-        setLanguagesInput((doctorRes.data.languages || []).join(", "));
         setLicenseDocPath((doctorRes.data as any).license_document_path || null);
       }
 
@@ -101,7 +112,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
-  // Apply geo-detected country if profile has none saved
   useEffect(() => {
     if (geo?.countryCode && !profile.country) {
       const detectedCountry = countryCodeToName[geo.countryCode] || "";
@@ -113,7 +123,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
   const handleSave = async () => {
     setSaving(true);
-    const langs = languagesInput.split(",").map(l => l.trim()).filter(Boolean);
 
     const profilePayload = {
       ...profile,
@@ -123,7 +132,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       supabase.from("profiles").update(profilePayload).eq("id", user.id),
       supabase.from("doctors").update({
         ...doctor,
-        languages: langs,
       }).eq("profile_id", user.id),
     ]);
 
@@ -152,12 +160,21 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               <Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Title (e.g. Dr., Prof.)</Label>
-              <Input value={doctor.title} onChange={(e) => setDoctor({ ...doctor, title: e.target.value })} />
+              <Label>Title</Label>
+              <Select value={doctor.title} onValueChange={(v) => setDoctor({ ...doctor, title: v })}>
+                <SelectTrigger><SelectValue placeholder="Select title" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Dr.">Dr.</SelectItem>
+                  <SelectItem value="Prof.">Prof.</SelectItem>
+                  <SelectItem value="Assoc. Prof.">Assoc. Prof.</SelectItem>
+                  <SelectItem value="Mr.">Mr.</SelectItem>
+                  <SelectItem value="Ms.">Ms.</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Phone</Label>
-              <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+              <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="e.g. +27 81 234 5678" />
             </div>
             <div className="space-y-2">
               <Label>Gender</Label>
@@ -201,7 +218,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
             </div>
             <div className="space-y-2">
               <Label>License Number</Label>
-              <Input value={doctor.license_number} onChange={(e) => setDoctor({ ...doctor, license_number: e.target.value })} />
+              <Input value={doctor.license_number} onChange={(e) => setDoctor({ ...doctor, license_number: e.target.value })} placeholder="e.g. MP-0612345" />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label>License Document (PDF/Image)</Label>
@@ -260,20 +277,30 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Education</Label>
-            <Input value={doctor.education} onChange={(e) => setDoctor({ ...doctor, education: e.target.value })} placeholder="e.g. MD, Harvard Medical School" />
+            <Label>Education / Qualifications</Label>
+            <TagInput
+              values={doctor.education ? doctor.education.split(",").map(s => s.trim()).filter(Boolean) : []}
+              onChange={(vals) => setDoctor({ ...doctor, education: vals.join(", ") })}
+              placeholder="Type or select qualifications..."
+              suggestions={EDUCATION_SUGGESTIONS}
+            />
           </div>
           <div className="space-y-2">
             <Label>Hospital Affiliation</Label>
-            <Input value={doctor.hospital_affiliation} onChange={(e) => setDoctor({ ...doctor, hospital_affiliation: e.target.value })} />
+            <Input value={doctor.hospital_affiliation} onChange={(e) => setDoctor({ ...doctor, hospital_affiliation: e.target.value })} placeholder="e.g. Groote Schuur Hospital" />
           </div>
           <div className="space-y-2">
-            <Label>Languages (comma-separated)</Label>
-            <Input value={languagesInput} onChange={(e) => setLanguagesInput(e.target.value)} placeholder="English, French, Arabic" />
+            <Label>Languages Spoken</Label>
+            <TagInput
+              values={doctor.languages}
+              onChange={(vals) => setDoctor({ ...doctor, languages: vals })}
+              placeholder="Type or select languages..."
+              suggestions={COMMON_LANGUAGES}
+            />
           </div>
           <div className="space-y-2">
             <Label>Bio</Label>
-            <Textarea value={doctor.bio} onChange={(e) => setDoctor({ ...doctor, bio: e.target.value })} rows={3} placeholder="Brief professional bio..." />
+            <Textarea value={doctor.bio} onChange={(e) => setDoctor({ ...doctor, bio: e.target.value })} rows={3} placeholder="Brief professional bio highlighting your experience and areas of focus..." />
           </div>
           <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

@@ -9,10 +9,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, HeartPulse } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import SuggestionChips from "@/components/shared/SuggestionChips";
 
 interface MedicalInfoProps {
   user: User;
 }
+
+const COMMON_ALLERGIES = [
+  "Penicillin", "Aspirin", "Ibuprofen", "Sulfa drugs", "Latex",
+  "Peanuts", "Shellfish", "Dairy", "Eggs", "Pollen", "Dust mites", "None"
+];
+
+const COMMON_CONDITIONS = [
+  "Hypertension", "Diabetes Type 2", "Diabetes Type 1", "Asthma",
+  "High Cholesterol", "Heart Disease", "Arthritis", "Depression",
+  "Anxiety", "Thyroid Disorder", "COPD", "Epilepsy", "HIV/AIDS", "None"
+];
+
+const COMMON_MEDICATIONS = [
+  "Metformin", "Amlodipine", "Lisinopril", "Atorvastatin", "Omeprazole",
+  "Paracetamol", "Ibuprofen", "Amoxicillin", "Metoprolol", "Hydrochlorothiazide",
+  "Insulin", "Salbutamol Inhaler", "None"
+];
 
 const MedicalInfo = ({ user }: MedicalInfoProps) => {
   const [loading, setLoading] = useState(true);
@@ -53,6 +71,26 @@ const MedicalInfo = ({ user }: MedicalInfoProps) => {
         setLoading(false);
       });
   }, [user.id]);
+
+  const toggleChipInField = (field: "allergies" | "chronic_conditions" | "current_medications", chip: string) => {
+    const current = info[field]
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const exists = current.some((c) => c.toLowerCase() === chip.toLowerCase());
+    let updated: string[];
+    if (chip === "None") {
+      updated = exists ? [] : ["None"];
+    } else {
+      updated = exists
+        ? current.filter((c) => c.toLowerCase() !== chip.toLowerCase())
+        : [...current.filter((c) => c.toLowerCase() !== "none"), chip];
+    }
+    setInfo({ ...info, [field]: updated.join(", ") });
+  };
+
+  const getActiveValues = (field: "allergies" | "chronic_conditions" | "current_medications") =>
+    info[field].split(",").map((s) => s.trim()).filter(Boolean);
 
   const handleSave = async () => {
     setSaving(true);
@@ -105,33 +143,51 @@ const MedicalInfo = ({ user }: MedicalInfoProps) => {
           </div>
           <div className="space-y-2">
             <Label>Height (cm)</Label>
-            <Input type="number" value={info.height_cm} onChange={(e) => setInfo({ ...info, height_cm: e.target.value })} />
+            <Input type="number" value={info.height_cm} onChange={(e) => setInfo({ ...info, height_cm: e.target.value })} placeholder="e.g. 170" />
           </div>
           <div className="space-y-2">
             <Label>Weight (kg)</Label>
-            <Input type="number" value={info.weight_kg} onChange={(e) => setInfo({ ...info, weight_kg: e.target.value })} />
+            <Input type="number" value={info.weight_kg} onChange={(e) => setInfo({ ...info, weight_kg: e.target.value })} placeholder="e.g. 70" />
           </div>
         </div>
         <div className="space-y-2">
           <Label>Allergies</Label>
-          <Textarea value={info.allergies} onChange={(e) => setInfo({ ...info, allergies: e.target.value })} rows={2} placeholder="List any known allergies..." />
+          <SuggestionChips
+            suggestions={COMMON_ALLERGIES}
+            onSelect={(v) => toggleChipInField("allergies", v)}
+            activeValues={getActiveValues("allergies")}
+            label="Tap to select common allergies"
+          />
+          <Textarea value={info.allergies} onChange={(e) => setInfo({ ...info, allergies: e.target.value })} rows={2} placeholder="Or type your own..." />
         </div>
         <div className="space-y-2">
           <Label>Chronic Conditions</Label>
-          <Textarea value={info.chronic_conditions} onChange={(e) => setInfo({ ...info, chronic_conditions: e.target.value })} rows={2} placeholder="E.g., diabetes, hypertension..." />
+          <SuggestionChips
+            suggestions={COMMON_CONDITIONS}
+            onSelect={(v) => toggleChipInField("chronic_conditions", v)}
+            activeValues={getActiveValues("chronic_conditions")}
+            label="Tap to select common conditions"
+          />
+          <Textarea value={info.chronic_conditions} onChange={(e) => setInfo({ ...info, chronic_conditions: e.target.value })} rows={2} placeholder="Or type your own..." />
         </div>
         <div className="space-y-2">
           <Label>Current Medications</Label>
-          <Textarea value={info.current_medications} onChange={(e) => setInfo({ ...info, current_medications: e.target.value })} rows={2} placeholder="List medications and dosages..." />
+          <SuggestionChips
+            suggestions={COMMON_MEDICATIONS}
+            onSelect={(v) => toggleChipInField("current_medications", v)}
+            activeValues={getActiveValues("current_medications")}
+            label="Tap to select common medications"
+          />
+          <Textarea value={info.current_medications} onChange={(e) => setInfo({ ...info, current_medications: e.target.value })} rows={2} placeholder="Or type your own with dosages..." />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Emergency Contact Name</Label>
-            <Input value={info.emergency_contact_name} onChange={(e) => setInfo({ ...info, emergency_contact_name: e.target.value })} />
+            <Input value={info.emergency_contact_name} onChange={(e) => setInfo({ ...info, emergency_contact_name: e.target.value })} placeholder="e.g. John Smith" />
           </div>
           <div className="space-y-2">
             <Label>Emergency Contact Phone</Label>
-            <Input value={info.emergency_contact_phone} onChange={(e) => setInfo({ ...info, emergency_contact_phone: e.target.value })} />
+            <Input value={info.emergency_contact_phone} onChange={(e) => setInfo({ ...info, emergency_contact_phone: e.target.value })} placeholder="e.g. +27 81 234 5678" />
           </div>
         </div>
         <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
