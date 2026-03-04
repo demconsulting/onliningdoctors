@@ -9,11 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import SuggestionChips from "@/components/shared/SuggestionChips";
 
 interface BookAppointmentProps {
   user: User;
   onBooked?: () => void;
 }
+
+const COMMON_REASONS = [
+  "General check-up", "Flu / Cold symptoms", "Headache / Migraine",
+  "Skin condition", "Stomach / Digestive issues", "Back / Joint pain",
+  "Follow-up consultation", "Prescription refill", "Mental health concern",
+  "Chronic disease management", "Lab results review", "Second opinion"
+];
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -129,7 +137,16 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
           </div>
           <div className="space-y-2">
             <Label>Reason for Visit</Label>
-            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Brief description of your symptoms or reason..." maxLength={500} />
+            <SuggestionChips
+              suggestions={COMMON_REASONS}
+              onSelect={(v) => setReason((prev) => {
+                if (prev.toLowerCase().includes(v.toLowerCase())) return prev;
+                return prev ? `${prev}, ${v}` : v;
+              })}
+              activeValues={reason.split(",").map(s => s.trim()).filter(Boolean)}
+              label="Quick select a common reason"
+            />
+            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
           </div>
           <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
