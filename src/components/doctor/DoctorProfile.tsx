@@ -12,7 +12,7 @@ import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { countryCodeToName, countryCurrency } from "@/data/countryMappings";
+import { countryCodeToName } from "@/data/countryMappings";
 
 interface DoctorProfileProps {
   user: User;
@@ -61,10 +61,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [uploadingLicense, setUploadingLicense] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
   const { geo } = useGeoLocation();
-
-  const currencySymbol = geo?.countryCode && countryCurrency[geo.countryCode]
-    ? countryCurrency[geo.countryCode].symbol
-    : "$";
+  const currencySymbol = geo?.currencySymbol || "";
 
   useEffect(() => {
     const load = async () => {
@@ -75,8 +72,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       ]);
 
       if (profileRes.data) {
-        const savedCountry = profileRes.data.country || "";
-        const detectedCountry = geo?.countryCode ? (countryCodeToName[geo.countryCode] || "") : "";
         setProfile({
           full_name: profileRes.data.full_name || "",
           phone: profileRes.data.phone || "",
@@ -85,7 +80,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           address: profileRes.data.address || "",
           city: profileRes.data.city || "",
           state: (profileRes.data as any).state || "",
-          country: savedCountry || detectedCountry,
+          country: profileRes.data.country || "",
         });
       }
 
@@ -112,14 +107,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
-  useEffect(() => {
-    if (geo?.countryCode && !profile.country) {
-      const detectedCountry = countryCodeToName[geo.countryCode] || "";
-      if (detectedCountry) {
-        setProfile(prev => ({ ...prev, country: detectedCountry }));
-      }
-    }
-  }, [geo, profile.country]);
 
   const handleSave = async () => {
     setSaving(true);

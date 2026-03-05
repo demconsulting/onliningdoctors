@@ -10,8 +10,6 @@ import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
-import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { countryCodeToName } from "@/data/countryMappings";
 
 interface ProfileEditProps {
   user: User;
@@ -32,8 +30,6 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
     country: "",
   });
 
-  const { geo } = useGeoLocation();
-
   useEffect(() => {
     supabase
       .from("profiles")
@@ -42,7 +38,6 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
       .single()
       .then(({ data }) => {
         if (data) {
-          const detectedCountry = geo?.countryCode ? (countryCodeToName[geo.countryCode] || "") : "";
           setProfile({
             full_name: data.full_name || "",
             phone: data.phone || "",
@@ -51,12 +46,12 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
             address: data.address || "",
             city: data.city || "",
             state: data.state || "",
-            country: data.country || detectedCountry,
+            country: data.country || "",
           });
         }
         setLoading(false);
       });
-  }, [user.id, geo]);
+  }, [user.id]);
 
   const handleSave = async () => {
     setSaving(true);

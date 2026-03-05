@@ -121,7 +121,7 @@ const Doctors = () => {
             <p className="mb-6 text-sm text-muted-foreground">{filtered.length} doctor{filtered.length !== 1 ? "s" : ""} found</p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((doc) => (
-                <DoctorCard key={doc.id} doctor={doc} currencySymbol={geo?.currencySymbol ?? "$"} />
+                <DoctorCard key={doc.id} doctor={doc} currencySymbol={geo?.currencySymbol || ""} />
               ))}
             </div>
           </>
