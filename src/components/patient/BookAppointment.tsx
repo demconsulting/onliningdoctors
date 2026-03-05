@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Loader2, Star, MapPin, ExternalLink, DollarSign, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
@@ -49,7 +51,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     setLoadingDoctors(true);
     supabase
       .from("doctors")
-      .select("*, profile:profile_id(id, full_name), specialty:specialty_id(name)")
+      .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name)")
       .eq("specialty_id", selectedSpecialty)
       .eq("is_available", true)
       .then(({ data }) => {
@@ -126,8 +128,53 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
           </div>
+          </div>
+
+          {/* Doctor preview card */}
+          {selectedDoctor && (() => {
+            const doc = doctors.find(d => d.profile_id === selectedDoctor);
+            if (!doc) return null;
+            const name = doc.profile?.full_name || "Doctor";
+            const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+            return (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  {doc.profile?.avatar_url ? (
+                    <img src={doc.profile.avatar_url} alt={name} className="h-12 w-12 rounded-lg object-cover ring-2 ring-border" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 ring-2 ring-border">
+                      <span className="text-sm font-bold text-primary">{initials}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-foreground">{doc.title || "Dr."} {name}</p>
+                      {doc.specialty?.name && <Badge variant="secondary" className="text-xs">{doc.specialty.name}</Badge>}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      {doc.profile?.city && (
+                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {doc.profile.city}{doc.profile.country ? `, ${doc.profile.country}` : ""}</span>
+                      )}
+                      {(doc.rating ?? 0) > 0 && (
+                        <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
+                      )}
+                      {doc.consultation_fee != null && (
+                        <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" /> {currencySymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
+                      )}
+                      {(doc.experience_years ?? 0) > 0 && (
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {doc.experience_years} yrs exp.</span>
+                      )}
+                    </div>
+                    {doc.bio && <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{doc.bio}</p>}
+                  </div>
+                </div>
+                <Link to={`/doctor/${selectedDoctor}`} target="_blank" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                  View full profile <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            );
+          })()}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Date</Label>
