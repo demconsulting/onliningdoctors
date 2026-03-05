@@ -10,7 +10,7 @@ import { Loader2, DollarSign, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { countryCurrency } from "@/data/countryMappings";
+
 
 interface PricingTiersProps {
   user: User;
@@ -31,9 +31,7 @@ const PricingTiers = ({ user }: PricingTiersProps) => {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { geo } = useGeoLocation();
-  const currencySymbol = geo?.countryCode && countryCurrency[geo.countryCode]
-    ? countryCurrency[geo.countryCode].symbol
-    : "$";
+  const currencySymbol = geo?.currencySymbol || "";
 
   const fetchTiers = async () => {
     const { data } = await supabase

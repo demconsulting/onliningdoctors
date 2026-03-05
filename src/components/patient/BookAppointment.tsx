@@ -10,6 +10,7 @@ import { Calendar, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
 
 interface BookAppointmentProps {
   user: User;
@@ -24,6 +25,8 @@ const COMMON_REASONS = [
 ];
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
+  const { geo } = useGeoLocation();
+  const currencySymbol = geo?.currencySymbol || "";
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
@@ -118,7 +121,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                 <SelectContent>
                   {doctors.map(d => (
                     <SelectItem key={d.profile_id} value={d.profile_id}>
-                      {d.profile?.full_name || "Doctor"} — ${d.consultation_fee || "N/A"}
+                      {d.profile?.full_name || "Doctor"} — {currencySymbol}{d.consultation_fee || "N/A"}
                     </SelectItem>
                   ))}
                 </SelectContent>
