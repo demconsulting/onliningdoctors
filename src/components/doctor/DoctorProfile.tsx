@@ -180,9 +180,9 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               country={profile.country}
               state={profile.state}
               city={profile.city}
-              onCountryChange={(v) => setProfile({ ...profile, country: v, state: "", city: "" })}
-              onStateChange={(v) => setProfile({ ...profile, state: v, city: "" })}
-              onCityChange={(v) => setProfile({ ...profile, city: v })}
+              onCountryChange={(v) => setProfile((prev) => ({ ...prev, country: v, state: "", city: "" }))}
+              onStateChange={(v) => setProfile((prev) => ({ ...prev, state: v, city: "" }))}
+              onCityChange={(v) => setProfile((prev) => ({ ...prev, city: v }))}
             />
           </div>
         </CardContent>
