@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Loader2, Star, MapPin, ExternalLink, DollarSign, Clock } from "lucide-react";
+import { Calendar, Loader2, Star, MapPin, ExternalLink, DollarSign, Clock, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
@@ -33,6 +33,9 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [reason, setReason] = useState("");
@@ -49,6 +52,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   useEffect(() => {
     if (!selectedSpecialty) { setDoctors([]); return; }
     setLoadingDoctors(true);
+    setSelectedDoctor("");
     supabase
       .from("doctors")
       .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name)")
@@ -59,6 +63,18 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
         setLoadingDoctors(false);
       });
   }, [selectedSpecialty]);
+
+  // Derive unique countries/cities for filters
+  const countries = [...new Set(doctors.map(d => d.profile?.country).filter(Boolean))].sort();
+  const cities = [...new Set(doctors.map(d => d.profile?.city).filter(Boolean))].sort();
+
+  const filteredDoctors = doctors.filter(d => {
+    const name = d.profile?.full_name?.toLowerCase() || "";
+    const matchSearch = !searchQuery || name.includes(searchQuery.toLowerCase()) || d.specialty?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchCountry = !countryFilter || d.profile?.country === countryFilter;
+    const matchCity = !cityFilter || d.profile?.city === cityFilter;
+    return matchSearch && matchCountry && matchCity;
+  });
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,107 +117,171 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleBook} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Specialty</Label>
-              <Select value={selectedSpecialty} onValueChange={(v) => { setSelectedSpecialty(v); setSelectedDoctor(""); }}>
-                <SelectTrigger><SelectValue placeholder="Choose specialty" /></SelectTrigger>
-                <SelectContent>
-                  {specialties.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Doctor</Label>
-              <Select value={selectedDoctor} onValueChange={setSelectedDoctor} disabled={!selectedSpecialty || loadingDoctors}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingDoctors ? "Loading..." : doctors.length === 0 ? "Select specialty first" : "Choose doctor"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {doctors.map(d => (
-                    <SelectItem key={d.profile_id} value={d.profile_id}>
-                      {d.profile?.full_name || "Doctor"} — {currencySymbol}{d.consultation_fee || "N/A"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-          </div>
+        <form onSubmit={handleBook} className="space-y-5">
+          {/* Step 1: Specialty */}
+          <div className="space-y-2">
+            <Label>1. Choose Specialty</Label>
+            <Select value={selectedSpecialty} onValueChange={(v) => { setSelectedSpecialty(v); setSelectedDoctor(""); setSearchQuery(""); setCountryFilter(""); setCityFilter(""); }}>
+              <SelectTrigger><SelectValue placeholder="Select a specialty" /></SelectTrigger>
+              <SelectContent>
+                {specialties.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Doctor preview card */}
-          {selectedDoctor && (() => {
-            const doc = doctors.find(d => d.profile_id === selectedDoctor);
-            if (!doc) return null;
-            const name = doc.profile?.full_name || "Doctor";
-            const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-            return (
-              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
-                <div className="flex items-start gap-3">
-                  {doc.profile?.avatar_url ? (
-                    <img src={doc.profile.avatar_url} alt={name} className="h-12 w-12 rounded-lg object-cover ring-2 ring-border" />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 ring-2 ring-border">
-                      <span className="text-sm font-bold text-primary">{initials}</span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground">{doc.title || "Dr."} {name}</p>
-                      {doc.specialty?.name && <Badge variant="secondary" className="text-xs">{doc.specialty.name}</Badge>}
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                      {doc.profile?.city && (
-                        <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {doc.profile.city}{doc.profile.country ? `, ${doc.profile.country}` : ""}</span>
-                      )}
-                      {(doc.rating ?? 0) > 0 && (
-                        <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
-                      )}
-                      {doc.consultation_fee != null && (
-                        <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" /> {currencySymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
-                      )}
-                      {(doc.experience_years ?? 0) > 0 && (
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {doc.experience_years} yrs exp.</span>
-                      )}
-                    </div>
-                    {doc.bio && <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2">{doc.bio}</p>}
-                  </div>
+          {/* Step 2: Doctor selection with filters */}
+          {selectedSpecialty && (
+            <div className="space-y-3">
+              <Label>2. Select a Doctor</Label>
+
+              {loadingDoctors ? (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 </div>
-                <Link to={`/doctor/${selectedDoctor}`} target="_blank" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                  View full profile <ExternalLink className="h-3 w-3" />
-                </Link>
+              ) : doctors.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No available doctors for this specialty.</p>
+              ) : (
+                <>
+                  {/* Search & Filters */}
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    {countries.length > 1 && (
+                      <Select value={countryFilter} onValueChange={(v) => { setCountryFilter(v === "all" ? "" : v); setCityFilter(""); }}>
+                        <SelectTrigger className="w-full sm:w-40">
+                          <SelectValue placeholder="Country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Countries</SelectItem>
+                          {countries.map(c => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {cities.length > 1 && (
+                      <Select value={cityFilter} onValueChange={(v) => setCityFilter(v === "all" ? "" : v)}>
+                        <SelectTrigger className="w-full sm:w-40">
+                          <SelectValue placeholder="City" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Cities</SelectItem>
+                          {cities.map(c => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+
+                  {/* Doctor cards */}
+                  <div className="max-h-72 space-y-2 overflow-y-auto rounded-md border border-border p-2">
+                    {filteredDoctors.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">No doctors match your filters.</p>
+                    ) : (
+                      filteredDoctors.map(doc => {
+                        const name = doc.profile?.full_name || "Doctor";
+                        const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+                        const isSelected = selectedDoctor === doc.profile_id;
+
+                        return (
+                          <div
+                            key={doc.profile_id}
+                            onClick={() => setSelectedDoctor(doc.profile_id)}
+                            className={`cursor-pointer rounded-lg border p-3 transition-colors ${
+                              isSelected
+                                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                : "border-border hover:border-primary/40 hover:bg-muted/30"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              {doc.profile?.avatar_url ? (
+                                <img src={doc.profile.avatar_url} alt={name} className="h-10 w-10 rounded-full object-cover ring-1 ring-border" />
+                              ) : (
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 ring-1 ring-border">
+                                  <span className="text-xs font-bold text-primary">{initials}</span>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-foreground truncate">{doc.title || "Dr."} {name}</p>
+                                  {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
+                                </div>
+                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                  {doc.profile?.city && (
+                                    <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" /> {doc.profile.city}{doc.profile.country ? `, ${doc.profile.country}` : ""}</span>
+                                  )}
+                                  {(doc.rating ?? 0) > 0 && (
+                                    <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
+                                  )}
+                                  {doc.consultation_fee != null && (
+                                    <span className="flex items-center gap-0.5"><DollarSign className="h-3 w-3" /> {currencySymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
+                                  )}
+                                  {(doc.experience_years ?? 0) > 0 && (
+                                    <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {doc.experience_years} yrs</span>
+                                  )}
+                                </div>
+                                {doc.bio && <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{doc.bio}</p>}
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <Link to={`/doctors/${doc.profile_id}`} target="_blank" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+                                  View full profile <ExternalLink className="h-3 w-3" />
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Date & Time */}
+          {selectedDoctor && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>3. Date</Label>
+                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().split("T")[0]} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Time</Label>
+                  <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
+                </div>
               </div>
-            );
-          })()}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Date</Label>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().split("T")[0]} required />
-            </div>
-            <div className="space-y-2">
-              <Label>Time</Label>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Reason for Visit</Label>
-            <SuggestionChips
-              suggestions={COMMON_REASONS}
-              onSelect={(v) => setReason((prev) => {
-                if (prev.toLowerCase().includes(v.toLowerCase())) return prev;
-                return prev ? `${prev}, ${v}` : v;
-              })}
-              activeValues={reason.split(",").map(s => s.trim()).filter(Boolean)}
-              label="Quick select a common reason"
-            />
-            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
-          </div>
-          <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-            Book Appointment
-          </Button>
+              <div className="space-y-2">
+                <Label>Reason for Visit</Label>
+                <SuggestionChips
+                  suggestions={COMMON_REASONS}
+                  onSelect={(v) => setReason((prev) => {
+                    if (prev.toLowerCase().includes(v.toLowerCase())) return prev;
+                    return prev ? `${prev}, ${v}` : v;
+                  })}
+                  activeValues={reason.split(",").map(s => s.trim()).filter(Boolean)}
+                  label="Quick select a common reason"
+                />
+                <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
+              </div>
+              <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+                Book Appointment
+              </Button>
+            </>
+          )}
         </form>
       </CardContent>
     </Card>
