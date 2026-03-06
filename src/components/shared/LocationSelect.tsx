@@ -118,14 +118,14 @@ const LocationSelect = ({
         label="Country"
         value={country}
         options={countries}
-        onChange={(v) => { onCountryChange(v); onStateChange(""); onCityChange(""); }}
+        onChange={onCountryChange}
         placeholder="Select country"
       />
       <SearchableSelect
         label="Province / State"
         value={state}
         options={states}
-        onChange={(v) => { onStateChange(v); onCityChange(""); }}
+        onChange={onStateChange}
         placeholder={states.length > 0 ? "Select province/state" : "Enter province/state"}
         disabled={!country}
       />
