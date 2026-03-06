@@ -137,23 +137,32 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                       {apt.reason && <p className="mt-1 text-xs text-muted-foreground italic">Reason: {apt.reason}</p>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={statusColors[apt.status] || ""}>{apt.status}</Badge>
-                    {apt.status === "pending" && (
-                      <>
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "confirmed")} className="text-primary">Confirm</Button>
-                        <Button size="sm" variant="ghost" onClick={() => updateStatus(apt.id, "cancelled")} className="text-destructive">Decline</Button>
-                      </>
-                    )}
-                    {apt.status === "confirmed" && (
-                      <>
-                        <Button size="sm" variant="outline" onClick={() => navigate(`/call/${apt.id}`)} className="gap-1 text-primary">
-                          <Video className="h-3.5 w-3.5" /> Call
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "completed")} className="text-success">Complete</Button>
-                      </>
-                    )}
-                  </div>
+                  {(() => {
+                    const aptEnd = new Date(new Date(apt.scheduled_at).getTime() + (apt.duration_minutes || 30) * 60000);
+                    const isExpired = Date.now() > aptEnd.getTime() + 30 * 60000;
+                    const displayStatus = isExpired && (apt.status === "pending" || apt.status === "confirmed") ? "expired" : apt.status;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={displayStatus === "expired" ? "bg-muted text-muted-foreground border-border" : (statusColors[apt.status] || "")}>
+                          {displayStatus === "expired" ? "past" : apt.status}
+                        </Badge>
+                        {!isExpired && apt.status === "pending" && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "confirmed")} className="text-primary">Confirm</Button>
+                            <Button size="sm" variant="ghost" onClick={() => updateStatus(apt.id, "cancelled")} className="text-destructive">Decline</Button>
+                          </>
+                        )}
+                        {!isExpired && apt.status === "confirmed" && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/call/${apt.id}`)} className="gap-1 text-primary">
+                              <Video className="h-3.5 w-3.5" /> Call
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "completed")} className="text-success">Complete</Button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Patient Documents (if shared) */}

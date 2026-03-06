@@ -10,7 +10,7 @@ import { Stethoscope, Loader2, ShieldCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
-import { countryCodeToName } from "@/data/countryMappings";
+import { getCountries } from "@/data/locations";
 
 const DoctorSignup = () => {
   const [fullName, setFullName] = useState("");
@@ -99,8 +99,8 @@ const DoctorSignup = () => {
                 <Select value={country} onValueChange={setCountry}>
                   <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
                   <SelectContent>
-                    {Object.entries(countryCodeToName).map(([code, name]) => (
-                      <SelectItem key={code} value={name}>{name}</SelectItem>
+                    {getCountries().map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
