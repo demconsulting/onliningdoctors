@@ -82,7 +82,14 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
         <CardTitle className="font-display">Personal Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex justify-center pb-2">
+          <AvatarUpload
+            userId={user.id}
+            currentUrl={avatarUrl}
+            fullName={profile.full_name}
+            onUploaded={setAvatarUrl}
+          />
+        </div>
           <div className="space-y-2">
             <Label>Full Name</Label>
             <Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
