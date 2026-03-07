@@ -144,6 +144,14 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex justify-center pb-2">
+            <AvatarUpload
+              userId={user.id}
+              currentUrl={avatarUrl}
+              fullName={profile.full_name}
+              onUploaded={setAvatarUrl}
+            />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Full Name</Label>
