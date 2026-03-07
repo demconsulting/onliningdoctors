@@ -90,6 +90,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
             onUploaded={setAvatarUrl}
           />
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Full Name</Label>
             <Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
