@@ -37,6 +37,7 @@ const Doctors = () => {
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [selectedCountry, setSelectedCountry] = useState("all");
   const [loading, setLoading] = useState(true);
   const { geo } = useGeoLocation();
 
@@ -58,11 +59,13 @@ const Doctors = () => {
     fetchData();
   }, []);
 
+  const countries = [...new Set(doctors.map(d => d.profile?.country).filter(Boolean))].sort() as string[];
+
   const filtered = doctors.filter((d) => {
     const name = d.profile?.full_name?.toLowerCase() || "";
     const matchesSearch = name.includes(search.toLowerCase()) || (d.specialty?.name?.toLowerCase().includes(search.toLowerCase()));
     const matchesSpecialty = selectedSpecialty === "all" || d.specialty?.name === specialties.find(s => s.id === selectedSpecialty)?.name;
-    const matchesCountry = !geo?.countryName || !d.profile?.country || d.profile.country === geo.countryName;
+    const matchesCountry = selectedCountry === "all" || d.profile?.country === selectedCountry;
     return matchesSearch && matchesSpecialty && matchesCountry;
   });
 
