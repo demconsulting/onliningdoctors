@@ -40,6 +40,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
       .single()
       .then(({ data }) => {
         if (data) {
+          setAvatarUrl(data.avatar_url || null);
           setProfile({
             full_name: data.full_name || "",
             phone: data.phone || "",
