@@ -10,6 +10,7 @@ import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
+import AvatarUpload from "@/components/shared/AvatarUpload";
 
 interface ProfileEditProps {
   user: User;
@@ -19,6 +20,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     full_name: "",
     phone: "",
@@ -38,6 +40,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
       .single()
       .then(({ data }) => {
         if (data) {
+          setAvatarUrl(data.avatar_url || null);
           setProfile({
             full_name: data.full_name || "",
             phone: data.phone || "",
@@ -79,6 +82,14 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
         <CardTitle className="font-display">Personal Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex justify-center pb-2">
+          <AvatarUpload
+            userId={user.id}
+            currentUrl={avatarUrl}
+            fullName={profile.full_name}
+            onUploaded={setAvatarUrl}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Full Name</Label>

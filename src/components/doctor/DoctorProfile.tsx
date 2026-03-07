@@ -13,6 +13,7 @@ import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { countryCodeToName } from "@/data/countryMappings";
+import AvatarUpload from "@/components/shared/AvatarUpload";
 
 interface DoctorProfileProps {
   user: User;
@@ -35,6 +36,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [saving, setSaving] = useState(false);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     full_name: "",
     phone: "",
@@ -72,6 +74,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       ]);
 
       if (profileRes.data) {
+        setAvatarUrl(profileRes.data.avatar_url || null);
         setProfile({
           full_name: profileRes.data.full_name || "",
           phone: profileRes.data.phone || "",
@@ -141,6 +144,14 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex justify-center pb-2">
+            <AvatarUpload
+              userId={user.id}
+              currentUrl={avatarUrl}
+              fullName={profile.full_name}
+              onUploaded={setAvatarUrl}
+            />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Full Name</Label>
