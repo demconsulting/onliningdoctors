@@ -46,6 +46,8 @@ const Doctors = () => {
         supabase
           .from("doctors")
           .select("*, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
+          .eq("is_verified", true)
+          .eq("is_available", true)
           .order("rating", { ascending: false }),
         supabase.from("specialties").select("*").order("name"),
       ]);
