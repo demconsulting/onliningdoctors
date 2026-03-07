@@ -37,6 +37,7 @@ const Doctors = () => {
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
+  const [selectedCountry, setSelectedCountry] = useState("all");
   const [loading, setLoading] = useState(true);
   const { geo } = useGeoLocation();
 
@@ -46,6 +47,8 @@ const Doctors = () => {
         supabase
           .from("doctors")
           .select("*, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
+          .eq("is_verified", true)
+          .eq("is_available", true)
           .order("rating", { ascending: false }),
         supabase.from("specialties").select("*").order("name"),
       ]);
@@ -56,11 +59,13 @@ const Doctors = () => {
     fetchData();
   }, []);
 
+  const countries = [...new Set(doctors.map(d => d.profile?.country).filter(Boolean))].sort() as string[];
+
   const filtered = doctors.filter((d) => {
     const name = d.profile?.full_name?.toLowerCase() || "";
     const matchesSearch = name.includes(search.toLowerCase()) || (d.specialty?.name?.toLowerCase().includes(search.toLowerCase()));
     const matchesSpecialty = selectedSpecialty === "all" || d.specialty?.name === specialties.find(s => s.id === selectedSpecialty)?.name;
-    const matchesCountry = !geo?.countryName || !d.profile?.country || d.profile.country === geo.countryName;
+    const matchesCountry = selectedCountry === "all" || d.profile?.country === selectedCountry;
     return matchesSearch && matchesSpecialty && matchesCountry;
   });
 
@@ -100,6 +105,19 @@ const Doctors = () => {
                 ))}
               </SelectContent>
             </Select>
+            {countries.length > 0 && (
+              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="All Countries" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Countries</SelectItem>
+                  {countries.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
       </section>
