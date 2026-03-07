@@ -74,6 +74,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       ]);
 
       if (profileRes.data) {
+        setAvatarUrl(profileRes.data.avatar_url || null);
         setProfile({
           full_name: profileRes.data.full_name || "",
           phone: profileRes.data.phone || "",
