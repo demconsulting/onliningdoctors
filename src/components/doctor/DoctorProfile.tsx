@@ -13,6 +13,7 @@ import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { countryCodeToName } from "@/data/countryMappings";
+import AvatarUpload from "@/components/shared/AvatarUpload";
 
 interface DoctorProfileProps {
   user: User;

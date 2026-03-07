@@ -10,6 +10,7 @@ import { Loader2, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
+import AvatarUpload from "@/components/shared/AvatarUpload";
 
 interface ProfileEditProps {
   user: User;
@@ -19,6 +20,7 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     full_name: "",
     phone: "",
