@@ -9,11 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, DollarSign, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
-import { useGeoLocation } from "@/hooks/useGeoLocation";
-
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface PricingTiersProps {
   user: User;
+  doctorCountry?: string | null;
 }
 
 interface Tier {
@@ -25,13 +25,12 @@ interface Tier {
   is_active: boolean;
 }
 
-const PricingTiers = ({ user }: PricingTiersProps) => {
+const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-  const { geo } = useGeoLocation();
-  const currencySymbol = geo?.currencySymbol || "";
+  const currencySymbol = getCurrencySymbol(doctorCountry);
 
   const fetchTiers = async () => {
     const { data } = await supabase
