@@ -157,10 +157,32 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                     />
                   </div>
                 )}
-                {apt.status === "completed" && reviewedIds.has(apt.id) && (
-                  <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-warning text-warning" /> Reviewed
-                  </p>
+                {apt.status === "completed" && reviewedIds.has(apt.id) && editingReviewId !== apt.id && (() => {
+                  const rev = reviewsMap[apt.id];
+                  const canEdit = rev && (Date.now() - new Date(rev.created_at).getTime()) < 24 * 3600000;
+                  return (
+                    <div className="mt-2 flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-warning text-warning" /> Reviewed
+                      </p>
+                      {canEdit && (
+                        <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs text-muted-foreground" onClick={() => setEditingReviewId(apt.id)}>
+                          <Pencil className="h-3 w-3" /> Edit
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()}
+                {apt.status === "completed" && reviewedIds.has(apt.id) && editingReviewId === apt.id && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <ReviewForm
+                      user={user}
+                      appointmentId={apt.id}
+                      doctorId={apt.doctor_id}
+                      existingReview={reviewsMap[apt.id]}
+                      onSubmitted={() => { setEditingReviewId(null); fetchAppointments(); }}
+                    />
+                  </div>
                 )}
               </div>
             ))}
