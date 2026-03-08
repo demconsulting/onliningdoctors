@@ -1,4 +1,5 @@
 import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/landing/HeroSection";
 import WhyChooseSection from "@/components/landing/WhyChooseSection";
 import FindDoctorSection from "@/components/landing/FindDoctorSection";
@@ -13,6 +14,7 @@ const Index = () => (
       <FindDoctorSection />
       <DoctorCTASection />
     </main>
+    <Footer />
   </div>
 );
 
