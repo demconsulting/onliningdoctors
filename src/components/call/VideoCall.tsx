@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff, Maximize, Minimize } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -319,47 +320,46 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
           </Button>
         ) : callState !== "ended" ? (
           <>
-            <Button
-              variant={isMuted ? "destructive" : "outline"}
-              size="icon"
-              onClick={toggleMute}
-              className="rounded-full h-12 w-12"
-            >
-              {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant={isVideoOff ? "destructive" : "outline"}
-              size="icon"
-              onClick={toggleVideo}
-              className="rounded-full h-12 w-12"
-              disabled={isScreenSharing}
-            >
-              {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant={isScreenSharing ? "destructive" : "outline"}
-              size="icon"
-              onClick={toggleScreenShare}
-              className="rounded-full h-12 w-12"
-            >
-              {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleFullscreen}
-              className="rounded-full h-12 w-12"
-            >
-              {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant="destructive"
-              size="icon"
-              onClick={hangUp}
-              className="rounded-full h-12 w-12"
-            >
-              <PhoneOff className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={isMuted ? "destructive" : "outline"} size="icon" onClick={toggleMute} className="rounded-full h-12 w-12">
+                  {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isMuted ? "Unmute" : "Mute"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={isVideoOff ? "destructive" : "outline"} size="icon" onClick={toggleVideo} className="rounded-full h-12 w-12" disabled={isScreenSharing}>
+                  {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isVideoOff ? "Turn on camera" : "Turn off camera"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={isScreenSharing ? "destructive" : "outline"} size="icon" onClick={toggleScreenShare} className="rounded-full h-12 w-12">
+                  {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isScreenSharing ? "Stop sharing" : "Share screen"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={toggleFullscreen} className="rounded-full h-12 w-12">
+                  {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isFullscreen ? "Exit fullscreen" : "Fullscreen"}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="destructive" size="icon" onClick={hangUp} className="rounded-full h-12 w-12">
+                  <PhoneOff className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Hang up</TooltipContent>
+            </Tooltip>
           </>
         ) : (
           <p className="text-sm text-muted-foreground">Call has ended</p>
