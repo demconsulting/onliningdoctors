@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, Clock, DollarSign, Loader2, Stethoscope, User } from "lucide-react";
+import { Search, Star, Clock, Calendar, Video, Loader2, Stethoscope, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getCurrencySymbol } from "@/lib/currency";
 
 interface Doctor {
