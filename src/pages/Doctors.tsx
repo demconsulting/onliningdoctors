@@ -39,7 +39,6 @@ const Doctors = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("all");
   const [loading, setLoading] = useState(true);
-  const { geo } = useGeoLocation();
 
   useEffect(() => {
     const fetchData = async () => {
