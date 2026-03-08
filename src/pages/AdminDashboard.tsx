@@ -14,6 +14,10 @@ import AdminStats from "@/components/admin/AdminStats";
 import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
 import AdminDoctorVerification from "@/components/admin/AdminDoctorVerification";
 import AdminSiteSettings from "@/components/admin/AdminSiteSettings";
+import AdminWhyChoose from "@/components/admin/AdminWhyChoose";
+import AdminFindDoctor from "@/components/admin/AdminFindDoctor";
+import AdminDoctorCTA from "@/components/admin/AdminDoctorCTA";
+import AdminFooter from "@/components/admin/AdminFooter";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -56,6 +60,10 @@ const AdminDashboard = () => {
     switch (activeSection) {
       case "hero": return <AdminHero />;
       case "stats": return <AdminStats />;
+      case "why-choose": return <AdminWhyChoose />;
+      case "find-doctor": return <AdminFindDoctor />;
+      case "doctor-cta": return <AdminDoctorCTA />;
+      case "footer": return <AdminFooter />;
       case "users": return <AdminUsers />;
       case "appointments": return <AdminAppointments />;
       case "reviews": return <AdminReviews />;

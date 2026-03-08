@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -15,6 +15,10 @@ import {
 const items = [
   { title: "Hero Section", key: "hero", icon: Layout },
   { title: "Stats", key: "stats", icon: BarChart3 },
+  { title: "Why Choose", key: "why-choose", icon: Sparkles },
+  { title: "Find Doctor", key: "find-doctor", icon: Search },
+  { title: "Doctor CTA", key: "doctor-cta", icon: Stethoscope },
+  { title: "Footer", key: "footer", icon: PanelBottom },
   { title: "Specialties", key: "specialties", icon: Stethoscope },
   { title: "FAQs", key: "faqs", icon: HelpCircle },
   { title: "Doctor Verification", key: "doctor-verification", icon: ShieldCheck },
