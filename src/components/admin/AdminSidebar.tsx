@@ -23,6 +23,7 @@ const items = [
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
+  { title: "Site Settings", key: "site-settings", icon: Settings },
 ];
 
 interface AdminSidebarProps {

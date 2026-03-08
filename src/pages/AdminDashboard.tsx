@@ -64,6 +64,7 @@ const AdminDashboard = () => {
       case "faqs": return <AdminFaqs />;
       case "audit-logs": return <AdminAuditLogs />;
       case "doctor-verification": return <AdminDoctorVerification />;
+      case "site-settings": return <AdminSiteSettings />;
       default: return <AdminHero />;
     }
   };
