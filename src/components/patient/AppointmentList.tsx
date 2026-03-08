@@ -74,6 +74,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
     }
   };
 
+
+  const filteredAppointments = statusFilter
+    ? appointments.filter((apt) => apt.status === statusFilter)
+    : appointments;
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
