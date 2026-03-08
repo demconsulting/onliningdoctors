@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, DollarSign, Plus, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, DollarSign, Plus, Trash2, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
-import { getCurrencySymbol } from "@/lib/currency";
+import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 
 interface PricingTiersProps {
   user: User;
