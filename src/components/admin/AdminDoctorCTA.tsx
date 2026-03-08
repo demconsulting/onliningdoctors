@@ -79,6 +79,10 @@ const AdminDoctorCTA = () => {
           <label className="text-sm font-medium text-foreground">Login Button Text</label>
           <Input value={content.login_text} onChange={(e) => setContent({ ...content, login_text: e.target.value })} />
         </div>
+        <PreviewWrapper>
+          <DoctorCTAPreview content={content} />
+        </PreviewWrapper>
+
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Changes
         </Button>

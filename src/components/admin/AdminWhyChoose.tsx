@@ -111,6 +111,10 @@ const AdminWhyChoose = () => {
           ))}
         </div>
 
+        <PreviewWrapper>
+          <WhyChoosePreview content={content} />
+        </PreviewWrapper>
+
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Changes
         </Button>

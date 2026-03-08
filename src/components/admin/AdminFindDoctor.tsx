@@ -73,6 +73,10 @@ const AdminFindDoctor = () => {
           <label className="text-sm font-medium text-foreground">Subheading</label>
           <Textarea value={content.subheading} onChange={(e) => setContent({ ...content, subheading: e.target.value })} rows={2} />
         </div>
+        <PreviewWrapper>
+          <FindDoctorPreview content={content} />
+        </PreviewWrapper>
+
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Changes
         </Button>

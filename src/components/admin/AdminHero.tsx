@@ -136,6 +136,10 @@ const AdminHero = () => {
           ))}
         </div>
 
+        <PreviewWrapper>
+          <HeroPreview content={hero} />
+        </PreviewWrapper>
+
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Changes
         </Button>
