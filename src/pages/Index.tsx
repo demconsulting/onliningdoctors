@@ -7,6 +7,7 @@ import StatsSection from "@/components/landing/StatsSection";
 import WhyChooseSection from "@/components/landing/WhyChooseSection";
 import FindDoctorSection from "@/components/landing/FindDoctorSection";
 import DoctorCTASection from "@/components/landing/DoctorCTASection";
+import FAQSection from "@/components/landing/FAQSection";
 
 interface SectionConfig {
   key: string;
@@ -20,6 +21,7 @@ const defaultOrder: SectionConfig[] = [
   { key: "why-choose", label: "Why Choose Section", visible: true },
   { key: "find-doctor", label: "Find Doctor Section", visible: true },
   { key: "doctor-cta", label: "Doctor CTA Section", visible: true },
+  { key: "faq", label: "FAQ Section", visible: true },
 ];
 
 const sectionComponents: Record<string, React.FC> = {
@@ -28,6 +30,7 @@ const sectionComponents: Record<string, React.FC> = {
   "why-choose": WhyChooseSection,
   "find-doctor": FindDoctorSection,
   "doctor-cta": DoctorCTASection,
+  faq: FAQSection,
 };
 
 const Index = () => {

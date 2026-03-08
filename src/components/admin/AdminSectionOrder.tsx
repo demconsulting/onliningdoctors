@@ -35,6 +35,7 @@ const defaultSections: SectionConfig[] = [
   { key: "why-choose", label: "Why Choose Section", visible: true },
   { key: "find-doctor", label: "Find Doctor Section", visible: true },
   { key: "doctor-cta", label: "Doctor CTA Section", visible: true },
+  { key: "faq", label: "FAQ Section", visible: true },
 ];
 
 const SortableSection = ({
