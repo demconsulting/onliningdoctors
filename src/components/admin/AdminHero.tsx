@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Layout, Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PreviewWrapper from "./previews/PreviewWrapper";
+import HeroPreview from "./previews/HeroPreview";
 
 interface HeroFeature {
   icon: string;
