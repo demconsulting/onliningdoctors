@@ -345,6 +345,14 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
               {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
             </Button>
             <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleFullscreen}
+              className="rounded-full h-12 w-12"
+            >
+              {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+            </Button>
+            <Button
               variant="destructive"
               size="icon"
               onClick={hangUp}
