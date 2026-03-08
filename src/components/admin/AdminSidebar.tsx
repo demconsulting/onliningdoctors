@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
+  { title: "Section Order", key: "section-order", icon: Layers },
   { title: "Hero Section", key: "hero", icon: Layout },
   { title: "Stats", key: "stats", icon: BarChart3 },
   { title: "Why Choose", key: "why-choose", icon: Sparkles },

@@ -59,6 +59,7 @@ const AdminDashboard = () => {
 
   const renderSection = () => {
     switch (activeSection) {
+      case "section-order": return <AdminSectionOrder />;
       case "hero": return <AdminHero />;
       case "stats": return <AdminStats />;
       case "why-choose": return <AdminWhyChoose />;
