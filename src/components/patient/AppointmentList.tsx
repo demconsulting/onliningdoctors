@@ -41,7 +41,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         .order("scheduled_at", { ascending: false }),
       supabase
         .from("reviews")
-        .select("appointment_id")
+        .select("id, appointment_id, rating, comment, created_at")
         .eq("patient_id", user.id),
     ]);
 
