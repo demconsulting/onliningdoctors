@@ -57,8 +57,7 @@ const DoctorDetail = () => {
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [tiers, setTiers] = useState<PricingTier[]>([]);
   const [loading, setLoading] = useState(true);
-  const { geo } = useGeoLocation();
-  const cs = geo?.currencySymbol || "";
+  const cs = doctor ? getCurrencySymbol(doctor.profile?.country) : "";
 
   useEffect(() => {
     if (!id) return;
