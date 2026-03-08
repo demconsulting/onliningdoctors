@@ -84,7 +84,52 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {appointments.length === 0 ? (
+        {/* Filter buttons */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <Button
+            variant={statusFilter === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter(null)}
+            className="text-xs"
+          >
+            All
+          </Button>
+          <Button
+            variant={statusFilter === "pending" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("pending")}
+            className="text-xs"
+          >
+            Pending
+          </Button>
+          <Button
+            variant={statusFilter === "confirmed" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("confirmed")}
+            className="text-xs"
+          >
+            Confirmed
+          </Button>
+          <Button
+            variant={statusFilter === "completed" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("completed")}
+            className="text-xs"
+          >
+            Completed
+          </Button>
+          <Button
+            variant={statusFilter === "cancelled" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("cancelled")}
+            className="text-xs"
+          >
+            Cancelled
+          </Button>
+        </div>
+
+        {/* Appointments list */}
+        {filteredAppointments.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p>No appointments yet</p>
