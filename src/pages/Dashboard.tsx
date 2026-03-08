@@ -11,6 +11,7 @@ import MedicalInfo from "@/components/patient/MedicalInfo";
 import AppointmentList from "@/components/patient/AppointmentList";
 import BookAppointment from "@/components/patient/BookAppointment";
 import DocumentUpload from "@/components/patient/DocumentUpload";
+import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupaUser | null>(null);
@@ -48,6 +49,8 @@ const Dashboard = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Patient Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, {user.user_metadata?.full_name || user.email}</p>
         </div>
+
+        <ReviewPromptBanner user={user} onSwitchToAppointments={() => setActiveTab("appointments")} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-auto lg:grid-cols-5">
