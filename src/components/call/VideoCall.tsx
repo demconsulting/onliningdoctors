@@ -271,9 +271,9 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div ref={containerRef} className={`flex flex-col items-center gap-4 ${isFullscreen ? "bg-background p-4 justify-center h-full" : ""}`}>
       {/* Video feeds */}
-      <div className="relative w-full max-w-4xl aspect-video rounded-xl overflow-hidden bg-muted">
+      <div className={`relative w-full ${isFullscreen ? "max-w-full flex-1" : "max-w-4xl"} aspect-video rounded-xl overflow-hidden bg-muted`}>
         <video
           ref={remoteVideoRef}
           autoPlay
