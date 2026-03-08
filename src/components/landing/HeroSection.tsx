@@ -61,7 +61,7 @@ const HeroSection = () => {
               <Button size="lg" className="gap-2 gradient-primary border-0 text-primary-foreground" onClick={() => navigate("/doctors")}>
                 {hero.cta_primary} <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10" onClick={() => navigate("/signup")}>
+              <Button size="lg" variant="outline" className="border-white/60 bg-white/10 text-white hover:bg-white/20" onClick={() => navigate("/signup")}>
                 {hero.cta_secondary}
               </Button>
             </div>
