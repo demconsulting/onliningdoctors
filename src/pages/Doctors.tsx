@@ -155,93 +155,75 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
   const name = doctor.profile?.full_name || "Doctor";
   const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const currencySymbol = getCurrencySymbol(doctor.profile?.country);
+  const displayName = `${doctor.title ? `${doctor.title} ` : "Dr. "}${name}`;
 
   return (
     <Link to={`/doctors/${doctor.profile_id}`} className="block">
-    <Card className="group overflow-hidden transition-shadow hover:shadow-lg cursor-pointer">
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          {/* Avatar */}
+      <Card className="group overflow-hidden transition-all hover:shadow-xl cursor-pointer">
+        {/* Large image */}
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
           {doctor.profile?.avatar_url ? (
             <img
               src={doctor.profile.avatar_url}
-              alt={name}
-              className="h-20 w-20 rounded-full object-cover ring-2 ring-border flex-shrink-0"
+              alt={displayName}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 ring-2 ring-border flex-shrink-0">
-              <span className="text-base font-bold text-primary">{initials}</span>
+            <div className="flex h-full w-full items-center justify-center bg-primary/10">
+              <User className="h-20 w-20 text-primary/30" />
             </div>
-          )}
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="truncate font-display text-base font-semibold text-foreground">
-                {doctor.title ? `${doctor.title} ` : "Dr. "}{name}
-              </h3>
-            </div>
-
-            {doctor.specialty?.name && (
-              <p className="mt-0.5 text-sm text-primary font-medium">{doctor.specialty.name}</p>
-            )}
-
-            {doctor.profile?.city && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{doctor.profile.city}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          {(doctor.rating ?? 0) > 0 && (
-            <span className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-              <span className="font-medium text-foreground">{Number(doctor.rating).toFixed(1)}</span>
-              {(doctor.total_reviews ?? 0) > 0 && (
-                <span>({doctor.total_reviews})</span>
-              )}
-            </span>
-          )}
-          {(doctor.experience_years ?? 0) > 0 && (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
-              {doctor.experience_years} yrs
-            </span>
-          )}
-          {doctor.consultation_fee != null && (
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3.5 w-3.5" />
-              {currencySymbol}{Number(doctor.consultation_fee).toFixed(0)}
-            </span>
           )}
         </div>
 
-        {/* Bio */}
-        {doctor.bio && (
-          <p className="mt-3 line-clamp-2 text-xs text-muted-foreground">{doctor.bio}</p>
-        )}
-
-        {/* Languages + Availability */}
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex flex-wrap gap-1">
-            {doctor.languages?.slice(0, 3).map((lang) => (
-              <Badge key={lang} variant="secondary" className="text-[10px] px-1.5 py-0">
-                {lang}
+        <CardContent className="p-5">
+          {/* Name & reviews */}
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-display text-lg font-bold text-foreground">{displayName}</h3>
+            {(doctor.total_reviews ?? 0) > 0 ? (
+              <Badge variant="outline" className="shrink-0 gap-1 border-warning/30 text-warning">
+                <Star className="h-3 w-3 fill-warning" />
+                {Number(doctor.rating).toFixed(1)}
               </Badge>
-            ))}
+            ) : (
+              <Badge variant="outline" className="shrink-0 text-muted-foreground">No reviews</Badge>
+            )}
           </div>
-          <Badge
-            variant="outline"
-            className={doctor.is_available
-              ? "border-success/30 bg-success/10 text-success"
-              : "border-destructive/30 bg-destructive/10 text-destructive"
-            }
-          >
-            {doctor.is_available ? "Available" : "Unavailable"}
-          </Badge>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Specialty */}
+          {doctor.specialty?.name && (
+            <p className="mt-1 text-sm font-medium text-primary">{doctor.specialty.name}</p>
+          )}
+
+          {/* Details */}
+          <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+            {(doctor.experience_years ?? 0) > 0 && (
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{doctor.experience_years}+ years experience</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>{doctor.is_available ? "Available Today" : "Currently Unavailable"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Video className="h-4 w-4 text-secondary" />
+              <span className="font-medium text-secondary">Online Consultation Available</span>
+            </div>
+            {doctor.consultation_fee != null && (
+              <div className="flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                <span className="font-semibold text-foreground">{currencySymbol}{Number(doctor.consultation_fee).toFixed(0)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Book button */}
+          <Button className="mt-4 w-full gradient-primary border-0 text-primary-foreground" size="lg">
+            Book Appointment
+          </Button>
+        </CardContent>
+      </Card>
     </Link>
   );
 };
