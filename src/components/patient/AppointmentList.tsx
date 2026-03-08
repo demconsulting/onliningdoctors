@@ -29,6 +29,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [reviewsMap, setReviewsMap] = useState<Record<string, any>>({});
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -73,6 +74,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
     }
   };
 
+
+  const filteredAppointments = statusFilter
+    ? appointments.filter((apt) => apt.status === statusFilter)
+    : appointments;
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
@@ -83,15 +89,60 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {appointments.length === 0 ? (
+        {/* Filter buttons */}
+        <div className="mb-6 flex flex-wrap gap-2">
+          <Button
+            variant={statusFilter === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter(null)}
+            className="text-xs"
+          >
+            All
+          </Button>
+          <Button
+            variant={statusFilter === "pending" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("pending")}
+            className="text-xs"
+          >
+            Pending
+          </Button>
+          <Button
+            variant={statusFilter === "confirmed" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("confirmed")}
+            className="text-xs"
+          >
+            Confirmed
+          </Button>
+          <Button
+            variant={statusFilter === "completed" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("completed")}
+            className="text-xs"
+          >
+            Completed
+          </Button>
+          <Button
+            variant={statusFilter === "cancelled" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("cancelled")}
+            className="text-xs"
+          >
+            Cancelled
+          </Button>
+        </div>
+
+        {/* Appointments list */}
+        {filteredAppointments.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-            <p>No appointments yet</p>
-            <p className="text-sm">Book your first appointment with a doctor</p>
+            <p>{statusFilter ? `No ${statusFilter} appointments` : "No appointments yet"}</p>
+            {!statusFilter && <p className="text-sm">Book your first appointment with a doctor</p>}
           </div>
         ) : (
           <div className="space-y-3">
-            {appointments.map((apt) => (
+            {filteredAppointments.map((apt) => (
               <div key={apt.id} className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
