@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff, Maximize, Minimize } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface VideoCallProps {
@@ -25,6 +25,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const senderRef = useRef<RTCRtpSender | null>(null);
 
@@ -32,6 +33,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const { toast } = useToast();
 
   // Send signaling message
@@ -243,6 +245,22 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
     }
   };
 
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      await containerRef.current.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  }, []);
+
+  // Sync fullscreen state with browser
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -253,9 +271,9 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div ref={containerRef} className={`flex flex-col items-center gap-4 ${isFullscreen ? "bg-background p-4 justify-center h-full" : ""}`}>
       {/* Video feeds */}
-      <div className="relative w-full max-w-4xl aspect-video rounded-xl overflow-hidden bg-muted">
+      <div className={`relative w-full ${isFullscreen ? "max-w-full flex-1" : "max-w-4xl"} aspect-video rounded-xl overflow-hidden bg-muted`}>
         <video
           ref={remoteVideoRef}
           autoPlay
@@ -325,6 +343,14 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
               className="rounded-full h-12 w-12"
             >
               {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={toggleFullscreen}
+              className="rounded-full h-12 w-12"
+            >
+              {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
             </Button>
             <Button
               variant="destructive"
