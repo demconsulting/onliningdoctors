@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Layout, Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PreviewWrapper from "./previews/PreviewWrapper";
+import HeroPreview from "./previews/HeroPreview";
 
 interface HeroFeature {
   icon: string;
@@ -133,6 +135,10 @@ const AdminHero = () => {
             </div>
           ))}
         </div>
+
+        <PreviewWrapper>
+          <HeroPreview content={hero} />
+        </PreviewWrapper>
 
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Changes

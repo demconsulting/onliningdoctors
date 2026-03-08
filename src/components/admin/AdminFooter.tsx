@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, PanelBottom } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PreviewWrapper from "./previews/PreviewWrapper";
+import FooterPreview from "./previews/FooterPreview";
 
 interface FooterContent {
   tagline: string;
@@ -104,6 +106,10 @@ const AdminFooter = () => {
             <Textarea value={content.disclaimer_emergency} onChange={(e) => setContent({ ...content, disclaimer_emergency: e.target.value })} rows={2} />
           </div>
         </div>
+
+        <PreviewWrapper>
+          <FooterPreview content={content} />
+        </PreviewWrapper>
 
         <Button onClick={save} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Changes
