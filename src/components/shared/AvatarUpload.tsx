@@ -71,10 +71,10 @@ const AvatarUpload = ({ userId, currentUrl, fullName, onUploaded }: AvatarUpload
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative group">
-        <Avatar className="h-24 w-24 border-2 border-primary/20">
+        <Avatar className="h-32 w-32 border-2 border-primary/20">
           <AvatarImage src={currentUrl || undefined} alt={fullName} />
-          <AvatarFallback className="text-lg bg-primary/10 text-primary">
-            {initials || <User className="h-8 w-8" />}
+          <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+            {initials || <User className="h-12 w-12" />}
           </AvatarFallback>
         </Avatar>
         <button
