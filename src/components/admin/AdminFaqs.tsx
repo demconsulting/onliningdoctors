@@ -127,6 +127,10 @@ const AdminFaqs = () => {
           </SortableContext>
         </DndContext>
 
+        <PreviewWrapper>
+          <FAQPreview faqs={faqs} />
+        </PreviewWrapper>
+
         {faqs.length > 1 && (
           <Button onClick={saveOrder} disabled={saving} variant="outline" className="gap-2">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Order
