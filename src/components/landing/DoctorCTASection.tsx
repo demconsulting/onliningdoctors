@@ -7,7 +7,7 @@ const DoctorCTASection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 gradient-hero">
+    <section id="for-doctors" className="py-20 gradient-hero">
       <div className="container mx-auto px-4">
         <motion.div
           className="max-w-3xl mx-auto text-center space-y-6"
