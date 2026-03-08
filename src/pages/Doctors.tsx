@@ -150,9 +150,10 @@ const Doctors = () => {
   );
 };
 
-const DoctorCard = ({ doctor, currencySymbol }: { doctor: Doctor; currencySymbol: string }) => {
+const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
   const name = doctor.profile?.full_name || "Doctor";
   const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const currencySymbol = getCurrencySymbol(doctor.profile?.country);
 
   return (
     <Link to={`/doctors/${doctor.profile_id}`} className="block">
@@ -164,11 +165,11 @@ const DoctorCard = ({ doctor, currencySymbol }: { doctor: Doctor; currencySymbol
             <img
               src={doctor.profile.avatar_url}
               alt={name}
-              className="h-14 w-14 rounded-full object-cover ring-2 ring-border"
+              className="h-20 w-20 rounded-full object-cover ring-2 ring-border flex-shrink-0"
             />
           ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 ring-2 ring-border">
-              <span className="text-sm font-bold text-primary">{initials}</span>
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 ring-2 ring-border flex-shrink-0">
+              <span className="text-base font-bold text-primary">{initials}</span>
             </div>
           )}
 
