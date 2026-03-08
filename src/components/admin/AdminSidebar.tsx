@@ -15,6 +15,10 @@ import {
 const items = [
   { title: "Hero Section", key: "hero", icon: Layout },
   { title: "Stats", key: "stats", icon: BarChart3 },
+  { title: "Why Choose", key: "why-choose", icon: Sparkles },
+  { title: "Find Doctor", key: "find-doctor", icon: Search },
+  { title: "Doctor CTA", key: "doctor-cta", icon: Stethoscope },
+  { title: "Footer", key: "footer", icon: PanelBottom },
   { title: "Specialties", key: "specialties", icon: Stethoscope },
   { title: "FAQs", key: "faqs", icon: HelpCircle },
   { title: "Doctor Verification", key: "doctor-verification", icon: ShieldCheck },

@@ -60,6 +60,10 @@ const AdminDashboard = () => {
     switch (activeSection) {
       case "hero": return <AdminHero />;
       case "stats": return <AdminStats />;
+      case "why-choose": return <AdminWhyChoose />;
+      case "find-doctor": return <AdminFindDoctor />;
+      case "doctor-cta": return <AdminDoctorCTA />;
+      case "footer": return <AdminFooter />;
       case "users": return <AdminUsers />;
       case "appointments": return <AdminAppointments />;
       case "reviews": return <AdminReviews />;
