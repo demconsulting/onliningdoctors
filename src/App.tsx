@@ -13,7 +13,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CallPage from "./pages/CallPage";
 import About from "./pages/About";
-import Contact from "./pages/Contact";
+
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Doctors from "./pages/Doctors";
