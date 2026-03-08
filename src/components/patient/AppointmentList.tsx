@@ -158,21 +158,31 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                   </div>
                 )}
                 {apt.status === "completed" && reviewedIds.has(apt.id) && editingReviewId !== apt.id && (() => {
-                  const rev = reviewsMap[apt.id];
-                  const canEdit = rev && (Date.now() - new Date(rev.created_at).getTime()) < 24 * 3600000;
-                  return (
-                    <div className="mt-2 flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-warning text-warning" /> Reviewed
-                      </p>
-                      {canEdit && (
-                        <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs text-muted-foreground" onClick={() => setEditingReviewId(apt.id)}>
-                          <Pencil className="h-3 w-3" /> Edit
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })()}
+                   const rev = reviewsMap[apt.id];
+                   const canEdit = rev && (Date.now() - new Date(rev.created_at).getTime()) < 24 * 3600000;
+                   return (
+                     <div className="mt-3 pt-3 border-t border-border space-y-2">
+                       <div className="flex items-start justify-between gap-2">
+                         <div className="flex-1">
+                           <div className="flex items-center gap-1 mb-1">
+                             {[1, 2, 3, 4, 5].map((s) => (
+                               <Star key={s} className={`h-3 w-3 ${rev.rating >= s ? "fill-warning text-warning" : "text-muted-foreground/20"}`} />
+                             ))}
+                             <span className="text-xs text-muted-foreground ml-1">({rev.rating}/5)</span>
+                           </div>
+                           {rev.comment && (
+                             <p className="text-xs text-foreground line-clamp-2">{rev.comment}</p>
+                           )}
+                         </div>
+                         {canEdit && (
+                           <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs text-muted-foreground shrink-0" onClick={() => setEditingReviewId(apt.id)}>
+                             <Pencil className="h-3 w-3" /> Edit
+                           </Button>
+                         )}
+                       </div>
+                     </div>
+                   );
+                 })()}
                 {apt.status === "completed" && reviewedIds.has(apt.id) && editingReviewId === apt.id && (
                   <div className="mt-3 pt-3 border-t border-border">
                     <ReviewForm
