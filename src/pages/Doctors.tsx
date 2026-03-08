@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useGeoLocation } from "@/hooks/useGeoLocation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Star, Clock, DollarSign, Loader2, Stethoscope, User } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface Doctor {
   id: string;
@@ -39,7 +39,6 @@ const Doctors = () => {
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("all");
   const [loading, setLoading] = useState(true);
-  const { geo } = useGeoLocation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -136,12 +135,12 @@ const Doctors = () => {
           </div>
         ) : (
           <>
-            <p className="mb-6 text-sm text-muted-foreground">{filtered.length} doctor{filtered.length !== 1 ? "s" : ""} found</p>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((doc) => (
-                <DoctorCard key={doc.id} doctor={doc} currencySymbol={geo?.currencySymbol || ""} />
-              ))}
-            </div>
+             <p className="mb-6 text-sm text-muted-foreground">{filtered.length} doctor{filtered.length !== 1 ? "s" : ""} found</p>
+             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+               {filtered.map((doc) => (
+                 <DoctorCard key={doc.id} doctor={doc} />
+               ))}
+             </div>
           </>
         )}
       </section>
@@ -151,9 +150,10 @@ const Doctors = () => {
   );
 };
 
-const DoctorCard = ({ doctor, currencySymbol }: { doctor: Doctor; currencySymbol: string }) => {
+const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
   const name = doctor.profile?.full_name || "Doctor";
   const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  const currencySymbol = getCurrencySymbol(doctor.profile?.country);
 
   return (
     <Link to={`/doctors/${doctor.profile_id}`} className="block">
@@ -165,11 +165,11 @@ const DoctorCard = ({ doctor, currencySymbol }: { doctor: Doctor; currencySymbol
             <img
               src={doctor.profile.avatar_url}
               alt={name}
-              className="h-14 w-14 rounded-full object-cover ring-2 ring-border"
+              className="h-20 w-20 rounded-full object-cover ring-2 ring-border flex-shrink-0"
             />
           ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 ring-2 ring-border">
-              <span className="text-sm font-bold text-primary">{initials}</span>
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 ring-2 ring-border flex-shrink-0">
+              <span className="text-base font-bold text-primary">{initials}</span>
             </div>
           )}
 
