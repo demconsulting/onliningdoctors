@@ -245,6 +245,22 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
     }
   };
 
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      await containerRef.current.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  }, []);
+
+  // Sync fullscreen state with browser
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
