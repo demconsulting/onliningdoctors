@@ -113,9 +113,9 @@ const DoctorDashboard = () => {
           <TabsContent value="availability">
             <AvailabilityManager user={user} />
           </TabsContent>
-          <TabsContent value="pricing">
-            <PricingTiers user={user} />
-          </TabsContent>
+           <TabsContent value="pricing">
+             <PricingTiers user={user} doctorCountry={doctorCountry} />
+           </TabsContent>
           <TabsContent value="profile">
             <DoctorProfile user={user} />
           </TabsContent>
