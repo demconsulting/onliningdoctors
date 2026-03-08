@@ -13,6 +13,7 @@ import AdminHero from "@/components/admin/AdminHero";
 import AdminStats from "@/components/admin/AdminStats";
 import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
 import AdminDoctorVerification from "@/components/admin/AdminDoctorVerification";
+import AdminSiteSettings from "@/components/admin/AdminSiteSettings";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
