@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff, Maximize, Minimize } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
