@@ -95,12 +95,27 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
+  const countryName = doctorCountry 
+    ? Object.entries(COUNTRY_CURRENCY).find(([code]) => code === doctorCountry.toUpperCase())?.[0] || doctorCountry
+    : null;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display">
-          <DollarSign className="h-5 w-5 text-primary" /> Pricing Tiers
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 font-display">
+            <DollarSign className="h-5 w-5 text-primary" /> Pricing Tiers
+          </CardTitle>
+          {doctorCountry && (
+            <Badge variant="secondary" className="gap-1 flex items-center">
+              <MapPin className="h-3.5 w-3.5" />
+              {currencySymbol} Currency ({doctorCountry.toUpperCase()})
+            </Badge>
+          )}
+        </div>
+        {!doctorCountry && (
+          <p className="text-xs text-muted-foreground mt-2">Please set your country in your profile to see your currency.</p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {tiers.length === 0 && (
