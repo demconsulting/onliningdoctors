@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { getCurrencySymbol } from "@/lib/currency";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ReviewList from "@/components/reviews/ReviewList";
@@ -57,8 +57,7 @@ const DoctorDetail = () => {
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [tiers, setTiers] = useState<PricingTier[]>([]);
   const [loading, setLoading] = useState(true);
-  const { geo } = useGeoLocation();
-  const cs = geo?.currencySymbol || "";
+  const cs = doctor ? getCurrencySymbol(doctor.profile?.country) : "";
 
   useEffect(() => {
     if (!id) return;
