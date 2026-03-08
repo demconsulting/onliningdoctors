@@ -14,6 +14,10 @@ import AdminStats from "@/components/admin/AdminStats";
 import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
 import AdminDoctorVerification from "@/components/admin/AdminDoctorVerification";
 import AdminSiteSettings from "@/components/admin/AdminSiteSettings";
+import AdminWhyChoose from "@/components/admin/AdminWhyChoose";
+import AdminFindDoctor from "@/components/admin/AdminFindDoctor";
+import AdminDoctorCTA from "@/components/admin/AdminDoctorCTA";
+import AdminFooter from "@/components/admin/AdminFooter";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
