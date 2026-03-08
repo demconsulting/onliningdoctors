@@ -25,6 +25,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const senderRef = useRef<RTCRtpSender | null>(null);
 
