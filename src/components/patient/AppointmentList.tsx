@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Loader2, Video, Star } from "lucide-react";
+import { Calendar, Clock, User, Loader2, Video, Star, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,8 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
+  const [reviewsMap, setReviewsMap] = useState<Record<string, any>>({});
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,13 +41,18 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         .order("scheduled_at", { ascending: false }),
       supabase
         .from("reviews")
-        .select("appointment_id")
+        .select("id, appointment_id, rating, comment, created_at")
         .eq("patient_id", user.id),
     ]);
 
     if (aptRes.data) setAppointments(aptRes.data);
     if (aptRes.error) console.error(aptRes.error);
-    if (reviewRes.data) setReviewedIds(new Set(reviewRes.data.map((r: any) => r.appointment_id)));
+    if (reviewRes.data) {
+      setReviewedIds(new Set(reviewRes.data.map((r: any) => r.appointment_id)));
+      const map: Record<string, any> = {};
+      reviewRes.data.forEach((r: any) => { map[r.appointment_id] = r; });
+      setReviewsMap(map);
+    }
     setLoading(false);
   };
 
@@ -150,10 +157,32 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                     />
                   </div>
                 )}
-                {apt.status === "completed" && reviewedIds.has(apt.id) && (
-                  <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
-                    <Star className="h-3 w-3 fill-warning text-warning" /> Reviewed
-                  </p>
+                {apt.status === "completed" && reviewedIds.has(apt.id) && editingReviewId !== apt.id && (() => {
+                  const rev = reviewsMap[apt.id];
+                  const canEdit = rev && (Date.now() - new Date(rev.created_at).getTime()) < 24 * 3600000;
+                  return (
+                    <div className="mt-2 flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-warning text-warning" /> Reviewed
+                      </p>
+                      {canEdit && (
+                        <Button variant="ghost" size="sm" className="h-6 gap-1 text-xs text-muted-foreground" onClick={() => setEditingReviewId(apt.id)}>
+                          <Pencil className="h-3 w-3" /> Edit
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })()}
+                {apt.status === "completed" && reviewedIds.has(apt.id) && editingReviewId === apt.id && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <ReviewForm
+                      user={user}
+                      appointmentId={apt.id}
+                      doctorId={apt.doctor_id}
+                      existingReview={reviewsMap[apt.id]}
+                      onSubmitted={() => { setEditingReviewId(null); fetchAppointments(); }}
+                    />
+                  </div>
                 )}
               </div>
             ))}
