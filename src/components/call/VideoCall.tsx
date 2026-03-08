@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff, Maximize, Minimize } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface VideoCallProps {
