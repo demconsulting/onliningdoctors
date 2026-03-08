@@ -16,6 +16,7 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isDoctor, setIsDoctor] = useState(false);
   const [activeTab, setActiveTab] = useState("appointments");
+  const [doctorCountry, setDoctorCountry] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,6 +48,17 @@ const DoctorDashboard = () => {
       if (!doctorRecord) {
         // Auto-create doctor record
         await supabase.from("doctors").insert({ profile_id: session.user.id });
+      }
+
+      // Fetch doctor's country from profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("country")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profileData?.country) {
+        setDoctorCountry(profileData.country);
       }
 
       setIsDoctor(true);
@@ -102,7 +114,7 @@ const DoctorDashboard = () => {
             <AvailabilityManager user={user} />
           </TabsContent>
           <TabsContent value="pricing">
-            <PricingTiers user={user} />
+            <PricingTiers user={user} doctorCountry={doctorCountry} />
           </TabsContent>
           <TabsContent value="profile">
             <DoctorProfile user={user} />
