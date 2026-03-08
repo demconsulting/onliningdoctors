@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -23,6 +23,7 @@ const items = [
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
+  { title: "Site Settings", key: "site-settings", icon: Settings },
 ];
 
 interface AdminSidebarProps {
