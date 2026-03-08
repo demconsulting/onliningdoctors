@@ -47,7 +47,12 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
 
     if (aptRes.data) setAppointments(aptRes.data);
     if (aptRes.error) console.error(aptRes.error);
-    if (reviewRes.data) setReviewedIds(new Set(reviewRes.data.map((r: any) => r.appointment_id)));
+    if (reviewRes.data) {
+      setReviewedIds(new Set(reviewRes.data.map((r: any) => r.appointment_id)));
+      const map: Record<string, any> = {};
+      reviewRes.data.forEach((r: any) => { map[r.appointment_id] = r; });
+      setReviewsMap(map);
+    }
     setLoading(false);
   };
 
