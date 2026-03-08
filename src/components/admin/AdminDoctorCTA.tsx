@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, Stethoscope } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PreviewWrapper from "./previews/PreviewWrapper";
+import DoctorCTAPreview from "./previews/DoctorCTAPreview";
 
 interface DoctorCTAContent {
   heading: string;
