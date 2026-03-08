@@ -18,6 +18,7 @@ import AdminWhyChoose from "@/components/admin/AdminWhyChoose";
 import AdminFindDoctor from "@/components/admin/AdminFindDoctor";
 import AdminDoctorCTA from "@/components/admin/AdminDoctorCTA";
 import AdminFooter from "@/components/admin/AdminFooter";
+import AdminSectionOrder from "@/components/admin/AdminSectionOrder";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -58,6 +59,7 @@ const AdminDashboard = () => {
 
   const renderSection = () => {
     switch (activeSection) {
+      case "section-order": return <AdminSectionOrder />;
       case "hero": return <AdminHero />;
       case "stats": return <AdminStats />;
       case "why-choose": return <AdminWhyChoose />;
