@@ -39,30 +39,30 @@ const DoctorDashboard = () => {
       }
 
       // Ensure doctor record exists
-       const { data: doctorRecord } = await supabase
-         .from("doctors")
-         .select("id")
-         .eq("profile_id", session.user.id)
-         .single();
+      const { data: doctorRecord } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("profile_id", session.user.id)
+        .single();
 
-       if (!doctorRecord) {
-         // Auto-create doctor record
-         await supabase.from("doctors").insert({ profile_id: session.user.id });
-       }
+      if (!doctorRecord) {
+        // Auto-create doctor record
+        await supabase.from("doctors").insert({ profile_id: session.user.id });
+      }
 
-       // Fetch doctor's country from profile
-       const { data: profile } = await supabase
-         .from("profiles")
-         .select("country")
-         .eq("id", session.user.id)
-         .single();
+      // Fetch doctor's country from profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("country")
+        .eq("id", session.user.id)
+        .single();
 
-       if (profile) {
-         setDoctorCountry(profile.country);
-       }
+      if (profileData?.country) {
+        setDoctorCountry(profileData.country);
+      }
 
-       setIsDoctor(true);
-       setLoading(false);
+      setIsDoctor(true);
+      setLoading(false);
     };
 
     checkAuth();
@@ -113,9 +113,9 @@ const DoctorDashboard = () => {
           <TabsContent value="availability">
             <AvailabilityManager user={user} />
           </TabsContent>
-           <TabsContent value="pricing">
-             <PricingTiers user={user} doctorCountry={doctorCountry} />
-           </TabsContent>
+          <TabsContent value="pricing">
+            <PricingTiers user={user} doctorCountry={doctorCountry} />
+          </TabsContent>
           <TabsContent value="profile">
             <DoctorProfile user={user} />
           </TabsContent>
