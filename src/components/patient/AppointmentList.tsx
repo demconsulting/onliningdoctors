@@ -29,6 +29,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [reviewsMap, setReviewsMap] = useState<Record<string, any>>({});
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
