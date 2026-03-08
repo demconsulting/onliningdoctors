@@ -39,19 +39,30 @@ const DoctorDashboard = () => {
       }
 
       // Ensure doctor record exists
-      const { data: doctorRecord } = await supabase
-        .from("doctors")
-        .select("id")
-        .eq("profile_id", session.user.id)
-        .single();
+       const { data: doctorRecord } = await supabase
+         .from("doctors")
+         .select("id")
+         .eq("profile_id", session.user.id)
+         .single();
 
-      if (!doctorRecord) {
-        // Auto-create doctor record
-        await supabase.from("doctors").insert({ profile_id: session.user.id });
-      }
+       if (!doctorRecord) {
+         // Auto-create doctor record
+         await supabase.from("doctors").insert({ profile_id: session.user.id });
+       }
 
-      setIsDoctor(true);
-      setLoading(false);
+       // Fetch doctor's country from profile
+       const { data: profile } = await supabase
+         .from("profiles")
+         .select("country")
+         .eq("id", session.user.id)
+         .single();
+
+       if (profile) {
+         setDoctorCountry(profile.country);
+       }
+
+       setIsDoctor(true);
+       setLoading(false);
     };
 
     checkAuth();
