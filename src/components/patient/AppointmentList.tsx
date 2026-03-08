@@ -137,12 +137,12 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         {filteredAppointments.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-            <p>No appointments yet</p>
-            <p className="text-sm">Book your first appointment with a doctor</p>
+            <p>{statusFilter ? `No ${statusFilter} appointments` : "No appointments yet"}</p>
+            {!statusFilter && <p className="text-sm">Book your first appointment with a doctor</p>}
           </div>
         ) : (
           <div className="space-y-3">
-            {appointments.map((apt) => (
+            {filteredAppointments.map((apt) => (
               <div key={apt.id} className="flex flex-col gap-3 rounded-lg border border-border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
