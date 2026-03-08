@@ -11,6 +11,7 @@ import MedicalInfo from "@/components/patient/MedicalInfo";
 import AppointmentList from "@/components/patient/AppointmentList";
 import BookAppointment from "@/components/patient/BookAppointment";
 import DocumentUpload from "@/components/patient/DocumentUpload";
+import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupaUser | null>(null);
