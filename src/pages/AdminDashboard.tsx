@@ -18,6 +18,7 @@ import AdminWhyChoose from "@/components/admin/AdminWhyChoose";
 import AdminFindDoctor from "@/components/admin/AdminFindDoctor";
 import AdminDoctorCTA from "@/components/admin/AdminDoctorCTA";
 import AdminFooter from "@/components/admin/AdminFooter";
+import AdminSectionOrder from "@/components/admin/AdminSectionOrder";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
