@@ -16,6 +16,7 @@ const DoctorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isDoctor, setIsDoctor] = useState(false);
   const [activeTab, setActiveTab] = useState("appointments");
+  const [doctorCountry, setDoctorCountry] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
