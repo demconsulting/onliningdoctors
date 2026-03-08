@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface VideoCallProps {
@@ -25,10 +25,13 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const senderRef = useRef<RTCRtpSender | null>(null);
 
   const [callState, setCallState] = useState<"idle" | "connecting" | "connected" | "ended">("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const { toast } = useToast();
 
   // Send signaling message
@@ -63,8 +66,11 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
       const pc = new RTCPeerConnection(ICE_SERVERS);
       pcRef.current = pc;
 
-      // Add local tracks
-      stream.getTracks().forEach(track => pc.addTrack(track, stream));
+      // Add local tracks and keep reference to video sender for screen sharing
+      stream.getTracks().forEach(track => {
+        const sender = pc.addTrack(track, stream);
+        if (track.kind === "video") senderRef.current = sender;
+      });
 
       // Handle remote tracks
       pc.ontrack = (event) => {
@@ -149,9 +155,13 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   }, [appointmentId, localUserId, sendSignal]);
 
   const endCall = useCallback(() => {
+    screenStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current?.getTracks().forEach(t => t.stop());
     pcRef.current?.close();
     pcRef.current = null;
+    screenStreamRef.current = null;
+    senderRef.current = null;
+    setIsScreenSharing(false);
     setCallState("ended");
     cleanupSignaling();
     onEnd?.();
@@ -171,6 +181,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   };
 
   const toggleVideo = () => {
+    if (isScreenSharing) return; // Don't toggle camera while screen sharing
     const videoTrack = localStreamRef.current?.getVideoTracks()[0];
     if (videoTrack) {
       videoTrack.enabled = !videoTrack.enabled;
@@ -178,9 +189,64 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
     }
   };
 
+  const toggleScreenShare = async () => {
+    const pc = pcRef.current;
+    const sender = senderRef.current;
+    if (!pc || !sender) return;
+
+    if (isScreenSharing) {
+      // Stop screen sharing — switch back to camera
+      screenStreamRef.current?.getTracks().forEach(t => t.stop());
+      screenStreamRef.current = null;
+      const cameraTrack = localStreamRef.current?.getVideoTracks()[0];
+      if (cameraTrack) {
+        await sender.replaceTrack(cameraTrack);
+        if (localVideoRef.current && localStreamRef.current) {
+          localVideoRef.current.srcObject = localStreamRef.current;
+        }
+      }
+      setIsScreenSharing(false);
+    } else {
+      // Start screen sharing
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStreamRef.current = screenStream;
+        const screenTrack = screenStream.getVideoTracks()[0];
+
+        await sender.replaceTrack(screenTrack);
+
+        // Show screen share in local preview
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = screenStream;
+        }
+
+        // When user stops sharing via browser UI
+        screenTrack.onended = () => {
+          const cameraTrack = localStreamRef.current?.getVideoTracks()[0];
+          if (cameraTrack && sender) {
+            sender.replaceTrack(cameraTrack);
+          }
+          if (localVideoRef.current && localStreamRef.current) {
+            localVideoRef.current.srcObject = localStreamRef.current;
+          }
+          screenStreamRef.current = null;
+          setIsScreenSharing(false);
+        };
+
+        setIsScreenSharing(true);
+      } catch (err: any) {
+        // User cancelled the screen picker
+        if (err.name !== "NotAllowedError") {
+          toast({ variant: "destructive", title: "Screen share error", description: err.message });
+        }
+      }
+    }
+  };
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      screenStreamRef.current?.getTracks().forEach(t => t.stop());
       localStreamRef.current?.getTracks().forEach(t => t.stop());
       pcRef.current?.close();
     };
@@ -205,6 +271,15 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
             </p>
           </div>
         )}
+
+        {/* Screen sharing indicator */}
+        {isScreenSharing && (
+          <div className="absolute top-4 left-4 flex items-center gap-2 rounded-lg bg-destructive/90 px-3 py-1.5 text-destructive-foreground text-xs font-medium shadow-lg">
+            <MonitorUp className="h-3.5 w-3.5" />
+            Sharing your screen
+          </div>
+        )}
+
         {/* Local video pip */}
         <div className="absolute bottom-4 right-4 w-40 aspect-video rounded-lg overflow-hidden border-2 border-background shadow-lg">
           <video
@@ -212,7 +287,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
             autoPlay
             playsInline
             muted
-            className="h-full w-full object-cover mirror"
+            className={`h-full w-full object-cover ${!isScreenSharing ? "mirror" : ""}`}
           />
         </div>
       </div>
@@ -239,8 +314,17 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
               size="icon"
               onClick={toggleVideo}
               className="rounded-full h-12 w-12"
+              disabled={isScreenSharing}
             >
               {isVideoOff ? <VideoOff className="h-5 w-5" /> : <Video className="h-5 w-5" />}
+            </Button>
+            <Button
+              variant={isScreenSharing ? "destructive" : "outline"}
+              size="icon"
+              onClick={toggleScreenShare}
+              className="rounded-full h-12 w-12"
+            >
+              {isScreenSharing ? <MonitorOff className="h-5 w-5" /> : <MonitorUp className="h-5 w-5" />}
             </Button>
             <Button
               variant="destructive"
