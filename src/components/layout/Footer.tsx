@@ -20,7 +20,7 @@ const Footer = () => (
           <h4 className="mb-3 font-display font-semibold text-foreground">Platform</h4>
           <div className="flex flex-col gap-2">
             <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link>
-            <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</Link>
+            
           </div>
         </div>
         <div>

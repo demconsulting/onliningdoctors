@@ -1,20 +1,18 @@
 import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/landing/HeroSection";
-import StatsSection from "@/components/landing/StatsSection";
-import SpecialtiesSection from "@/components/landing/SpecialtiesSection";
-import FAQSection from "@/components/landing/FAQSection";
+import WhyChooseSection from "@/components/landing/WhyChooseSection";
+import FindDoctorSection from "@/components/landing/FindDoctorSection";
+import DoctorCTASection from "@/components/landing/DoctorCTASection";
 
 const Index = () => (
-  <div className="flex min-h-screen flex-col">
+  <div className="min-h-screen flex flex-col">
     <Navbar />
     <main className="flex-1">
       <HeroSection />
-      <StatsSection />
-      <SpecialtiesSection />
-      <FAQSection />
+      <WhyChooseSection />
+      <FindDoctorSection />
+      <DoctorCTASection />
     </main>
-    <Footer />
   </div>
 );
 

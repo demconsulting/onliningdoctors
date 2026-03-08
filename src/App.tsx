@@ -13,7 +13,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import CallPage from "./pages/CallPage";
 import About from "./pages/About";
-import Contact from "./pages/Contact";
+
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Doctors from "./pages/Doctors";
@@ -41,7 +41,7 @@ const App = () => (
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/doctors/:id" element={<DoctorDetail />} />
           <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+          
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
