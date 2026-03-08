@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Save, PanelBottom } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import PreviewWrapper from "./previews/PreviewWrapper";
+import FooterPreview from "./previews/FooterPreview";
 
 interface FooterContent {
   tagline: string;
