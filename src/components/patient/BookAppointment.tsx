@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Calendar, Loader2, Star, MapPin, ExternalLink, DollarSign, Clock, Search, Check } from "lucide-react";
+import { Calendar, Loader2, Star, MapPin, ExternalLink, Coins, Clock, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
