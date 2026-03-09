@@ -120,7 +120,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
       if (timing === "at_booking") {
         // Initialize Paystack payment
-        const currency = geo?.currencyCode || "NGN";
+        const currency = geo?.currency || "NGN";
         const callbackUrl = `${window.location.origin}/dashboard?payment_ref=`;
 
         try {
