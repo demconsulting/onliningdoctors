@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, User, Calendar, FileText, HeartPulse } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import ProfileEdit from "@/components/patient/ProfileEdit";
 import MedicalInfo from "@/components/patient/MedicalInfo";
