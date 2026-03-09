@@ -149,6 +149,13 @@ serve(async (req) => {
       const payConfig = configData?.value as Record<string, unknown> | null;
       const feeBearer = (payConfig?.fee_bearer as string) || "patient";
 
+      // Paystack supported currencies — fall back to NGN if unsupported
+      const PAYSTACK_SUPPORTED_CURRENCIES = ["NGN", "GHS", "ZAR", "USD", "KES", "EGP", "XOF", "RWF"];
+      const requestedCurrency = (currency || "NGN").toUpperCase();
+      const finalCurrency = PAYSTACK_SUPPORTED_CURRENCIES.includes(requestedCurrency)
+        ? requestedCurrency
+        : "NGN";
+
       // Convert amount to kobo/pesewas (smallest unit)
       const amountInSmallestUnit = Math.round(Number(amount) * 100);
 
@@ -164,7 +171,7 @@ serve(async (req) => {
         body: JSON.stringify({
           email,
           amount: amountInSmallestUnit,
-          currency: currency || "NGN",
+          currency: finalCurrency,
           reference,
           callback_url: callback_url || undefined,
           channels: (payConfig?.payment_methods as string[]) || ["card"],
