@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Calendar, Loader2, Star, MapPin, ExternalLink, DollarSign, Clock, Search, Check } from "lucide-react";
+import { Calendar, Loader2, Star, MapPin, ExternalLink, Coins, Clock, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
@@ -29,6 +29,7 @@ const COMMON_REASONS = [
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
+  const [patientCountry, setPatientCountry] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
@@ -44,13 +45,32 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("country")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setPatientCountry(data?.country ?? null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
+  useEffect(() => {
     supabase.from("specialties").select("*").then(({ data }) => {
       if (data) setSpecialties(data);
     });
   }, []);
 
   useEffect(() => {
-    if (!selectedSpecialty) { setDoctors([]); return; }
+    if (!selectedSpecialty) {
+      setDoctors([]);
+      return;
+    }
     setLoadingDoctors(true);
     setSelectedDoctor("");
     supabase
@@ -75,6 +95,10 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     const matchCity = !cityFilter || d.profile?.city === cityFilter;
     return matchSearch && matchCountry && matchCity;
   });
+
+  const displayCurrencySymbol = patientCountry || geo
+    ? getCurrencySymbol(patientCountry || geo?.countryCode || geo?.countryName)
+    : "";
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,7 +286,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         const name = doc.profile?.full_name || "Doctor";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
                         const isSelected = selectedDoctor === doc.profile_id;
-                        const feeSymbol = getCurrencySymbol(doc.profile?.country || geo?.countryCode || geo?.countryName);
+                        const feeSymbol = displayCurrencySymbol;
 
                         return (
                           <div
@@ -295,7 +319,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                                     <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
                                   )}
                                   {doc.consultation_fee != null && (
-                                    <span className="flex items-center gap-0.5"><DollarSign className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
+                                    <span className="flex items-center gap-0.5"><Coins className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
                                   )}
                                   {(doc.experience_years ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {doc.experience_years} yrs</span>
