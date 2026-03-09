@@ -29,6 +29,7 @@ const items = [
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
   { title: "Payments", key: "payments", icon: Receipt },
+  { title: "Payouts", key: "payouts", icon: Wallet },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
 ];

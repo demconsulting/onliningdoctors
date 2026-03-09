@@ -77,6 +77,7 @@ const AdminDashboard = () => {
       case "faqs": return <AdminFaqs />;
       case "payment-config": return <AdminPaymentConfig />;
       case "payments": return <AdminPayments />;
+      case "payouts": return <AdminPayouts />;
       case "audit-logs": return <AdminAuditLogs />;
       case "doctor-verification": return <AdminDoctorVerification />;
       case "site-settings": return <AdminSiteSettings />;
