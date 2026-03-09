@@ -35,6 +35,9 @@ serve(async (req) => {
     if (!action && typeof bodyJson.action === "string") {
       action = bodyJson.action;
     }
+
+    // --- Webhook: verify event from Paystack (no auth needed) ---
+    if (action === "webhook") {
       const signature = req.headers.get("x-paystack-signature");
 
       // Verify signature using HMAC SHA512
@@ -46,7 +49,7 @@ serve(async (req) => {
         false,
         ["sign"]
       );
-      const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+      const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
       const expectedSig = Array.from(new Uint8Array(sig))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
@@ -59,7 +62,7 @@ serve(async (req) => {
         });
       }
 
-      const event = JSON.parse(body);
+      const event = bodyJson as Record<string, any>;
       console.log("Paystack webhook event:", event.event);
 
       if (event.event === "charge.success") {
