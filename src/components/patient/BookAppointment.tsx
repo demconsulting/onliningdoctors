@@ -128,6 +128,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
             "paystack-payment",
             {
               body: {
+                action: "initialize",
                 appointment_id: apptData.id,
                 amount: fee,
                 currency,
@@ -135,7 +136,6 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                 doctor_id: selectedDoctor,
                 callback_url: callbackUrl,
               },
-              headers: { "Content-Type": "application/json" },
             }
           );
 

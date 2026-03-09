@@ -34,8 +34,7 @@ const Dashboard = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke("paystack-payment", {
-        body: { reference: ref },
-        headers: { "Content-Type": "application/json" },
+        body: { action: "verify", reference: ref },
       });
 
       if (error || data?.error) {
