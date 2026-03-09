@@ -89,8 +89,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     setLoading(true);
 
     // Determine fee upfront to decide initial status
-    const doctor = doctors.find(d => d.profile_id === selectedDoctor) || null;
-    const fee = doctor?.consultation_fee ? Number(doctor.consultation_fee) : 0;
+    const fee = selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0;
     const needsPayment = fee > 0;
 
     // 1. Create the appointment — awaiting_payment if fee required, pending otherwise
