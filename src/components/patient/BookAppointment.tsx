@@ -96,10 +96,6 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     return matchSearch && matchCountry && matchCity;
   });
 
-  const displayCurrencySymbol = patientCountry || geo
-    ? getCurrencySymbol(patientCountry || geo?.countryCode || geo?.countryName)
-    : "";
-
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDoctor || !date || !time) {
