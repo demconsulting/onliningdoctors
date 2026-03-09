@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.license-renewal-reminder]
 verify_jwt = false
+
+[functions.paystack-payment]
+verify_jwt = false
