@@ -252,7 +252,7 @@ serve(async (req) => {
 
       const newStatus = txData.status === "success" ? "success" : "failed";
 
-      await serviceClient
+      const { data: paymentRows } = await serviceClient
         .from("payments")
         .update({
           status: newStatus,
@@ -261,7 +261,17 @@ serve(async (req) => {
           fee_amount: txData.fees ? txData.fees / 100 : null,
           metadata: txData,
         })
-        .eq("paystack_reference", reference);
+        .eq("paystack_reference", reference)
+        .select("appointment_id");
+
+      // Confirm the appointment if payment succeeded
+      if (newStatus === "success" && paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
+        await serviceClient
+          .from("appointments")
+          .update({ status: "pending" })
+          .eq("id", paymentRows[0].appointment_id)
+          .eq("status", "awaiting_payment");
+      }
 
       return new Response(
         JSON.stringify({
