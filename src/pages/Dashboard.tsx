@@ -64,6 +64,11 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Verify payment after auth is ready
+  useEffect(() => {
+    if (user) verifyPayment();
+  }, [user, verifyPayment]);
+
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
