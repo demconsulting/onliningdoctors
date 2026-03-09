@@ -60,6 +60,20 @@ function formatSlotTime(t: string) {
   return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
+function getTimezoneFromCountry(countryCode: string | null): { name: string; abbreviation: string } {
+  const timezones: Record<string, { name: string; abbreviation: string }> = {
+    ZA: { name: "South Africa Standard Time", abbreviation: "SAST" },
+    NG: { name: "West Africa Time", abbreviation: "WAT" },
+    KE: { name: "East Africa Time", abbreviation: "EAT" },
+    GH: { name: "West Africa Time", abbreviation: "WAT" },
+    UG: { name: "East Africa Time", abbreviation: "EAT" },
+    RW: { name: "Central Africa Time", abbreviation: "CAT" },
+    TZ: { name: "East Africa Time", abbreviation: "EAT" },
+    ET: { name: "East Africa Time", abbreviation: "EAT" },
+  };
+  return timezones[countryCode || ""] || { name: "Local Time", abbreviation: "UTC" };
+}
+
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
   const [patientCountry, setPatientCountry] = useState<string | null>(null);
