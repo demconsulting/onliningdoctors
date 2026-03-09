@@ -121,7 +121,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       if (timing === "at_booking") {
         // Initialize Paystack payment
         const currency = geo?.currency || "NGN";
-        const callbackUrl = `${window.location.origin}/dashboard?payment_ref=`;
+        const callbackUrl = `${window.location.origin}/dashboard`;
 
         try {
           const { data: payData, error: payError } = await supabase.functions.invoke(
