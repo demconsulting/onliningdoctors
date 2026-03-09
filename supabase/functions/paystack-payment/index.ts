@@ -24,11 +24,20 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action");
+    let action = url.searchParams.get("action");
+
+    // Clone request body for potential re-reading; parse once
+    const rawBody = await req.text();
+    let bodyJson: Record<string, unknown> = {};
+    try { bodyJson = rawBody ? JSON.parse(rawBody) : {}; } catch { /* ignore */ }
+
+    // Allow action from body as well (for supabase.functions.invoke which doesn't support query params easily)
+    if (!action && typeof bodyJson.action === "string") {
+      action = bodyJson.action;
+    }
 
     // --- Webhook: verify event from Paystack (no auth needed) ---
     if (action === "webhook") {
-      const body = await req.text();
       const signature = req.headers.get("x-paystack-signature");
 
       // Verify signature using HMAC SHA512
@@ -40,7 +49,7 @@ serve(async (req) => {
         false,
         ["sign"]
       );
-      const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+      const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(rawBody));
       const expectedSig = Array.from(new Uint8Array(sig))
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
@@ -53,7 +62,7 @@ serve(async (req) => {
         });
       }
 
-      const event = JSON.parse(body);
+      const event = bodyJson as Record<string, any>;
       console.log("Paystack webhook event:", event.event);
 
       if (event.event === "charge.success") {
@@ -110,7 +119,7 @@ serve(async (req) => {
     // --- Initialize payment ---
     if (action === "initialize") {
       const { appointment_id, amount, currency, email, doctor_id, callback_url } =
-        await req.json();
+        bodyJson as any;
 
       if (!appointment_id || !amount || !email || !doctor_id) {
         return new Response(
@@ -200,7 +209,7 @@ serve(async (req) => {
 
     // --- Verify payment ---
     if (action === "verify") {
-      const { reference } = await req.json();
+      const { reference } = bodyJson as any;
       if (!reference) {
         return new Response(
           JSON.stringify({ error: "Reference required" }),

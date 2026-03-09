@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, User, Calendar, FileText, HeartPulse } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import ProfileEdit from "@/components/patient/ProfileEdit";
 import MedicalInfo from "@/components/patient/MedicalInfo";
@@ -18,6 +19,35 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("appointments");
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  // Verify payment on return from Paystack
+  const verifyPayment = useCallback(async () => {
+    const ref = searchParams.get("reference") || searchParams.get("trxref");
+    if (!ref) return;
+
+    // Clean up URL
+    searchParams.delete("reference");
+    searchParams.delete("trxref");
+    setSearchParams(searchParams, { replace: true });
+
+    try {
+      const { data, error } = await supabase.functions.invoke("paystack-payment", {
+        body: { action: "verify", reference: ref },
+      });
+
+      if (error || data?.error) {
+        toast({ variant: "destructive", title: "Payment verification failed", description: data?.error || error?.message });
+      } else if (data?.status === "success") {
+        toast({ title: "Payment successful!", description: `${data.currency} ${data.amount} paid via ${data.channel}` });
+      } else {
+        toast({ variant: "destructive", title: "Payment not completed", description: "Please try again or contact support." });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Verification error", description: err.message });
+    }
+  }, [searchParams, setSearchParams, toast]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -32,6 +62,11 @@ const Dashboard = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Verify payment after auth is ready
+  useEffect(() => {
+    if (user) verifyPayment();
+  }, [user, verifyPayment]);
 
   if (loading || !user) {
     return (
