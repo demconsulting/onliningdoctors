@@ -149,10 +149,12 @@ serve(async (req) => {
       const payConfig = configData?.value as Record<string, unknown> | null;
       const feeBearer = (payConfig?.fee_bearer as string) || "patient";
 
-      // Paystack supported currencies — fall back to NGN if unsupported
-      const PAYSTACK_SUPPORTED_CURRENCIES = ["NGN", "GHS", "ZAR", "USD", "KES", "EGP", "XOF", "RWF"];
+      // Only send currencies actually enabled on the merchant's Paystack account.
+      // If the requested currency isn't enabled, fall back to NGN.
+      // To add more currencies, enable them on Paystack dashboard first, then add here.
+      const MERCHANT_ENABLED_CURRENCIES = ["NGN"];
       const requestedCurrency = (currency || "NGN").toUpperCase();
-      const finalCurrency = PAYSTACK_SUPPORTED_CURRENCIES.includes(requestedCurrency)
+      const finalCurrency = MERCHANT_ENABLED_CURRENCIES.includes(requestedCurrency)
         ? requestedCurrency
         : "NGN";
 
