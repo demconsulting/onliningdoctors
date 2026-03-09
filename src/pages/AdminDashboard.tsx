@@ -21,6 +21,7 @@ import AdminFooter from "@/components/admin/AdminFooter";
 import AdminSectionOrder from "@/components/admin/AdminSectionOrder";
 import AdminPaymentConfig from "@/components/admin/AdminPaymentConfig";
 import AdminPayments from "@/components/admin/AdminPayments";
+import AdminPayouts from "@/components/admin/AdminPayouts";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -76,6 +77,7 @@ const AdminDashboard = () => {
       case "faqs": return <AdminFaqs />;
       case "payment-config": return <AdminPaymentConfig />;
       case "payments": return <AdminPayments />;
+      case "payouts": return <AdminPayouts />;
       case "audit-logs": return <AdminAuditLogs />;
       case "doctor-verification": return <AdminDoctorVerification />;
       case "site-settings": return <AdminSiteSettings />;
