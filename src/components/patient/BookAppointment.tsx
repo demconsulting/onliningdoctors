@@ -88,14 +88,19 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
     setLoading(true);
 
-    // 1. Create the appointment
+    // Determine fee upfront to decide initial status
+    const doctor = doctors.find(d => d.profile_id === selectedDoctor) || null;
+    const fee = doctor?.consultation_fee ? Number(doctor.consultation_fee) : 0;
+    const needsPayment = fee > 0;
+
+    // 1. Create the appointment — awaiting_payment if fee required, pending otherwise
     const { data: apptData, error } = await supabase.from("appointments").insert({
       patient_id: user.id,
       doctor_id: selectedDoctor,
       scheduled_at: scheduledAt,
       duration_minutes: 30,
       reason: reason.trim() || null,
-      status: "pending",
+      status: needsPayment ? "awaiting_payment" : "pending",
     }).select("id").single();
 
     if (error) {
