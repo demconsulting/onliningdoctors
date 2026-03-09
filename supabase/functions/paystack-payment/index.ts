@@ -119,7 +119,7 @@ serve(async (req) => {
     // --- Initialize payment ---
     if (action === "initialize") {
       const { appointment_id, amount, currency, email, doctor_id, callback_url } =
-        await req.json();
+        bodyJson as any;
 
       if (!appointment_id || !amount || !email || !doctor_id) {
         return new Response(
