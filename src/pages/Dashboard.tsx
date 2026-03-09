@@ -19,6 +19,36 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("appointments");
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  // Verify payment on return from Paystack
+  const verifyPayment = useCallback(async () => {
+    const ref = searchParams.get("reference") || searchParams.get("trxref");
+    if (!ref) return;
+
+    // Clean up URL
+    searchParams.delete("reference");
+    searchParams.delete("trxref");
+    setSearchParams(searchParams, { replace: true });
+
+    try {
+      const { data, error } = await supabase.functions.invoke("paystack-payment", {
+        body: { reference: ref },
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (error || data?.error) {
+        toast({ variant: "destructive", title: "Payment verification failed", description: data?.error || error?.message });
+      } else if (data?.status === "success") {
+        toast({ title: "Payment successful!", description: `${data.currency} ${data.amount} paid via ${data.channel}` });
+      } else {
+        toast({ variant: "destructive", title: "Payment not completed", description: "Please try again or contact support." });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Verification error", description: err.message });
+    }
+  }, [searchParams, setSearchParams, toast]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
