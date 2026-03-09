@@ -171,7 +171,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
     // If no fee or payment timing is not at_booking, just confirm
     setLoading(false);
-    toast({ title: "Appointment booked!", description: `With ${doctor?.profile?.full_name || "doctor"} on ${date}` });
+    toast({ title: "Appointment booked!", description: `With ${selectedDoc?.profile?.full_name || "doctor"} on ${date}` });
     setSelectedDoctor("");
     setDate("");
     setTime("");
