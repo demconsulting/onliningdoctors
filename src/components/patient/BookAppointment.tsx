@@ -216,7 +216,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       const timing = (payConfig?.payment_timing as string) || "at_booking";
 
       if (timing === "at_booking") {
-        const currency = "NGN";
+        const currency = geo?.currency || "NGN";
         const callbackUrl = `${window.location.origin}/dashboard`;
 
         try {
