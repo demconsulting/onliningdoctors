@@ -45,12 +45,27 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("country")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setPatientCountry(data?.country ?? null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
+  useEffect(() => {
     supabase.from("specialties").select("*").then(({ data }) => {
       if (data) setSpecialties(data);
     });
   }, []);
 
-  useEffect(() => {
     if (!selectedSpecialty) { setDoctors([]); return; }
     setLoadingDoctors(true);
     setSelectedDoctor("");
