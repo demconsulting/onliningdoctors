@@ -209,7 +209,7 @@ serve(async (req) => {
 
     // --- Verify payment ---
     if (action === "verify") {
-      const { reference } = await req.json();
+      const { reference } = bodyJson as any;
       if (!reference) {
         return new Response(
           JSON.stringify({ error: "Reference required" }),
