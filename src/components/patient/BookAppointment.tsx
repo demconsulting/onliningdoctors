@@ -29,7 +29,6 @@ const COMMON_REASONS = [
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
-  const currencySymbol = geo?.currencySymbol || "";
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
@@ -263,6 +262,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         const name = doc.profile?.full_name || "Doctor";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
                         const isSelected = selectedDoctor === doc.profile_id;
+                        const feeSymbol = getCurrencySymbol(doc.profile?.country || geo?.countryCode || geo?.countryName);
 
                         return (
                           <div
@@ -295,7 +295,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                                     <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
                                   )}
                                   {doc.consultation_fee != null && (
-                                    <span className="flex items-center gap-0.5"><DollarSign className="h-3 w-3" /> {currencySymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
+                                    <span className="flex items-center gap-0.5"><DollarSign className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
                                   )}
                                   {(doc.experience_years ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {doc.experience_years} yrs</span>
