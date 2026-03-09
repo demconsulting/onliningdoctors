@@ -60,6 +60,20 @@ function formatSlotTime(t: string) {
   return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
+function getTimezoneFromCountry(countryCode: string | null): { name: string; abbreviation: string } {
+  const timezones: Record<string, { name: string; abbreviation: string }> = {
+    ZA: { name: "South Africa Standard Time", abbreviation: "SAST" },
+    NG: { name: "West Africa Time", abbreviation: "WAT" },
+    KE: { name: "East Africa Time", abbreviation: "EAT" },
+    GH: { name: "West Africa Time", abbreviation: "WAT" },
+    UG: { name: "East Africa Time", abbreviation: "EAT" },
+    RW: { name: "Central Africa Time", abbreviation: "CAT" },
+    TZ: { name: "East Africa Time", abbreviation: "EAT" },
+    ET: { name: "East Africa Time", abbreviation: "EAT" },
+  };
+  return timezones[countryCode || ""] || { name: "Local Time", abbreviation: "UTC" };
+}
+
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
   const [patientCountry, setPatientCountry] = useState<string | null>(null);
@@ -464,6 +478,9 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         <>
                           <p className="text-sm font-medium text-foreground">
                             Available slots for <span className="text-primary">{format(selectedDate, "EEE, MMM d")}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            All times in {getTimezoneFromCountry(selectedDoctor ? doctors.find(d => d.profile_id === selectedDoctor)?.profile?.country : null)?.abbreviation || "local"}
                           </p>
                           {timeSlots.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No time slots available for this day.</p>
