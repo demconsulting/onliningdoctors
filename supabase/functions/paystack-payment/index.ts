@@ -72,7 +72,8 @@ serve(async (req) => {
           Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
         );
 
-        await serviceClient
+        // Update payment status
+        const { data: paymentRows } = await serviceClient
           .from("payments")
           .update({
             status: "success",
@@ -80,7 +81,17 @@ serve(async (req) => {
             payment_method: event.data.channel,
             metadata: event.data,
           })
-          .eq("paystack_reference", reference);
+          .eq("paystack_reference", reference)
+          .select("appointment_id");
+
+        // Confirm the appointment now that payment succeeded
+        if (paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
+          await serviceClient
+            .from("appointments")
+            .update({ status: "pending" })
+            .eq("id", paymentRows[0].appointment_id)
+            .eq("status", "awaiting_payment");
+        }
 
         console.log("Payment updated for reference:", reference);
       }
