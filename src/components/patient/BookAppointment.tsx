@@ -83,7 +83,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       return;
     }
 
-    const doctor = doctors.find(d => d.profile_id === selectedDoctor);
+    const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
     const scheduledAt = new Date(`${date}T${time}`).toISOString();
 
     setLoading(true);
