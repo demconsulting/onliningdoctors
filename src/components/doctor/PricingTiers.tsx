@@ -139,7 +139,7 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
                 <Input value={tier.name} onChange={(e) => updateTier(i, { name: e.target.value })} placeholder="e.g. Standard" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Price ({currencySymbol})</Label>
+                <Label className="text-xs">Price</Label>
                 <Input type="number" min={0} value={tier.price} onChange={(e) => updateTier(i, { price: Number(e.target.value) })} />
               </div>
               <div className="space-y-1">

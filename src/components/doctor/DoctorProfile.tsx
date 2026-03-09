@@ -11,8 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
-import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { countryCodeToName } from "@/data/countryMappings";
 import AvatarUpload from "@/components/shared/AvatarUpload";
 
 interface DoctorProfileProps {
@@ -62,8 +60,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
-  const { geo } = useGeoLocation();
-  const currencySymbol = geo?.currencySymbol || "";
 
   useEffect(() => {
     const load = async () => {
