@@ -469,21 +469,38 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                             <p className="text-sm text-muted-foreground">No time slots available for this day.</p>
                           ) : (
                             <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto">
-                              {timeSlots.map(slot => (
-                                <Button
-                                  key={slot}
-                                  type="button"
-                                  variant={time === slot ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => setTime(slot)}
-                                  className={cn(
-                                    "text-xs",
-                                    time === slot && "ring-2 ring-primary ring-offset-1"
-                                  )}
-                                >
-                                  {formatSlotTime(slot)}
-                                </Button>
-                              ))}
+                              {timeSlots.map((slot, idx) => {
+                                const isFirst = idx === 0;
+                                const [h] = slot.split(":").map(Number);
+                                const isPopular = h >= 16; // 4 PM onwards
+                                
+                                return (
+                                  <div key={slot} className="relative">
+                                    <Button
+                                      type="button"
+                                      variant={time === slot ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => setTime(slot)}
+                                      className={cn(
+                                        "text-xs w-full",
+                                        time === slot && "ring-2 ring-primary ring-offset-1"
+                                      )}
+                                    >
+                                      {formatSlotTime(slot)}
+                                    </Button>
+                                    {isFirst && (
+                                      <div className="absolute -top-2 -right-1 bg-primary text-primary-foreground text-xs font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                        Next
+                                      </div>
+                                    )}
+                                    {isPopular && !isFirst && (
+                                      <div className="absolute -top-2 -right-1 bg-warning text-warning-foreground text-xs font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                                        Popular
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
                         </>
