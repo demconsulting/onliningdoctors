@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Calendar, Loader2, Star, MapPin, ExternalLink, DollarSign, Clock, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface BookAppointmentProps {
   user: User;
@@ -28,7 +29,6 @@ const COMMON_REASONS = [
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
-  const currencySymbol = geo?.currencySymbol || "";
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
@@ -262,6 +262,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         const name = doc.profile?.full_name || "Doctor";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
                         const isSelected = selectedDoctor === doc.profile_id;
+                        const feeSymbol = getCurrencySymbol(doc.profile?.country || geo?.countryCode || geo?.countryName);
 
                         return (
                           <div
@@ -294,7 +295,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                                     <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
                                   )}
                                   {doc.consultation_fee != null && (
-                                    <span className="flex items-center gap-0.5"><DollarSign className="h-3 w-3" /> {currencySymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
+                                    <span className="flex items-center gap-0.5"><DollarSign className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}</span>
                                   )}
                                   {(doc.experience_years ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {doc.experience_years} yrs</span>
