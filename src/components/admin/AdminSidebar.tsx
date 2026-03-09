@@ -27,6 +27,7 @@ const items = [
   { title: "Appointments", key: "appointments", icon: Calendar },
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Contact Messages", key: "contacts", icon: Mail },
+  { title: "Payment Config", key: "payment-config", icon: CreditCard },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
 ];
