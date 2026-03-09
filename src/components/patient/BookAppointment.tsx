@@ -83,19 +83,23 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       return;
     }
 
-    const doctor = doctors.find(d => d.profile_id === selectedDoctor);
+    const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
     const scheduledAt = new Date(`${date}T${time}`).toISOString();
 
     setLoading(true);
 
-    // 1. Create the appointment
+    // Determine fee upfront to decide initial status
+    const fee = selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0;
+    const needsPayment = fee > 0;
+
+    // 1. Create the appointment — awaiting_payment if fee required, pending otherwise
     const { data: apptData, error } = await supabase.from("appointments").insert({
       patient_id: user.id,
       doctor_id: selectedDoctor,
       scheduled_at: scheduledAt,
       duration_minutes: 30,
       reason: reason.trim() || null,
-      status: "pending",
+      status: needsPayment ? "awaiting_payment" : "pending",
     }).select("id").single();
 
     if (error) {
@@ -105,9 +109,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     }
 
     // 2. Check payment config & doctor fee
-    const fee = doctor?.consultation_fee ? Number(doctor.consultation_fee) : 0;
-
-    if (fee > 0) {
+    if (needsPayment) {
       // Load payment config to check timing
       const { data: configData } = await supabase
         .from("site_content")
@@ -169,7 +171,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
     // If no fee or payment timing is not at_booking, just confirm
     setLoading(false);
-    toast({ title: "Appointment booked!", description: `With ${doctor?.profile?.full_name || "doctor"} on ${date}` });
+    toast({ title: "Appointment booked!", description: `With ${selectedDoc?.profile?.full_name || "doctor"} on ${date}` });
     setSelectedDoctor("");
     setDate("");
     setTime("");
