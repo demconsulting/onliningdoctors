@@ -286,7 +286,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         const name = doc.profile?.full_name || "Doctor";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
                         const isSelected = selectedDoctor === doc.profile_id;
-                        const feeSymbol = getCurrencySymbol(doc.profile?.country || geo?.countryCode || geo?.countryName);
+                        const feeSymbol = displayCurrencySymbol;
 
                         return (
                           <div
