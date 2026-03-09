@@ -160,6 +160,22 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       const duration = s.slot_duration_minutes ?? 30;
       slots.push(...generateTimeSlots(s.start_time, s.end_time, duration));
     }
+    
+    // Filter out passed times if selected date is today
+    const now = new Date();
+    const isToday = selectedDate.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return [...new Set(slots)]
+        .sort()
+        .filter(slot => {
+          const [h, m] = slot.split(":").map(Number);
+          const slotTime = new Date(selectedDate);
+          slotTime.setHours(h, m, 0, 0);
+          return slotTime > now;
+        });
+    }
+    
     return [...new Set(slots)].sort();
   }, [selectedDate, availability]);
 
