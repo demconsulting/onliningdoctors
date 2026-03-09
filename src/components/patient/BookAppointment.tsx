@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 import { Calendar, Loader2, Star, MapPin, ExternalLink, Coins, Clock, Search, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -14,10 +15,20 @@ import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getCurrencySymbol } from "@/lib/currency";
+import { format, getDay, isBefore, startOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface BookAppointmentProps {
   user: User;
   onBooked?: () => void;
+}
+
+interface AvailabilitySlot {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_available: boolean | null;
+  slot_duration_minutes: number | null;
 }
 
 const COMMON_REASONS = [
@@ -26,6 +37,28 @@ const COMMON_REASONS = [
   "Follow-up consultation", "Prescription refill", "Mental health concern",
   "Chronic disease management", "Lab results review", "Second opinion"
 ];
+
+function generateTimeSlots(startTime: string, endTime: string, durationMin: number): string[] {
+  const slots: string[] = [];
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  let current = sh * 60 + sm;
+  const end = eh * 60 + em;
+  while (current + durationMin <= end) {
+    const h = Math.floor(current / 60);
+    const m = current % 60;
+    slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    current += durationMin;
+  }
+  return slots;
+}
+
+function formatSlotTime(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+}
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
@@ -37,11 +70,13 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
-  const [date, setDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState("");
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,10 +89,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       .then(({ data }) => {
         if (!cancelled) setPatientCountry(data?.country ?? null);
       });
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [user.id]);
 
   useEffect(() => {
@@ -84,7 +116,53 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       });
   }, [selectedSpecialty]);
 
-  // Derive unique countries/cities for filters
+  // Fetch doctor availability when doctor is selected
+  useEffect(() => {
+    if (!selectedDoctor) {
+      setAvailability([]);
+      setSelectedDate(undefined);
+      setTime("");
+      return;
+    }
+    setLoadingAvailability(true);
+    setSelectedDate(undefined);
+    setTime("");
+    supabase
+      .from("doctor_availability")
+      .select("day_of_week, start_time, end_time, is_available, slot_duration_minutes")
+      .eq("doctor_id", selectedDoctor)
+      .eq("is_available", true)
+      .then(({ data }) => {
+        setAvailability((data as AvailabilitySlot[]) || []);
+        setLoadingAvailability(false);
+      });
+  }, [selectedDoctor]);
+
+  // Available days of week (0=Sun in date-fns, but doctor_availability uses 0=Sun too)
+  const availableDaysOfWeek = useMemo(() => {
+    return new Set(availability.map(a => a.day_of_week));
+  }, [availability]);
+
+  // Disable dates that are in the past or not on available days
+  const isDateDisabled = (date: Date) => {
+    if (isBefore(date, startOfDay(new Date()))) return true;
+    const dow = getDay(date); // 0=Sun
+    return !availableDaysOfWeek.has(dow);
+  };
+
+  // Generate time slots for selected date
+  const timeSlots = useMemo(() => {
+    if (!selectedDate || availability.length === 0) return [];
+    const dow = getDay(selectedDate);
+    const daySlots = availability.filter(a => a.day_of_week === dow);
+    const slots: string[] = [];
+    for (const s of daySlots) {
+      const duration = s.slot_duration_minutes ?? 30;
+      slots.push(...generateTimeSlots(s.start_time, s.end_time, duration));
+    }
+    return [...new Set(slots)].sort();
+  }, [selectedDate, availability]);
+
   const countries = [...new Set(doctors.map(d => d.profile?.country).filter(Boolean))].sort();
   const cities = [...new Set(doctors.map(d => d.profile?.city).filter(Boolean))].sort();
 
@@ -98,21 +176,20 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDoctor || !date || !time) {
+    if (!selectedDoctor || !selectedDate || !time) {
       toast({ variant: "destructive", title: "Please fill all required fields" });
       return;
     }
 
     const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
-    const scheduledAt = new Date(`${date}T${time}`).toISOString();
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const scheduledAt = new Date(`${dateStr}T${time}`).toISOString();
 
     setLoading(true);
 
-    // Determine fee upfront to decide initial status
     const fee = selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0;
     const needsPayment = fee > 0;
 
-    // 1. Create the appointment — awaiting_payment if fee required, pending otherwise
     const { data: apptData, error } = await supabase.from("appointments").insert({
       patient_id: user.id,
       doctor_id: selectedDoctor,
@@ -128,9 +205,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       return;
     }
 
-    // 2. Check payment config & doctor fee
     if (needsPayment) {
-      // Load payment config to check timing
       const { data: configData } = await supabase
         .from("site_content")
         .select("value")
@@ -141,7 +216,6 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       const timing = (payConfig?.payment_timing as string) || "at_booking";
 
       if (timing === "at_booking") {
-        // Initialize Paystack payment
         const currency = geo?.currency || "NGN";
         const callbackUrl = `${window.location.origin}/dashboard`;
 
@@ -171,7 +245,6 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
             return;
           }
 
-          // Redirect to Paystack checkout
           if (payData?.authorization_url) {
             toast({ title: "Redirecting to payment..." });
             window.location.href = payData.authorization_url;
@@ -189,11 +262,10 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       }
     }
 
-    // If no fee or payment timing is not at_booking, just confirm
     setLoading(false);
-    toast({ title: "Appointment booked!", description: `With ${selectedDoc?.profile?.full_name || "doctor"} on ${date}` });
+    toast({ title: "Appointment booked!", description: `With ${selectedDoc?.profile?.full_name || "doctor"} on ${dateStr}` });
     setSelectedDoctor("");
-    setDate("");
+    setSelectedDate(undefined);
     setTime("");
     setReason("");
     onBooked?.();
@@ -342,36 +414,97 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
             </div>
           )}
 
-          {/* Step 3: Date & Time */}
+          {/* Step 3: Date & Time — availability-aware */}
           {selectedDoctor && (
             <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>3. Date</Label>
-                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().split("T")[0]} required />
+              {loadingAvailability ? (
+                <div className="flex items-center justify-center gap-2 py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Loading availability...</span>
                 </div>
-                <div className="space-y-2">
-                  <Label>Time</Label>
-                  <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
+              ) : availability.length === 0 ? (
+                <div className="rounded-lg border border-border bg-muted/30 p-4 text-center">
+                  <p className="text-sm text-muted-foreground">This doctor hasn't set their availability yet. Please choose a different doctor or try again later.</p>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Reason for Visit</Label>
-                <SuggestionChips
-                  suggestions={COMMON_REASONS}
-                  onSelect={(v) => setReason((prev) => {
-                    if (prev.toLowerCase().includes(v.toLowerCase())) return prev;
-                    return prev ? `${prev}, ${v}` : v;
-                  })}
-                  activeValues={reason.split(",").map(s => s.trim()).filter(Boolean)}
-                  label="Quick select a common reason"
-                />
-                <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
-              </div>
-              <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
-                Book Appointment
-              </Button>
+              ) : (
+                <div className="space-y-4">
+                  <Label>3. Pick a Date & Time</Label>
+                  <div className="flex flex-col gap-4 sm:flex-row">
+                    {/* Calendar */}
+                    <div className="rounded-lg border border-border p-1">
+                      <CalendarComponent
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={(d) => { setSelectedDate(d); setTime(""); }}
+                        disabled={isDateDisabled}
+                        fromDate={new Date()}
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </div>
+
+                    {/* Time slots */}
+                    <div className="flex-1 space-y-2">
+                      {selectedDate ? (
+                        <>
+                          <p className="text-sm font-medium text-foreground">
+                            Available slots for <span className="text-primary">{format(selectedDate, "EEE, MMM d")}</span>
+                          </p>
+                          {timeSlots.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">No time slots available for this day.</p>
+                          ) : (
+                            <div className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto">
+                              {timeSlots.map(slot => (
+                                <Button
+                                  key={slot}
+                                  type="button"
+                                  variant={time === slot ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setTime(slot)}
+                                  className={cn(
+                                    "text-xs",
+                                    time === slot && "ring-2 ring-primary ring-offset-1"
+                                  )}
+                                >
+                                  {formatSlotTime(slot)}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-border p-6">
+                          <p className="text-sm text-muted-foreground text-center">
+                            ← Select a highlighted date to see available time slots
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reason & Submit — only show when date+time selected */}
+              {selectedDate && time && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Reason for Visit</Label>
+                    <SuggestionChips
+                      suggestions={COMMON_REASONS}
+                      onSelect={(v) => setReason((prev) => {
+                        if (prev.toLowerCase().includes(v.toLowerCase())) return prev;
+                        return prev ? `${prev}, ${v}` : v;
+                      })}
+                      activeValues={reason.split(",").map(s => s.trim()).filter(Boolean)}
+                      label="Quick select a common reason"
+                    />
+                    <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
+                  </div>
+                  <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
+                    Book Appointment
+                  </Button>
+                </>
+              )}
             </>
           )}
         </form>
