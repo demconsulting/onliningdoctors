@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, Loader2, Video, Star, Pencil } from "lucide-react";
+import { Calendar, Clock, User, Loader2, Video, Star, Pencil, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
