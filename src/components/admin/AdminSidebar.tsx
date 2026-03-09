@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -28,6 +28,7 @@ const items = [
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
+  { title: "Payments", key: "payments", icon: Receipt },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
 ];
