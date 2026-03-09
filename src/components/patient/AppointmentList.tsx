@@ -168,27 +168,39 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                   </div>
                 </div>
                 {(() => {
-                  const aptEnd = new Date(new Date(apt.scheduled_at).getTime() + (apt.duration_minutes || 30) * 60000);
-                  const isExpired = Date.now() > aptEnd.getTime() + 30 * 60000;
-                  const displayStatus = isExpired && (apt.status === "pending" || apt.status === "confirmed") ? "expired" : apt.status;
-                  return (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={displayStatus === "expired" ? "bg-muted text-muted-foreground border-border" : (statusColors[apt.status] || "")}>
-                        {displayStatus === "expired" ? "past" : apt.status}
-                      </Badge>
-                      {!isExpired && apt.status === "confirmed" && (
-                        <Button variant="outline" size="sm" className="gap-1 text-primary" onClick={() => navigate(`/call/${apt.id}`)}>
-                          <Video className="h-3.5 w-3.5" /> Join Call
-                        </Button>
-                      )}
-                      {!isExpired && (apt.status === "pending" || apt.status === "confirmed") && (
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })()}
+                   const aptEnd = new Date(new Date(apt.scheduled_at).getTime() + (apt.duration_minutes || 30) * 60000);
+                   const isExpired = Date.now() > aptEnd.getTime() + 30 * 60000;
+                   const displayStatus = isExpired && (apt.status === "pending" || apt.status === "confirmed") ? "expired" : apt.status;
+                   return (
+                     <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+                       <div className="flex items-center gap-2">
+                         {displayStatus === "awaiting_payment" && (
+                           <AlertCircle className="h-4 w-4 text-destructive animate-pulse" />
+                         )}
+                         <Badge variant="outline" className={displayStatus === "expired" ? "bg-muted text-muted-foreground border-border" : (statusColors[apt.status] || "")}>
+                           {displayStatus === "expired" ? "past" : displayStatus === "awaiting_payment" ? "Payment Pending" : apt.status}
+                         </Badge>
+                       </div>
+                       <div className="flex flex-wrap gap-2">
+                         {displayStatus === "awaiting_payment" && (
+                           <Button variant="default" size="sm" className="gap-1 text-xs" onClick={() => navigate(`/dashboard?activeTab=book`)}>
+                             Complete Payment
+                           </Button>
+                         )}
+                         {!isExpired && apt.status === "confirmed" && (
+                           <Button variant="outline" size="sm" className="gap-1 text-primary" onClick={() => navigate(`/call/${apt.id}`)}>
+                             <Video className="h-3.5 w-3.5" /> Join Call
+                           </Button>
+                         )}
+                         {!isExpired && (apt.status === "pending" || apt.status === "confirmed") && (
+                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
+                             Cancel
+                           </Button>
+                         )}
+                       </div>
+                     </div>
+                   );
+                 })()}
                 {/* Document sharing toggle for active appointments */}
                 {(apt.status === "pending" || apt.status === "confirmed" || apt.status === "completed") && (
                   <DocumentSharingToggle
