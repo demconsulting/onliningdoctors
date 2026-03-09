@@ -569,6 +569,113 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          appointment_id: string | null
+          created_at: string
+          currency: string
+          doctor_id: string
+          fee_amount: number | null
+          fee_bearer: string | null
+          id: string
+          metadata: Json | null
+          paid_at: string | null
+          patient_id: string
+          payment_method: string | null
+          paystack_access_code: string | null
+          paystack_reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          appointment_id?: string | null
+          created_at?: string
+          currency?: string
+          doctor_id: string
+          fee_amount?: number | null
+          fee_bearer?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          patient_id: string
+          payment_method?: string | null
+          paystack_access_code?: string | null
+          paystack_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string | null
+          created_at?: string
+          currency?: string
+          doctor_id?: string
+          fee_amount?: number | null
+          fee_bearer?: string | null
+          id?: string
+          metadata?: Json | null
+          paid_at?: string | null
+          patient_id?: string
+          payment_method?: string | null
+          paystack_access_code?: string | null
+          paystack_reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payout_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          currency: string
+          doctor_id: string
+          id: string
+          payment_ids: string[] | null
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          currency?: string
+          doctor_id: string
+          id?: string
+          payment_ids?: string[] | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          currency?: string
+          doctor_id?: string
+          id?: string
+          payment_ids?: string[] | null
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null

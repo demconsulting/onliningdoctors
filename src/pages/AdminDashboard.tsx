@@ -19,6 +19,7 @@ import AdminFindDoctor from "@/components/admin/AdminFindDoctor";
 import AdminDoctorCTA from "@/components/admin/AdminDoctorCTA";
 import AdminFooter from "@/components/admin/AdminFooter";
 import AdminSectionOrder from "@/components/admin/AdminSectionOrder";
+import AdminPaymentConfig from "@/components/admin/AdminPaymentConfig";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -72,6 +73,7 @@ const AdminDashboard = () => {
       case "specialties": return <AdminSpecialties />;
       case "contacts": return <AdminContacts />;
       case "faqs": return <AdminFaqs />;
+      case "payment-config": return <AdminPaymentConfig />;
       case "audit-logs": return <AdminAuditLogs />;
       case "doctor-verification": return <AdminDoctorVerification />;
       case "site-settings": return <AdminSiteSettings />;
