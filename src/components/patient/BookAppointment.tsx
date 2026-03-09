@@ -479,6 +479,9 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                           <p className="text-sm font-medium text-foreground">
                             Available slots for <span className="text-primary">{format(selectedDate, "EEE, MMM d")}</span>
                           </p>
+                          <p className="text-xs text-muted-foreground">
+                            All times in {getTimezoneFromCountry(selectedDoctor ? doctors.find(d => d.profile_id === selectedDoctor)?.profile?.country : null)?.abbreviation || "local"}
+                          </p>
                           {timeSlots.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No time slots available for this day.</p>
                           ) : (
