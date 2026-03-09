@@ -24,11 +24,17 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action");
+    let action = url.searchParams.get("action");
 
-    // --- Webhook: verify event from Paystack (no auth needed) ---
-    if (action === "webhook") {
-      const body = await req.text();
+    // Clone request body for potential re-reading; parse once
+    const rawBody = await req.text();
+    let bodyJson: Record<string, unknown> = {};
+    try { bodyJson = rawBody ? JSON.parse(rawBody) : {}; } catch { /* ignore */ }
+
+    // Allow action from body as well (for supabase.functions.invoke which doesn't support query params easily)
+    if (!action && typeof bodyJson.action === "string") {
+      action = bodyJson.action;
+    }
       const signature = req.headers.get("x-paystack-signature");
 
       // Verify signature using HMAC SHA512
