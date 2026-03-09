@@ -208,7 +208,7 @@ serve(async (req) => {
         patient_id: user.id,
         doctor_id,
         amount: Number(amount),
-        currency: currency || "NGN",
+        currency: finalCurrency,
         status: "pending",
         paystack_reference: reference,
         paystack_access_code: paystackData.data.access_code,
