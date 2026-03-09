@@ -65,18 +65,23 @@ export const COUNTRY_CURRENCY: Record<string, { currency: string; currencySymbol
 
 export function getCurrencySymbol(countryInput?: string | null): string {
   if (!countryInput) return "$";
-  
-  // If input is already a country code (2 chars, uppercase), use it directly
-  if (countryInput.length === 2) {
-    const info = COUNTRY_CURRENCY[countryInput.toUpperCase()];
+
+  const input = String(countryInput).trim();
+  if (!input) return "$";
+
+  // If input is already a country code (2 chars), use it directly
+  if (input.length === 2) {
+    const info = COUNTRY_CURRENCY[input.toUpperCase()];
     return info?.currencySymbol || "$";
   }
-  
-  // Otherwise, convert country name to code
-  const countryCode = countryNameToCode[countryInput];
-  if (countryCode) {
-    return COUNTRY_CURRENCY[countryCode]?.currencySymbol || "$";
-  }
-  
+
+  // Otherwise, convert country name to code (case-insensitive)
+  const exact = countryNameToCode[input];
+  const countryCode =
+    exact ??
+    Object.entries(countryNameToCode).find(([name]) => name.toLowerCase() === input.toLowerCase())?.[1];
+
+  if (countryCode) return COUNTRY_CURRENCY[countryCode]?.currencySymbol || "$";
   return "$";
 }
+

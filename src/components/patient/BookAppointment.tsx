@@ -96,10 +96,6 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     return matchSearch && matchCountry && matchCity;
   });
 
-  const displayCurrencySymbol = patientCountry || geo
-    ? getCurrencySymbol(patientCountry || geo?.countryCode || geo?.countryName)
-    : "";
-
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDoctor || !date || !time) {
@@ -286,8 +282,9 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         const name = doc.profile?.full_name || "Doctor";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
                         const isSelected = selectedDoctor === doc.profile_id;
-                        const feeSymbol = displayCurrencySymbol;
-
+                        const feeSymbol = getCurrencySymbol(
+                          doc.profile?.country || patientCountry || geo?.countryCode || geo?.countryName
+                        );
                         return (
                           <div
                             key={doc.profile_id}

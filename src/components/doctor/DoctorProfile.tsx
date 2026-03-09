@@ -11,8 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
-import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { countryCodeToName } from "@/data/countryMappings";
 import AvatarUpload from "@/components/shared/AvatarUpload";
 
 interface DoctorProfileProps {
@@ -62,8 +60,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
-  const { geo } = useGeoLocation();
-  const currencySymbol = geo?.currencySymbol || "";
 
   useEffect(() => {
     const load = async () => {
@@ -270,7 +266,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               <Input type="number" min={0} value={doctor.experience_years} onChange={(e) => setDoctor({ ...doctor, experience_years: Number(e.target.value) })} />
             </div>
             <div className="space-y-2">
-              <Label>Consultation Fee ({currencySymbol})</Label>
+              <Label>Consultation Fee</Label>
               <Input type="number" min={0} value={doctor.consultation_fee} onChange={(e) => setDoctor({ ...doctor, consultation_fee: Number(e.target.value) })} />
             </div>
           </div>
