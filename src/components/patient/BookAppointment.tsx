@@ -29,6 +29,7 @@ const COMMON_REASONS = [
 
 const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
+  const [patientCountry, setPatientCountry] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
