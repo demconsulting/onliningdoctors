@@ -152,7 +152,7 @@ serve(async (req) => {
       // Only send currencies actually enabled on the merchant's Paystack account.
       // If the requested currency isn't enabled, fall back to NGN.
       // To add more currencies, enable them on Paystack dashboard first, then add here.
-      const MERCHANT_ENABLED_CURRENCIES = ["NGN"];
+      const MERCHANT_ENABLED_CURRENCIES = ["NGN", "ZAR", "USD"];
       const requestedCurrency = (currency || "NGN").toUpperCase();
       const finalCurrency = MERCHANT_ENABLED_CURRENCIES.includes(requestedCurrency)
         ? requestedCurrency
