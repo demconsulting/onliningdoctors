@@ -87,26 +87,94 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     const scheduledAt = new Date(`${date}T${time}`).toISOString();
 
     setLoading(true);
-    const { error } = await supabase.from("appointments").insert({
+
+    // 1. Create the appointment
+    const { data: apptData, error } = await supabase.from("appointments").insert({
       patient_id: user.id,
       doctor_id: selectedDoctor,
       scheduled_at: scheduledAt,
       duration_minutes: 30,
       reason: reason.trim() || null,
       status: "pending",
-    });
-    setLoading(false);
+    }).select("id").single();
 
     if (error) {
+      setLoading(false);
       toast({ variant: "destructive", title: "Booking failed", description: error.message });
-    } else {
-      toast({ title: "Appointment booked!", description: `With ${doctor?.profile?.full_name || "doctor"} on ${date}` });
-      setSelectedDoctor("");
-      setDate("");
-      setTime("");
-      setReason("");
-      onBooked?.();
+      return;
     }
+
+    // 2. Check payment config & doctor fee
+    const fee = doctor?.consultation_fee ? Number(doctor.consultation_fee) : 0;
+
+    if (fee > 0) {
+      // Load payment config to check timing
+      const { data: configData } = await supabase
+        .from("site_content")
+        .select("value")
+        .eq("key", "paystack_config")
+        .maybeSingle();
+
+      const payConfig = configData?.value as Record<string, unknown> | null;
+      const timing = (payConfig?.payment_timing as string) || "at_booking";
+
+      if (timing === "at_booking") {
+        // Initialize Paystack payment
+        const currency = geo?.currencyCode || "NGN";
+        const callbackUrl = `${window.location.origin}/dashboard?payment_ref=`;
+
+        try {
+          const { data: payData, error: payError } = await supabase.functions.invoke(
+            "paystack-payment",
+            {
+              body: {
+                appointment_id: apptData.id,
+                amount: fee,
+                currency,
+                email: user.email,
+                doctor_id: selectedDoctor,
+                callback_url: callbackUrl,
+              },
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          if (payError || payData?.error) {
+            setLoading(false);
+            toast({
+              variant: "destructive",
+              title: "Payment initialization failed",
+              description: payData?.error || payError?.message || "Could not start payment",
+            });
+            return;
+          }
+
+          // Redirect to Paystack checkout
+          if (payData?.authorization_url) {
+            toast({ title: "Redirecting to payment..." });
+            window.location.href = payData.authorization_url;
+            return;
+          }
+        } catch (err: any) {
+          setLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Payment error",
+            description: err.message || "An unexpected error occurred",
+          });
+          return;
+        }
+      }
+    }
+
+    // If no fee or payment timing is not at_booking, just confirm
+    setLoading(false);
+    toast({ title: "Appointment booked!", description: `With ${doctor?.profile?.full_name || "doctor"} on ${date}` });
+    setSelectedDoctor("");
+    setDate("");
+    setTime("");
+    setReason("");
+    onBooked?.();
   };
 
   return (
