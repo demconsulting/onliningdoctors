@@ -110,9 +110,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     }
 
     // 2. Check payment config & doctor fee
-    const fee = doctor?.consultation_fee ? Number(doctor.consultation_fee) : 0;
-
-    if (fee > 0) {
+    if (needsPayment) {
       // Load payment config to check timing
       const { data: configData } = await supabase
         .from("site_content")
