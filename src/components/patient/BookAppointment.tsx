@@ -66,7 +66,11 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     });
   }, []);
 
-    if (!selectedSpecialty) { setDoctors([]); return; }
+  useEffect(() => {
+    if (!selectedSpecialty) {
+      setDoctors([]);
+      return;
+    }
     setLoadingDoctors(true);
     setSelectedDoctor("");
     supabase
