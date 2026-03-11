@@ -268,6 +268,61 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
             ))}
           </div>
         )}
+        {/* Archived / Unpaid Appointments */}
+        {unpaidAppointments.length > 0 && (
+          <div className="mt-6 border-t border-border pt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mb-3 gap-1.5 text-muted-foreground"
+              onClick={() => setShowArchived(!showArchived)}
+            >
+              <AlertCircle className="h-4 w-4" />
+              Archived — Unpaid ({unpaidAppointments.length})
+              <span className="text-xs">{showArchived ? "▲" : "▼"}</span>
+            </Button>
+            {showArchived && (
+              <div className="space-y-3">
+                {unpaidAppointments.map((apt) => (
+                  <div key={apt.id} className="flex flex-col gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between opacity-75">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+                        <User className="h-5 w-5 text-destructive" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {apt.doctor?.full_name || "Doctor"}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(apt.scheduled_at), "MMM d, yyyy")}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {format(new Date(apt.scheduled_at), "h:mm a")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-destructive animate-pulse" />
+                      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                        Payment Pending
+                      </Badge>
+                      <Button variant="default" size="sm" className="gap-1 text-xs" onClick={() => navigate(`/dashboard?activeTab=book`)}>
+                        Complete Payment
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

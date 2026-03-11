@@ -91,7 +91,24 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [hasUnpaidAppointments, setHasUnpaidAppointments] = useState(false);
+  const [checkingUnpaid, setCheckingUnpaid] = useState(true);
   const { toast } = useToast();
+
+  // Check for unpaid appointments - block booking if any exist
+  useEffect(() => {
+    setCheckingUnpaid(true);
+    supabase
+      .from("appointments")
+      .select("id")
+      .eq("patient_id", user.id)
+      .eq("status", "awaiting_payment")
+      .limit(1)
+      .then(({ data }) => {
+        setHasUnpaidAppointments((data?.length ?? 0) > 0);
+        setCheckingUnpaid(false);
+      });
+  }, [user.id]);
 
   useEffect(() => {
     let cancelled = false;
