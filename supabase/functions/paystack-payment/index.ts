@@ -177,7 +177,7 @@ serve(async (req) => {
         body: JSON.stringify({
           email,
           amount: amountInSmallestUnit,
-          currency: finalCurrency,
+          ...(mode !== "test" ? { currency: finalCurrency } : {}),
           reference,
           callback_url: callback_url || undefined,
           channels: (payConfig?.payment_methods as string[]) || ["card"],
