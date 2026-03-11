@@ -76,9 +76,15 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   };
 
 
+  // Separate unpaid (awaiting_payment) from normal appointments
+  const unpaidAppointments = appointments.filter((apt) => apt.status === "awaiting_payment");
+  const paidAppointments = appointments.filter((apt) => apt.status !== "awaiting_payment");
+
   const filteredAppointments = statusFilter
-    ? appointments.filter((apt) => apt.status === statusFilter)
-    : appointments;
+    ? paidAppointments.filter((apt) => apt.status === statusFilter)
+    : paidAppointments;
+
+  const [showArchived, setShowArchived] = useState(false);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
