@@ -318,6 +318,42 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     onBooked?.();
   };
 
+  if (checkingUnpaid) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center py-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasUnpaidAppointments) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-display">
+            <Calendar className="h-5 w-5 text-primary" /> Book Appointment
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <Coins className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Complete Your Pending Payment</h3>
+            <p className="max-w-md text-sm text-muted-foreground">
+              You have an unpaid appointment. Please complete the payment or cancel the pending appointment before booking a new one.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Check the <strong>Archived — Unpaid</strong> section in your Appointments tab.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
