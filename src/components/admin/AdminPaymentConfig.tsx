@@ -16,9 +16,6 @@ const CURRENCIES = [
   { code: "USD", name: "US Dollar" },
   { code: "GHS", name: "Ghanaian Cedi" },
   { code: "ZAR", name: "South African Rand" },
-  { code: "KES", name: "Kenyan Shilling" },
-  { code: "GBP", name: "British Pound" },
-  { code: "EUR", name: "Euro" },
 ];
 
 const PAYMENT_METHODS = [
