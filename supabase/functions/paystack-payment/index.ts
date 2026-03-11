@@ -148,14 +148,19 @@ serve(async (req) => {
 
       const payConfig = configData?.value as Record<string, unknown> | null;
       const feeBearer = (payConfig?.fee_bearer as string) || "patient";
+      const mode = (payConfig?.mode as string) || "test";
 
-      // Use the admin-configured supported currencies to validate.
-      // If the requested currency isn't in the admin list, fall back to NGN.
+      // In test mode, Paystack typically only supports NGN.
+      // In live mode, use the admin-configured supported currencies.
       const adminCurrencies = (payConfig?.supported_currencies as string[]) || ["NGN"];
       const requestedCurrency = (currency || "NGN").toUpperCase();
-      const finalCurrency = adminCurrencies.includes(requestedCurrency)
-        ? requestedCurrency
-        : adminCurrencies[0] || "NGN";
+      const finalCurrency = mode === "test"
+        ? "NGN"
+        : adminCurrencies.includes(requestedCurrency)
+          ? requestedCurrency
+          : adminCurrencies[0] || "NGN";
+
+      console.log("Payment init:", { mode, requestedCurrency, finalCurrency });
 
       // Convert amount to kobo/pesewas (smallest unit)
       const amountInSmallestUnit = Math.round(Number(amount) * 100);
