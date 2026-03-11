@@ -91,7 +91,24 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [hasUnpaidAppointments, setHasUnpaidAppointments] = useState(false);
+  const [checkingUnpaid, setCheckingUnpaid] = useState(true);
   const { toast } = useToast();
+
+  // Check for unpaid appointments - block booking if any exist
+  useEffect(() => {
+    setCheckingUnpaid(true);
+    supabase
+      .from("appointments")
+      .select("id")
+      .eq("patient_id", user.id)
+      .eq("status", "awaiting_payment")
+      .limit(1)
+      .then(({ data }) => {
+        setHasUnpaidAppointments((data?.length ?? 0) > 0);
+        setCheckingUnpaid(false);
+      });
+  }, [user.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -300,6 +317,42 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     setReason("");
     onBooked?.();
   };
+
+  if (checkingUnpaid) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center py-10">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (hasUnpaidAppointments) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-display">
+            <Calendar className="h-5 w-5 text-primary" /> Book Appointment
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <Coins className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Complete Your Pending Payment</h3>
+            <p className="max-w-md text-sm text-muted-foreground">
+              You have an unpaid appointment. Please complete the payment or cancel the pending appointment before booking a new one.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Check the <strong>Archived — Unpaid</strong> section in your Appointments tab.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
