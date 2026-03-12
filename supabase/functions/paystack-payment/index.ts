@@ -281,7 +281,7 @@ serve(async (req) => {
       if (newStatus === "success" && paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
         await serviceClient
           .from("appointments")
-          .update({ status: "pending" })
+          .update({ status: "confirmed" })
           .eq("id", paymentRows[0].appointment_id)
           .eq("status", "awaiting_payment");
       }
