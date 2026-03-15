@@ -5,9 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Clock, Save, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+
+// Generate time options in 30-min increments from 00:00 to 23:30
+const TIME_OPTIONS: { value: string; label: string }[] = [];
+for (let h = 0; h < 24; h++) {
+  for (const m of [0, 30]) {
+    const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    const ampm = h < 12 ? "AM" : "PM";
+    const label = `${hour12}:${String(m).padStart(2, "0")} ${ampm}`;
+    TIME_OPTIONS.push({ value: val, label });
+  }
+}
 
 interface AvailabilityManagerProps {
   user: User;
@@ -183,21 +196,29 @@ const AvailabilityManager = ({ user }: AvailabilityManagerProps) => {
                   <div key={rangeIdx} className="flex flex-wrap items-end gap-3 rounded-md bg-muted/50 p-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Start</Label>
-                      <Input
-                        type="time"
-                        value={range.start_time}
-                        onChange={(e) => updateRange(dayIdx, rangeIdx, { start_time: e.target.value })}
-                        className="w-32"
-                      />
+                      <Select value={range.start_time} onValueChange={(v) => updateRange(dayIdx, rangeIdx, { start_time: v })}>
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map(t => (
+                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">End</Label>
-                      <Input
-                        type="time"
-                        value={range.end_time}
-                        onChange={(e) => updateRange(dayIdx, rangeIdx, { end_time: e.target.value })}
-                        className="w-32"
-                      />
+                      <Select value={range.end_time} onValueChange={(v) => updateRange(dayIdx, rangeIdx, { end_time: v })}>
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.filter(t => t.value > range.start_time).map(t => (
+                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Slot (min)</Label>
