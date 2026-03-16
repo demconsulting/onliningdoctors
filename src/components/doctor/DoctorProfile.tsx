@@ -12,6 +12,7 @@ import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
 import AvatarUpload from "@/components/shared/AvatarUpload";
+import DoctorBilling from "@/components/doctor/DoctorBilling";
 
 interface DoctorProfileProps {
   user: User;
@@ -302,6 +303,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           </Button>
         </CardContent>
       </Card>
+      <DoctorBilling user={user} />
     </div>
   );
 };
