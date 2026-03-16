@@ -10,6 +10,7 @@ import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
 import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
+import DoctorEarnings from "@/components/doctor/DoctorEarnings";
 
 const DoctorDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
