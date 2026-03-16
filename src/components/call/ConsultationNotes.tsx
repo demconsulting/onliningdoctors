@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Save, FileText, Loader2 } from "lucide-react";
+import { Save, FileText, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ConsultationNotesProps {
@@ -15,9 +15,12 @@ interface ConsultationNotesProps {
 
 const ConsultationNotes = ({ appointmentId, doctorId, isDoctor }: ConsultationNotesProps) => {
   const [content, setContent] = useState("");
+  const [summary, setSummary] = useState("");
   const [saving, setSaving] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   const { toast } = useToast();
 
   // Load existing notes
@@ -25,13 +28,15 @@ const ConsultationNotes = ({ appointmentId, doctorId, isDoctor }: ConsultationNo
     const load = async () => {
       const { data } = await supabase
         .from("consultation_notes")
-        .select("content, updated_at")
+        .select("content, updated_at, summary")
         .eq("appointment_id", appointmentId)
         .maybeSingle();
 
       if (data) {
         setContent(data.content);
+        setSummary((data as any).summary || "");
         setLastSaved(new Date(data.updated_at));
+        if ((data as any).summary) setShowSummary(true);
       }
       setLoading(false);
     };
@@ -55,6 +60,34 @@ const ConsultationNotes = ({ appointmentId, doctorId, isDoctor }: ConsultationNo
     }
     setSaving(false);
   }, [appointmentId, doctorId, content, toast]);
+
+  const generateSummary = useCallback(async () => {
+    if (!content || content.trim().length < 10) {
+      toast({ variant: "destructive", title: "Notes too short", description: "Write more detailed notes before generating a summary." });
+      return;
+    }
+
+    // Save notes first
+    await saveNotes();
+
+    setSummarizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("summarize-consultation", {
+        body: { appointment_id: appointmentId },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setSummary(data.summary);
+      setShowSummary(true);
+      toast({ title: "AI summary generated" });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Summary failed", description: err.message || "Could not generate summary" });
+    } finally {
+      setSummarizing(false);
+    }
+  }, [content, appointmentId, saveNotes, toast]);
 
   // Auto-save every 30 seconds for doctors
   useEffect(() => {
@@ -81,13 +114,46 @@ const ConsultationNotes = ({ appointmentId, doctorId, isDoctor }: ConsultationNo
           Consultation Notes
         </CardTitle>
         {isDoctor && (
-          <Button size="sm" onClick={saveNotes} disabled={saving} className="gap-1">
-            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-            Save
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={generateSummary}
+              disabled={summarizing || !content}
+              className="gap-1 text-xs"
+            >
+              {summarizing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              AI Summary
+            </Button>
+            <Button size="sm" onClick={saveNotes} disabled={saving} className="gap-1">
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+              Save
+            </Button>
+          </div>
         )}
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-2 pt-0">
+        {/* AI Summary section */}
+        {summary && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5">
+            <button
+              onClick={() => setShowSummary(!showSummary)}
+              className="flex w-full items-center justify-between px-3 py-2 text-xs font-medium text-primary"
+            >
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" />
+                AI-Generated Summary
+              </span>
+              {showSummary ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+            {showSummary && (
+              <div className="border-t border-primary/10 px-3 py-2">
+                <p className="whitespace-pre-wrap text-xs text-foreground/80 leading-relaxed">{summary}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {isDoctor ? (
           <Textarea
             value={content}
