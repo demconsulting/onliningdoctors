@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, TrendingUp, Calendar, Percent } from "lucide-react";
 import { format } from "date-fns";
 import type { User } from "@supabase/supabase-js";
+import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 
 interface DoctorEarningsProps {
   user: User;
+  doctorCountry?: string | null;
 }
 
-const DoctorEarnings = ({ user }: DoctorEarningsProps) => {
+const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [commissionRate, setCommissionRate] = useState(15);
@@ -56,10 +58,14 @@ const DoctorEarnings = ({ user }: DoctorEarningsProps) => {
   const totalRevenue = payments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalCommission = totalRevenue * (commissionRate / 100);
   const netEarnings = totalRevenue - totalCommission;
-  const currency = payments[0]?.currency || "NGN";
+
+  // Determine currency: use doctor's country mapping, then payment data, then fallback
+  const countryCode = doctorCountry?.length === 2 ? doctorCountry.toUpperCase() : undefined;
+  const countryCurrencyCode = countryCode ? COUNTRY_CURRENCY[countryCode]?.currency : undefined;
+  const currency = countryCurrencyCode || payments[0]?.currency || "ZAR";
 
   const formatAmount = (amount: number) =>
-    new Intl.NumberFormat("en-NG", { style: "currency", currency }).format(amount);
+    new Intl.NumberFormat("en-ZA", { style: "currency", currency }).format(amount);
 
   return (
     <div className="space-y-6">
