@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Calendar, Clock, DollarSign, Stethoscope } from "lucide-react";
+import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
