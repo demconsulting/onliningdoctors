@@ -12,7 +12,7 @@ interface DoctorEarningsProps {
   doctorCountry?: string | null;
 }
 
-const DoctorEarnings = ({ user }: DoctorEarningsProps) => {
+const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [commissionRate, setCommissionRate] = useState(15);
