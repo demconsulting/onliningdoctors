@@ -114,6 +114,9 @@ const DoctorDashboard = () => {
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
           </TabsContent>
+          <TabsContent value="earnings">
+            <DoctorEarnings user={user} />
+          </TabsContent>
           <TabsContent value="availability">
             <AvailabilityManager user={user} />
           </TabsContent>
