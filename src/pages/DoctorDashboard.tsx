@@ -93,9 +93,12 @@ const DoctorDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 lg:w-auto">
             <TabsTrigger value="appointments" className="gap-1.5">
               <Calendar className="h-4 w-4" /> Appointments
+            </TabsTrigger>
+            <TabsTrigger value="earnings" className="gap-1.5">
+              <TrendingUp className="h-4 w-4" /> Earnings
             </TabsTrigger>
             <TabsTrigger value="availability" className="gap-1.5">
               <Clock className="h-4 w-4" /> Availability
