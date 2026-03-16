@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, TrendingUp, Calendar, Percent } from "lucide-react";
 import { format } from "date-fns";
 import type { User } from "@supabase/supabase-js";
+import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 
 interface DoctorEarningsProps {
   user: User;
+  doctorCountry?: string | null;
 }
 
 const DoctorEarnings = ({ user }: DoctorEarningsProps) => {
