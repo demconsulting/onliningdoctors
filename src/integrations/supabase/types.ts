@@ -220,6 +220,74 @@ export type Database = {
           },
         ]
       }
+      doctor_billing: {
+        Row: {
+          account_holder_name: string | null
+          account_number: string | null
+          account_type: string | null
+          bank_name: string | null
+          bank_swift_code: string | null
+          billing_type: string
+          branch_code: string | null
+          company_address: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          company_registration_number: string | null
+          company_vat_number: string | null
+          created_at: string
+          doctor_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          account_holder_name?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          bank_name?: string | null
+          bank_swift_code?: string | null
+          billing_type?: string
+          branch_code?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_registration_number?: string | null
+          company_vat_number?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          account_holder_name?: string | null
+          account_number?: string | null
+          account_type?: string | null
+          bank_name?: string | null
+          bank_swift_code?: string | null
+          billing_type?: string
+          branch_code?: string | null
+          company_address?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_registration_number?: string | null
+          company_vat_number?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_billing_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_pricing_tiers: {
         Row: {
           created_at: string
