@@ -1,0 +1,1 @@
+ALTER TABLE public.consultation_notes ADD COLUMN IF NOT EXISTS summary text;
