@@ -47,6 +47,7 @@ interface PaystackConfig {
   fee_bearer: string;
   payment_timing: string;
   payouts_enabled: boolean;
+  platform_commission_percent: number;
 }
 
 const DEFAULT_CONFIG: PaystackConfig = {
@@ -58,6 +59,7 @@ const DEFAULT_CONFIG: PaystackConfig = {
   fee_bearer: "patient",
   payment_timing: "at_booking",
   payouts_enabled: false,
+  platform_commission_percent: 15,
 };
 
 const AdminPaymentConfig = () => {
