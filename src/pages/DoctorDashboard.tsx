@@ -4,12 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Calendar, Clock, DollarSign, Stethoscope } from "lucide-react";
+import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
 import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
+import DoctorEarnings from "@/components/doctor/DoctorEarnings";
 
 const DoctorDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -92,9 +93,12 @@ const DoctorDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 lg:w-auto">
             <TabsTrigger value="appointments" className="gap-1.5">
               <Calendar className="h-4 w-4" /> Appointments
+            </TabsTrigger>
+            <TabsTrigger value="earnings" className="gap-1.5">
+              <TrendingUp className="h-4 w-4" /> Earnings
             </TabsTrigger>
             <TabsTrigger value="availability" className="gap-1.5">
               <Clock className="h-4 w-4" /> Availability
@@ -109,6 +113,9 @@ const DoctorDashboard = () => {
 
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
+          </TabsContent>
+          <TabsContent value="earnings">
+            <DoctorEarnings user={user} />
           </TabsContent>
           <TabsContent value="availability">
             <AvailabilityManager user={user} />

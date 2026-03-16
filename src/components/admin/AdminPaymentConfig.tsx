@@ -47,6 +47,7 @@ interface PaystackConfig {
   fee_bearer: string;
   payment_timing: string;
   payouts_enabled: boolean;
+  platform_commission_percent: number;
 }
 
 const DEFAULT_CONFIG: PaystackConfig = {
@@ -58,6 +59,7 @@ const DEFAULT_CONFIG: PaystackConfig = {
   fee_bearer: "patient",
   payment_timing: "at_booking",
   payouts_enabled: false,
+  platform_commission_percent: 15,
 };
 
 const AdminPaymentConfig = () => {
@@ -298,6 +300,30 @@ const AdminPaymentConfig = () => {
                   </div>
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium">Platform Commission (%)</Label>
+            <p className="text-xs text-muted-foreground mt-1 mb-2">
+              Percentage deducted from each doctor's consultation fee for platform usage.
+            </p>
+            <div className="flex items-center gap-3">
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={0.5}
+                value={config.platform_commission_percent}
+                onChange={(e) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    platform_commission_percent: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)),
+                  }))
+                }
+                className="w-28 font-mono"
+              />
+              <span className="text-sm text-muted-foreground font-medium">%</span>
             </div>
           </div>
 
