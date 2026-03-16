@@ -303,6 +303,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           </Button>
         </CardContent>
       </Card>
+      <DoctorBilling user={user} />
     </div>
   );
 };
