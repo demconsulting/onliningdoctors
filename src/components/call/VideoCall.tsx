@@ -259,7 +259,10 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const endCall = useCallback(() => {
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current?.getTracks().forEach(t => t.stop());
-    pcRef.current?.close();
+    if (pcRef.current) {
+      clearInterval((pcRef.current as any).__bandwidthMonitor);
+      pcRef.current.close();
+    }
     pcRef.current = null;
     screenStreamRef.current = null;
     senderRef.current = null;
