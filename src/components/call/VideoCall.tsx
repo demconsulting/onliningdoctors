@@ -74,6 +74,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [quality, setQuality] = useState<QualityLevel>("medium");
   const { toast } = useToast();
 
   // Send signaling message
