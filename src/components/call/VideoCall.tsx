@@ -97,12 +97,63 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
       .or(`sender_id.eq.${localUserId},receiver_id.eq.${localUserId}`);
   }, [appointmentId, localUserId]);
 
+  // Apply bitrate limits to senders
+  const applyBitrateLimits = useCallback(async (pc: RTCPeerConnection, level: QualityLevel) => {
+    const preset = QUALITY_PRESETS[level];
+    const senders = pc.getSenders();
+    for (const sender of senders) {
+      if (sender.track?.kind === "video") {
+        const params = sender.getParameters();
+        if (!params.encodings || params.encodings.length === 0) {
+          params.encodings = [{}];
+        }
+        params.encodings[0].maxBitrate = preset.maxBitrate;
+        params.encodings[0].maxFramerate = preset.frameRate;
+        try {
+          await sender.setParameters(params);
+        } catch (e) {
+          console.warn("Could not set encoding params", e);
+        }
+      }
+    }
+  }, []);
+
+  // Monitor connection quality and auto-downgrade
+  const startBandwidthMonitor = useCallback((pc: RTCPeerConnection) => {
+    const interval = setInterval(async () => {
+      if (pc.connectionState === "closed") { clearInterval(interval); return; }
+      try {
+        const stats = await pc.getStats();
+        stats.forEach((report) => {
+          if (report.type === "candidate-pair" && report.state === "succeeded") {
+            const rtt = report.currentRoundTripTime;
+            if (rtt !== undefined) {
+              let newQuality: QualityLevel;
+              if (rtt < 0.15) newQuality = "high";
+              else if (rtt < 0.4) newQuality = "medium";
+              else newQuality = "low";
+              setQuality((prev) => {
+                if (prev !== newQuality) {
+                  applyBitrateLimits(pc, newQuality);
+                  return newQuality;
+                }
+                return prev;
+              });
+            }
+          }
+        });
+      } catch { /* stats unavailable */ }
+    }, 5000);
+    return interval;
+  }, [applyBitrateLimits]);
+
   // Initialize media and peer connection
   const startCall = useCallback(async () => {
     try {
       setCallState("connecting");
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      // Start with medium quality for broader compatibility
+      const stream = await navigator.mediaDevices.getUserMedia(getMediaConstraints("medium"));
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
@@ -114,6 +165,9 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
         const sender = pc.addTrack(track, stream);
         if (track.kind === "video") senderRef.current = sender;
       });
+
+      // Apply initial bitrate limits
+      await applyBitrateLimits(pc, "medium");
 
       // Handle remote tracks
       pc.ontrack = (event) => {
@@ -136,6 +190,11 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
         }
       };
 
+      // Start monitoring bandwidth to auto-adjust quality
+      const monitorInterval = startBandwidthMonitor(pc);
+      // Store interval for cleanup
+      (pc as any).__bandwidthMonitor = monitorInterval;
+
       // If initiator, create and send offer
       if (isInitiator) {
         const offer = await pc.createOffer();
@@ -146,7 +205,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
       toast({ variant: "destructive", title: "Camera/mic error", description: err.message });
       setCallState("idle");
     }
-  }, [isInitiator, sendSignal, toast]);
+  }, [isInitiator, sendSignal, toast, applyBitrateLimits, startBandwidthMonitor]);
 
   // Handle incoming signaling messages via Realtime
   useEffect(() => {
