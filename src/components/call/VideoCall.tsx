@@ -401,6 +401,22 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
           </div>
         )}
 
+        {/* Quality indicator */}
+        {callState === "connected" && (
+          <div className={`absolute top-4 right-48 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium shadow-lg ${
+            quality === "high" ? "bg-green-600/90 text-white" :
+            quality === "medium" ? "bg-yellow-500/90 text-black" :
+            "bg-orange-600/90 text-white"
+          }`}>
+            <span className={`inline-block h-2 w-2 rounded-full ${
+              quality === "high" ? "bg-green-300" :
+              quality === "medium" ? "bg-yellow-200" :
+              "bg-orange-300"
+            }`} />
+            {quality === "high" ? "HD" : quality === "medium" ? "SD" : "Low"}
+          </div>
+        )}
+
         {/* Local video pip */}
         <div className="absolute bottom-4 right-4 w-40 aspect-video rounded-lg overflow-hidden border-2 border-background shadow-lg">
           <video
