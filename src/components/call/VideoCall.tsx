@@ -18,8 +18,47 @@ const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    // Free TURN servers for NAT traversal on restricted networks
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
+  iceCandidatePoolSize: 10,
 };
+
+// Adaptive quality presets based on bandwidth
+const QUALITY_PRESETS = {
+  high: { width: 1280, height: 720, frameRate: 30, maxBitrate: 2500000 },
+  medium: { width: 640, height: 480, frameRate: 24, maxBitrate: 1000000 },
+  low: { width: 320, height: 240, frameRate: 15, maxBitrate: 500000 },
+} as const;
+
+type QualityLevel = keyof typeof QUALITY_PRESETS;
+
+const getMediaConstraints = (quality: QualityLevel): MediaStreamConstraints => ({
+  video: {
+    width: { ideal: QUALITY_PRESETS[quality].width },
+    height: { ideal: QUALITY_PRESETS[quality].height },
+    frameRate: { ideal: QUALITY_PRESETS[quality].frameRate },
+  },
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  },
+});
 
 const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEnd }: VideoCallProps) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -35,6 +74,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [quality, setQuality] = useState<QualityLevel>("medium");
   const { toast } = useToast();
 
   // Send signaling message
@@ -57,12 +97,63 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
       .or(`sender_id.eq.${localUserId},receiver_id.eq.${localUserId}`);
   }, [appointmentId, localUserId]);
 
+  // Apply bitrate limits to senders
+  const applyBitrateLimits = useCallback(async (pc: RTCPeerConnection, level: QualityLevel) => {
+    const preset = QUALITY_PRESETS[level];
+    const senders = pc.getSenders();
+    for (const sender of senders) {
+      if (sender.track?.kind === "video") {
+        const params = sender.getParameters();
+        if (!params.encodings || params.encodings.length === 0) {
+          params.encodings = [{}];
+        }
+        params.encodings[0].maxBitrate = preset.maxBitrate;
+        params.encodings[0].maxFramerate = preset.frameRate;
+        try {
+          await sender.setParameters(params);
+        } catch (e) {
+          console.warn("Could not set encoding params", e);
+        }
+      }
+    }
+  }, []);
+
+  // Monitor connection quality and auto-downgrade
+  const startBandwidthMonitor = useCallback((pc: RTCPeerConnection) => {
+    const interval = setInterval(async () => {
+      if (pc.connectionState === "closed") { clearInterval(interval); return; }
+      try {
+        const stats = await pc.getStats();
+        stats.forEach((report) => {
+          if (report.type === "candidate-pair" && report.state === "succeeded") {
+            const rtt = report.currentRoundTripTime;
+            if (rtt !== undefined) {
+              let newQuality: QualityLevel;
+              if (rtt < 0.15) newQuality = "high";
+              else if (rtt < 0.4) newQuality = "medium";
+              else newQuality = "low";
+              setQuality((prev) => {
+                if (prev !== newQuality) {
+                  applyBitrateLimits(pc, newQuality);
+                  return newQuality;
+                }
+                return prev;
+              });
+            }
+          }
+        });
+      } catch { /* stats unavailable */ }
+    }, 5000);
+    return interval;
+  }, [applyBitrateLimits]);
+
   // Initialize media and peer connection
   const startCall = useCallback(async () => {
     try {
       setCallState("connecting");
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      // Start with medium quality for broader compatibility
+      const stream = await navigator.mediaDevices.getUserMedia(getMediaConstraints("medium"));
       localStreamRef.current = stream;
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
@@ -74,6 +165,9 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
         const sender = pc.addTrack(track, stream);
         if (track.kind === "video") senderRef.current = sender;
       });
+
+      // Apply initial bitrate limits
+      await applyBitrateLimits(pc, "medium");
 
       // Handle remote tracks
       pc.ontrack = (event) => {
@@ -96,6 +190,11 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
         }
       };
 
+      // Start monitoring bandwidth to auto-adjust quality
+      const monitorInterval = startBandwidthMonitor(pc);
+      // Store interval for cleanup
+      (pc as any).__bandwidthMonitor = monitorInterval;
+
       // If initiator, create and send offer
       if (isInitiator) {
         const offer = await pc.createOffer();
@@ -106,7 +205,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
       toast({ variant: "destructive", title: "Camera/mic error", description: err.message });
       setCallState("idle");
     }
-  }, [isInitiator, sendSignal, toast]);
+  }, [isInitiator, sendSignal, toast, applyBitrateLimits, startBandwidthMonitor]);
 
   // Handle incoming signaling messages via Realtime
   useEffect(() => {
@@ -160,7 +259,10 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
   const endCall = useCallback(() => {
     screenStreamRef.current?.getTracks().forEach(t => t.stop());
     localStreamRef.current?.getTracks().forEach(t => t.stop());
-    pcRef.current?.close();
+    if (pcRef.current) {
+      clearInterval((pcRef.current as any).__bandwidthMonitor);
+      pcRef.current.close();
+    }
     pcRef.current = null;
     screenStreamRef.current = null;
     senderRef.current = null;
@@ -296,6 +398,22 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
           <div className="absolute top-4 left-4 flex items-center gap-2 rounded-lg bg-destructive/90 px-3 py-1.5 text-destructive-foreground text-xs font-medium shadow-lg">
             <MonitorUp className="h-3.5 w-3.5" />
             Sharing your screen
+          </div>
+        )}
+
+        {/* Quality indicator */}
+        {callState === "connected" && (
+          <div className={`absolute top-4 right-48 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium shadow-lg ${
+            quality === "high" ? "bg-green-600/90 text-white" :
+            quality === "medium" ? "bg-yellow-500/90 text-black" :
+            "bg-orange-600/90 text-white"
+          }`}>
+            <span className={`inline-block h-2 w-2 rounded-full ${
+              quality === "high" ? "bg-green-300" :
+              quality === "medium" ? "bg-yellow-200" :
+              "bg-orange-300"
+            }`} />
+            {quality === "high" ? "HD" : quality === "medium" ? "SD" : "Low"}
           </div>
         )}
 
