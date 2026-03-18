@@ -18,8 +18,47 @@ const ICE_SERVERS: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    // Free TURN servers for NAT traversal on restricted networks
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
+  iceCandidatePoolSize: 10,
 };
+
+// Adaptive quality presets based on bandwidth
+const QUALITY_PRESETS = {
+  high: { width: 1280, height: 720, frameRate: 30, maxBitrate: 2500000 },
+  medium: { width: 640, height: 480, frameRate: 24, maxBitrate: 1000000 },
+  low: { width: 320, height: 240, frameRate: 15, maxBitrate: 500000 },
+} as const;
+
+type QualityLevel = keyof typeof QUALITY_PRESETS;
+
+const getMediaConstraints = (quality: QualityLevel): MediaStreamConstraints => ({
+  video: {
+    width: { ideal: QUALITY_PRESETS[quality].width },
+    height: { ideal: QUALITY_PRESETS[quality].height },
+    frameRate: { ideal: QUALITY_PRESETS[quality].frameRate },
+  },
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  },
+});
 
 const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEnd }: VideoCallProps) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
