@@ -12,6 +12,7 @@ import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import PatientDocuments from "@/components/doctor/PatientDocuments";
 import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
+import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
 
 interface DoctorAppointmentsProps {
   user: SupaUser;
