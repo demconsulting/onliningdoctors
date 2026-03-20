@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
