@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Star, Clock, DollarSign, Loader2, Stethoscope, MapPin,
   GraduationCap, Building2, Languages, CalendarPlus, ShieldCheck,
@@ -214,9 +215,18 @@ const DoctorDetail = () => {
                     <ShieldCheck className="mt-0.5 h-4 w-4 text-success" />
                     <div>
                       <p className="text-xs text-muted-foreground">Credentials</p>
-                      <p className="text-sm font-medium text-success flex items-center gap-1">
-                        <ShieldCheck className="h-3.5 w-3.5" /> Verified by Platform
-                      </p>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <p className="text-sm font-medium text-success flex items-center gap-1 cursor-help">
+                              <ShieldCheck className="h-3.5 w-3.5" /> Verified by Platform
+                            </p>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                            This doctor's medical license, qualifications, and professional credentials have been reviewed and verified by our team.
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 )}
