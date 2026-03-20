@@ -23,6 +23,7 @@ import AdminSectionOrder from "@/components/admin/AdminSectionOrder";
 import AdminPaymentConfig from "@/components/admin/AdminPaymentConfig";
 import AdminPayments from "@/components/admin/AdminPayments";
 import AdminPayouts from "@/components/admin/AdminPayouts";
+import AdminAIAssistant from "@/components/admin/AdminAIAssistant";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
