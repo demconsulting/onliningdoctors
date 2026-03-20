@@ -227,6 +227,7 @@ const DoctorDetail = () => {
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
+                    </div>
                   </div>
                 )}
               </CardContent>
