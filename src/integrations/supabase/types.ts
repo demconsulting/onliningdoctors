@@ -149,6 +149,50 @@ export type Database = {
           },
         ]
       }
+      consultation_outcomes: {
+        Row: {
+          admin_attention_required: boolean
+          appointment_id: string
+          conduct_flag: string | null
+          created_at: string
+          doctor_id: string
+          id: string
+          internal_note: string | null
+          outcome: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_attention_required?: boolean
+          appointment_id: string
+          conduct_flag?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: string
+          internal_note?: string | null
+          outcome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_attention_required?: boolean
+          appointment_id?: string
+          conduct_flag?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          internal_note?: string | null
+          outcome?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_outcomes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -798,36 +842,51 @@ export type Database = {
           appointment_id: string
           comment: string | null
           created_at: string
+          doctor_clear_helpful: boolean | null
           doctor_id: string
+          doctor_professional: boolean | null
+          flagged_reason: string | null
           id: string
           is_visible: boolean
+          moderation_status: string
           patient_id: string
           rating: number
           updated_at: string
+          would_recommend: boolean | null
         }
         Insert: {
           admin_notes?: string | null
           appointment_id: string
           comment?: string | null
           created_at?: string
+          doctor_clear_helpful?: boolean | null
           doctor_id: string
+          doctor_professional?: boolean | null
+          flagged_reason?: string | null
           id?: string
           is_visible?: boolean
+          moderation_status?: string
           patient_id: string
           rating: number
           updated_at?: string
+          would_recommend?: boolean | null
         }
         Update: {
           admin_notes?: string | null
           appointment_id?: string
           comment?: string | null
           created_at?: string
+          doctor_clear_helpful?: boolean | null
           doctor_id?: string
+          doctor_professional?: boolean | null
+          flagged_reason?: string | null
           id?: string
           is_visible?: boolean
+          moderation_status?: string
           patient_id?: string
           rating?: number
           updated_at?: string
+          would_recommend?: boolean | null
         }
         Relationships: []
       }

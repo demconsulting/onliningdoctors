@@ -12,6 +12,7 @@ import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import PatientDocuments from "@/components/doctor/PatientDocuments";
 import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
+import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
 
 interface DoctorAppointmentsProps {
   user: SupaUser;
@@ -198,6 +199,13 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                     currentAppointmentId={apt.id}
                     doctorId={user.id}
                   />
+                )}
+
+                {/* Consultation Outcome (for completed appointments) */}
+                {apt.status === "completed" && (
+                  <div className="pt-2 border-t border-border">
+                    <ConsultationOutcomeForm user={user} appointmentId={apt.id} />
+                  </div>
                 )}
 
                 {/* Consultation Notes */}

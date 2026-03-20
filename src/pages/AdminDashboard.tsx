@@ -6,6 +6,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminAppointments from "@/components/admin/AdminAppointments";
 import AdminReviews from "@/components/admin/AdminReviews";
+import AdminConsultationOutcomes from "@/components/admin/AdminConsultationOutcomes";
 import AdminSpecialties from "@/components/admin/AdminSpecialties";
 import AdminContacts from "@/components/admin/AdminContacts";
 import AdminFaqs from "@/components/admin/AdminFaqs";
@@ -72,6 +73,7 @@ const AdminDashboard = () => {
       case "users": return <AdminUsers />;
       case "appointments": return <AdminAppointments />;
       case "reviews": return <AdminReviews />;
+      case "consultation-outcomes": return <AdminConsultationOutcomes />;
       case "specialties": return <AdminSpecialties />;
       case "contacts": return <AdminContacts />;
       case "faqs": return <AdminFaqs />;

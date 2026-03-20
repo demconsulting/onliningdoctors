@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -26,6 +26,7 @@ const items = [
   { title: "Users", key: "users", icon: Users },
   { title: "Appointments", key: "appointments", icon: Calendar },
   { title: "Reviews", key: "reviews", icon: Star },
+  { title: "Consultation Outcomes", key: "consultation-outcomes", icon: ClipboardCheck },
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
   { title: "Payments", key: "payments", icon: Receipt },
