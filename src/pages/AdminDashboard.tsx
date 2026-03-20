@@ -73,6 +73,7 @@ const AdminDashboard = () => {
       case "users": return <AdminUsers />;
       case "appointments": return <AdminAppointments />;
       case "reviews": return <AdminReviews />;
+      case "consultation-outcomes": return <AdminConsultationOutcomes />;
       case "specialties": return <AdminSpecialties />;
       case "contacts": return <AdminContacts />;
       case "faqs": return <AdminFaqs />;

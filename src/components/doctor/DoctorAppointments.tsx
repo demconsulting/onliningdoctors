@@ -201,6 +201,13 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                   />
                 )}
 
+                {/* Consultation Outcome (for completed appointments) */}
+                {apt.status === "completed" && (
+                  <div className="pt-2 border-t border-border">
+                    <ConsultationOutcomeForm user={user} appointmentId={apt.id} />
+                  </div>
+                )}
+
                 {/* Consultation Notes */}
                 <div className="space-y-1 pt-2 border-t border-border">
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">

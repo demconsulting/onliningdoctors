@@ -26,6 +26,7 @@ const items = [
   { title: "Users", key: "users", icon: Users },
   { title: "Appointments", key: "appointments", icon: Calendar },
   { title: "Reviews", key: "reviews", icon: Star },
+  { title: "Consultation Outcomes", key: "consultation-outcomes", icon: ClipboardCheck },
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
   { title: "Payments", key: "payments", icon: Receipt },
