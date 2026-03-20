@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           details: Json | null
           id: string
+          user_id: string | null
         }
         Insert: {
           action: string
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          user_id?: string | null
         }
         Update: {
           action?: string
@@ -35,6 +37,7 @@ export type Database = {
           created_at?: string
           details?: Json | null
           id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -48,6 +51,7 @@ export type Database = {
       }
       ai_conversations: {
         Row: {
+          channel: string | null
           created_at: string
           id: string
           session_id: string
@@ -56,6 +60,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          channel?: string | null
           created_at?: string
           id?: string
           session_id: string
@@ -64,6 +69,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          channel?: string | null
           created_at?: string
           id?: string
           session_id?: string
@@ -119,6 +125,7 @@ export type Database = {
           id: string
           role: string
           tool_calls: Json | null
+          tool_used: string | null
         }
         Insert: {
           content?: string
@@ -127,6 +134,7 @@ export type Database = {
           id?: string
           role: string
           tool_calls?: Json | null
+          tool_used?: string | null
         }
         Update: {
           content?: string
@@ -135,6 +143,7 @@ export type Database = {
           id?: string
           role?: string
           tool_calls?: Json | null
+          tool_used?: string | null
         }
         Relationships: [
           {
@@ -634,31 +643,43 @@ export type Database = {
       }
       faq_articles: {
         Row: {
+          answer: string | null
           category: string
           content: string
           created_at: string
           id: string
           is_published: boolean
+          keywords: string[] | null
+          question: string | null
+          slug: string | null
           sort_order: number | null
           title: string
           updated_at: string
         }
         Insert: {
+          answer?: string | null
           category?: string
           content: string
           created_at?: string
           id?: string
           is_published?: boolean
+          keywords?: string[] | null
+          question?: string | null
+          slug?: string | null
           sort_order?: number | null
           title: string
           updated_at?: string
         }
         Update: {
+          answer?: string | null
           category?: string
           content?: string
           created_at?: string
           id?: string
           is_published?: boolean
+          keywords?: string[] | null
+          question?: string | null
+          slug?: string | null
           sort_order?: number | null
           title?: string
           updated_at?: string
@@ -1097,6 +1118,45 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          source: string
+          status: string
+          subject: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          source?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          source?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
