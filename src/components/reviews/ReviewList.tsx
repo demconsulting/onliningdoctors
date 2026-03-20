@@ -32,22 +32,44 @@ const ReviewList = ({ doctorId }: ReviewListProps) => {
   if (reviews.length === 0) return null;
 
   const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-  const recommendPct = reviews.filter(r => r.would_recommend === true).length;
+  const recommendPct = Math.round((reviews.filter(r => r.would_recommend === true).length / reviews.length) * 100);
+  const clearHelpfulPct = Math.round((reviews.filter(r => r.doctor_clear_helpful === true).length / reviews.length) * 100);
+  const professionalPct = Math.round((reviews.filter(r => r.doctor_professional === true).length / reviews.length) * 100);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm font-display">
           <Star className="h-4 w-4 fill-warning text-warning" />
-          Patient Reviews ({reviews.length}) — {avgRating.toFixed(1)} avg
+          Patient Reviews ({reviews.length})
         </CardTitle>
-        {recommendPct > 0 && (
-          <p className="text-xs text-muted-foreground">
-            {Math.round((recommendPct / reviews.length) * 100)}% of patients would recommend this doctor
-          </p>
-        )}
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
+        {/* Aggregate Stats */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+            <div className="flex items-center justify-center gap-1">
+              <Star className="h-4 w-4 fill-warning text-warning" />
+              <span className="text-lg font-bold text-foreground">{avgRating.toFixed(1)}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Avg Rating</p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+            <div className="flex items-center justify-center gap-1">
+              <ThumbsUp className="h-4 w-4 text-primary" />
+              <span className="text-lg font-bold text-foreground">{recommendPct}%</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Recommend</p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+            <span className="text-lg font-bold text-foreground">{clearHelpfulPct}%</span>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Clear & Helpful</p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+            <span className="text-lg font-bold text-foreground">{professionalPct}%</span>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Professional</p>
+          </div>
+        </div>
         {reviews.map((r) => (
           <div key={r.id} className="rounded-lg border border-border p-3 space-y-2">
             <div className="flex items-center justify-between">
