@@ -6,6 +6,7 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminAppointments from "@/components/admin/AdminAppointments";
 import AdminReviews from "@/components/admin/AdminReviews";
+import AdminConsultationOutcomes from "@/components/admin/AdminConsultationOutcomes";
 import AdminSpecialties from "@/components/admin/AdminSpecialties";
 import AdminContacts from "@/components/admin/AdminContacts";
 import AdminFaqs from "@/components/admin/AdminFaqs";
