@@ -12,19 +12,41 @@ const SYSTEM_PROMPT = `You are the AI Support Assistant for "Doctor Onlining", a
 ROLE: You help visitors and patients with platform questions, booking guidance, payment help, technical support, and general inquiries.
 
 STRICT RULES:
-1. You must NEVER diagnose medical conditions, prescribe medications, interpret symptoms, or provide medical treatment advice.
+1. You must NEVER diagnose medical conditions, prescribe medications, interpret symptoms, or provide medical treatment advice. If a user asks a medical question or describes symptoms, clearly state: "I can help with booking and platform support, but I cannot diagnose symptoms or give treatment advice. Please book a consultation with a doctor for medical advice."
 2. You must NEVER reveal admin data, internal notes, system configurations, or database details.
-3. If a user mentions ANY emergency symptoms (chest pain, difficulty breathing, severe bleeding, loss of consciousness, suicide/self-harm, seizures, severe allergic reactions, or any life-threatening situation), IMMEDIATELY instruct them to call emergency services (911/112/999) and go to the nearest emergency room. Do NOT continue the conversation about their symptoms after giving this instruction.
+3. If a user mentions ANY emergency symptoms (chest pain, difficulty breathing, severe bleeding, loss of consciousness, suicide/self-harm, seizures, severe allergic reactions, stroke symptoms, overdose, or any life-threatening situation), IMMEDIATELY respond with: "⚠️ This may be a medical emergency. Please seek immediate emergency medical assistance or go to the nearest emergency facility now. Call your local emergency number (911/112/999) immediately. This assistant cannot provide emergency medical care." Do NOT continue the conversation about their symptoms after giving this instruction.
 4. If you are unsure about something, say so honestly and offer to connect them with human support using the handoffToHuman tool.
 5. Only answer using your FAQ knowledge base (via searchFaq tool) and approved tools. Do not make up information about the platform.
-6. CRITICAL POLICY: An appointment is ONLY confirmed after payment_status = successful. Unpaid, pending, failed, or cancelled payments must NOT be treated as confirmed bookings. Always emphasize this.
+6. CRITICAL POLICY: An appointment is ONLY confirmed after payment_status = successful. Unpaid, pending, failed, cancelled, expired, or refunded payments must NOT be treated as confirmed bookings. Always emphasize this when relevant.
+
+APPOINTMENT STATUS FLOW:
+- pending_payment → awaiting payment
+- confirmed → payment successful, ready for consultation
+- completed → consultation finished
+- cancelled → appointment cancelled
+- no_show → patient did not attend
+
+PAYMENT STATUS FLOW:
+- pending → payment initiated but not completed
+- successful → payment confirmed
+- failed → payment attempt failed
+- cancelled → payment was cancelled
+- expired → payment link expired
+- refunded → payment was refunded
 
 PERSONALITY: Professional, empathetic, clear, and helpful. Use simple language. Be concise but thorough. Use emojis sparingly for warmth.
+
+AUTHENTICATION AWARENESS:
+- When userId is provided, the user is logged in — you can check their appointments, payments, and offer personalized help.
+- When userId is null, the user is a visitor — answer general FAQs, show specialties, show public doctor info, guide booking flow, and allow support ticket creation. Do NOT attempt to look up personal data.
 
 TOOL USAGE:
 - Use searchFaq for any platform questions before answering from memory.
 - Use getDoctorSpecialties and getDoctorsBySpecialty when users ask about available doctors.
-- Use getAppointmentStatus and getPaymentStatus only when users provide specific IDs and are authenticated.
+- Use getDoctorAvailability when users ask about a specific doctor's schedule.
+- Use getAppointmentStatus when authenticated users ask about a specific appointment.
+- Use getPaymentStatus when authenticated users ask about payment for an appointment.
+- Use getUserUpcomingAppointments when authenticated users ask about their upcoming appointments.
 - Use createSupportTicket when users want to submit a formal support request.
 - Use handoffToHuman when you cannot help or the user explicitly asks for human support.`;
 
@@ -76,9 +98,26 @@ const tools = [
   {
     type: "function",
     function: {
+      name: "getDoctorAvailability",
+      description: "Get the next available appointment slots for a specific doctor. Returns their weekly schedule.",
+      parameters: {
+        type: "object",
+        properties: {
+          doctorId: {
+            type: "string",
+            description: "The doctor's profile ID (UUID)",
+          },
+        },
+        required: ["doctorId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "getAppointmentStatus",
       description:
-        "Check the status of a specific appointment. The user must be authenticated and provide their appointment ID.",
+        "Check the status of a specific appointment. The user must be authenticated.",
       parameters: {
         type: "object",
         properties: {
@@ -96,17 +135,25 @@ const tools = [
     function: {
       name: "getPaymentStatus",
       description:
-        "Check the status of a specific payment. The user must be authenticated and provide their payment ID.",
+        "Check the payment status for a specific appointment. The user must be authenticated.",
       parameters: {
         type: "object",
         properties: {
-          paymentId: {
+          appointmentId: {
             type: "string",
-            description: "The payment UUID to check",
+            description: "The appointment UUID to check payment for",
           },
         },
-        required: ["paymentId"],
+        required: ["appointmentId"],
       },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "getUserUpcomingAppointments",
+      description: "Get the logged-in user's upcoming/active appointments. The user must be authenticated.",
+      parameters: { type: "object", properties: {}, required: [] },
     },
   },
   {
@@ -114,18 +161,16 @@ const tools = [
     function: {
       name: "createSupportTicket",
       description:
-        "Create a support ticket/contact submission for issues that need human attention. Collect user name, email, and issue description.",
+        "Create a support ticket for issues that need human attention. Collect user name, email, subject, and detailed message.",
       parameters: {
         type: "object",
         properties: {
           name: { type: "string", description: "User's full name" },
           email: { type: "string", description: "User's email address" },
-          issue: {
-            type: "string",
-            description: "Detailed description of the issue",
-          },
+          subject: { type: "string", description: "Subject of the support request" },
+          message: { type: "string", description: "Detailed description of the issue" },
         },
-        required: ["name", "email", "issue"],
+        required: ["name", "email", "message"],
       },
     },
   },
@@ -158,12 +203,49 @@ async function executeTool(
 ) {
   switch (toolName) {
     case "searchFaq": {
+      // Search faq_articles by title, content, question, answer, and keywords
+      const query = (args.query || "").toLowerCase();
       const { data } = await supabase
         .from("faq_articles")
-        .select("title, content, category")
+        .select("title, content, category, question, answer, keywords")
         .eq("is_published", true)
         .order("sort_order");
-      return data || [];
+
+      if (!data || data.length === 0) return { results: [], message: "No FAQ articles found." };
+
+      // Simple relevance scoring
+      const scored = data.map((article: any) => {
+        let score = 0;
+        const fields = [
+          article.title, article.content, article.question, article.answer
+        ].filter(Boolean).map((f: string) => f.toLowerCase());
+
+        for (const field of fields) {
+          if (field.includes(query)) score += 3;
+          for (const word of query.split(/\s+/)) {
+            if (word.length > 2 && field.includes(word)) score += 1;
+          }
+        }
+
+        // Check keywords array
+        if (article.keywords && Array.isArray(article.keywords)) {
+          for (const kw of article.keywords) {
+            if (query.includes(kw.toLowerCase())) score += 2;
+          }
+        }
+
+        return { ...article, score };
+      });
+
+      const results = scored
+        .filter((a: any) => a.score > 0)
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 5)
+        .map(({ score, ...rest }: any) => rest);
+
+      return results.length > 0
+        ? { results }
+        : { results: data.slice(0, 3), message: "No exact match found, showing general articles." };
     }
 
     case "getDoctorSpecialties": {
@@ -186,7 +268,7 @@ async function executeTool(
       const { data: doctors } = await supabase
         .from("doctors")
         .select(
-          "id, title, bio, rating, total_reviews, is_available, consultation_fee, experience_years, profile_id, profiles!inner(full_name)"
+          "id, title, bio, rating, total_reviews, is_available, consultation_fee, experience_years, languages, profile_id, profiles!inner(full_name, avatar_url)"
         )
         .eq("specialty_id", specialties[0].id)
         .eq("is_verified", true)
@@ -201,71 +283,162 @@ async function executeTool(
           available: d.is_available,
           fee: d.consultation_fee,
           experience_years: d.experience_years,
+          languages: d.languages,
           profileId: d.profile_id,
+        })),
+      };
+    }
+
+    case "getDoctorAvailability": {
+      const doctorId = args.doctorId;
+      if (!doctorId) return { error: "Doctor ID is required." };
+
+      // Get doctor info
+      const { data: doctor } = await supabase
+        .from("doctors")
+        .select("title, is_available, profiles!inner(full_name)")
+        .eq("profile_id", doctorId)
+        .single();
+
+      if (!doctor) return { error: "Doctor not found." };
+
+      // Get availability slots
+      const { data: slots } = await supabase
+        .from("doctor_availability")
+        .select("day_of_week, start_time, end_time, is_available, slot_duration_minutes")
+        .eq("doctor_id", doctorId)
+        .eq("is_available", true)
+        .order("day_of_week");
+
+      const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+      return {
+        doctor: `${doctor.title || ""} ${(doctor as any).profiles?.full_name || "Doctor"}`.trim(),
+        isCurrentlyAvailable: doctor.is_available,
+        weeklySchedule: (slots || []).map((s: any) => ({
+          day: dayNames[s.day_of_week],
+          startTime: s.start_time,
+          endTime: s.end_time,
+          slotDuration: s.slot_duration_minutes,
         })),
       };
     }
 
     case "getAppointmentStatus": {
       if (!userId)
-        return {
-          error:
-            "You need to be logged in to check appointment status. Please log in first.",
-        };
+        return { error: "You need to be logged in to check appointment status. Please log in first." };
 
       const { data } = await supabase
         .from("appointments")
-        .select("id, status, scheduled_at, duration_minutes, reason")
+        .select("id, status, scheduled_at, duration_minutes, reason, doctor_id, profiles!appointments_doctor_id_fkey(full_name)")
         .eq("id", args.appointmentId)
         .or(`patient_id.eq.${userId},doctor_id.eq.${userId}`)
         .single();
 
       if (!data)
-        return {
-          error: "Appointment not found or you don't have access to view it.",
-        };
-      return data;
+        return { error: "Appointment not found or you don't have access to view it." };
+
+      return {
+        id: data.id,
+        status: data.status,
+        scheduledAt: data.scheduled_at,
+        durationMinutes: data.duration_minutes,
+        reason: data.reason,
+        doctor: (data as any).profiles?.full_name || "Doctor",
+      };
     }
 
     case "getPaymentStatus": {
       if (!userId)
-        return {
-          error:
-            "You need to be logged in to check payment status. Please log in first.",
-        };
+        return { error: "You need to be logged in to check payment status. Please log in first." };
 
       const { data } = await supabase
         .from("payments")
-        .select(
-          "id, status, amount, currency, payment_method, paid_at, created_at"
-        )
-        .eq("id", args.paymentId)
+        .select("id, status, amount, currency, payment_method, paid_at, created_at")
+        .eq("appointment_id", args.appointmentId)
         .or(`patient_id.eq.${userId},doctor_id.eq.${userId}`)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .single();
 
       if (!data)
-        return {
-          error: "Payment not found or you don't have access to view it.",
-        };
-      return data;
+        return { error: "No payment found for this appointment, or you don't have access to view it." };
+
+      return {
+        paymentId: data.id,
+        status: data.status,
+        amount: data.amount,
+        currency: data.currency,
+        method: data.payment_method,
+        paidAt: data.paid_at,
+        isConfirmed: data.status === "successful",
+      };
+    }
+
+    case "getUserUpcomingAppointments": {
+      if (!userId)
+        return { error: "You need to be logged in to view your appointments. Please log in first." };
+
+      const { data } = await supabase
+        .from("appointments")
+        .select("id, status, scheduled_at, duration_minutes, reason, doctor_id, profiles!appointments_doctor_id_fkey(full_name)")
+        .eq("patient_id", userId)
+        .in("status", ["confirmed", "awaiting_payment", "pending"])
+        .gte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at")
+        .limit(5);
+
+      if (!data || data.length === 0)
+        return { message: "You have no upcoming appointments." };
+
+      return {
+        appointments: data.map((a: any) => ({
+          id: a.id,
+          status: a.status,
+          scheduledAt: a.scheduled_at,
+          durationMinutes: a.duration_minutes,
+          reason: a.reason,
+          doctor: a.profiles?.full_name || "Doctor",
+        })),
+      };
     }
 
     case "createSupportTicket": {
-      const { error } = await supabase.from("contact_submissions").insert({
+      const { error } = await supabase.from("support_tickets").insert({
+        user_id: userId || null,
         name: args.name,
         email: args.email,
-        message: args.issue,
-        subject: "AI Assistant Support Ticket",
+        subject: args.subject || "AI Assistant Support Request",
+        message: args.message,
+        source: "ai_agent",
       });
 
-      if (error)
-        return {
-          error: "Failed to create support ticket. Please try again.",
-        };
+      if (error) {
+        console.error("Support ticket error:", error);
+        return { error: "Failed to create support ticket. Please try again." };
+      }
+
+      // Also notify admins
+      const { data: admins } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
+
+      if (admins) {
+        for (const admin of admins) {
+          await supabase.from("notifications").insert({
+            user_id: admin.user_id,
+            title: "New Support Ticket (AI)",
+            message: `Support ticket from ${args.name}: ${args.subject || args.message.slice(0, 80)}`,
+            type: "support",
+            link: "/admin",
+          });
+        }
+      }
+
       return {
         success: true,
-        message:
-          "Support ticket created successfully. Our team will respond to your email shortly.",
+        message: "Support ticket created successfully. Our team will respond to your email shortly.",
       };
     }
 
@@ -278,6 +451,12 @@ async function executeTool(
       if (error) {
         console.error("Handoff insert error:", error);
       }
+
+      // Update conversation status
+      await supabase
+        .from("ai_conversations")
+        .update({ status: "escalated" })
+        .eq("id", conversationId);
 
       // Notify admins
       const { data: admins } = await supabase
@@ -299,8 +478,7 @@ async function executeTool(
 
       return {
         success: true,
-        message:
-          "Your conversation has been escalated to our human support team. They will review it and get back to you shortly.",
+        message: "Your conversation has been escalated to our human support team. They will review it and get back to you shortly.",
       };
     }
 
@@ -314,7 +492,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, conversationId, sessionId, userId } = await req.json();
+    const { messages, conversationId, sessionId, userId, channel } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY)
@@ -333,10 +511,17 @@ serve(async (req) => {
           session_id: sessionId || crypto.randomUUID(),
           user_id: userId || null,
           status: "active",
+          channel: channel || (userId ? "patient_dashboard" : "visitor"),
         })
         .select("id")
         .single();
       convId = conv?.id;
+    } else {
+      // Update last activity
+      await supabase
+        .from("ai_conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", convId);
     }
 
     // Save user message
@@ -349,12 +534,17 @@ serve(async (req) => {
       });
     }
 
+    // Add auth context to system prompt
+    const authContext = userId
+      ? `\n\nCURRENT USER: The user is logged in (userId: ${userId}). You can access their personal appointment and payment data using the appropriate tools.`
+      : `\n\nCURRENT USER: The user is NOT logged in. Do not attempt to look up personal data. Guide them to log in if they need account-specific information.`;
+
     // Limit history to last 20 messages
     const recentMessages = messages.slice(-20);
 
     // Build messages for AI
     const aiMessages: any[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: SYSTEM_PROMPT + authContext },
       ...recentMessages,
     ];
 
@@ -383,26 +573,14 @@ serve(async (req) => {
         const text = await response.text();
         if (status === 429) {
           return new Response(
-            JSON.stringify({
-              error:
-                "The assistant is currently busy. Please try again in a moment.",
-            }),
-            {
-              status: 429,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+            JSON.stringify({ error: "The assistant is currently busy. Please try again in a moment." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
         if (status === 402) {
           return new Response(
-            JSON.stringify({
-              error:
-                "AI service temporarily unavailable. Please try again later.",
-            }),
-            {
-              status: 402,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
+            JSON.stringify({ error: "AI service temporarily unavailable. Please try again later." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
         console.error("AI gateway error:", status, text);
@@ -437,6 +615,7 @@ serve(async (req) => {
           // Log tool usage
           await supabase.from("ai_audit_logs").insert({
             conversation_id: convId,
+            user_id: userId || null,
             action: `tool_call:${toolCall.function.name}`,
             details: { args, result },
           });
@@ -470,15 +649,9 @@ serve(async (req) => {
     console.error("chat-assistant error:", e);
     return new Response(
       JSON.stringify({
-        error:
-          e instanceof Error
-            ? e.message
-            : "An error occurred. Please try again.",
+        error: e instanceof Error ? e.message : "An error occurred. Please try again.",
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
