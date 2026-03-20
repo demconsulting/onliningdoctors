@@ -242,19 +242,58 @@ const DoctorDetail = () => {
             {/* Availability */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-display text-base"><Clock className="h-4 w-4 text-primary" /> Availability Schedule</CardTitle>
+                <CardTitle className="flex items-center gap-2 font-display text-base"><Clock className="h-4 w-4 text-primary" /> Weekly Availability</CardTitle>
               </CardHeader>
               <CardContent>
                 {availability.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No schedule set yet.</p>
                 ) : (
-                  <div className="space-y-2">
-                    {availability.filter(a => a.is_available !== false).map((slot, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                        <span className="font-medium text-foreground">{DAYS[slot.day_of_week]}</span>
-                        <span className="text-muted-foreground">{slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}</span>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-7 gap-1">
+                    {DAYS.map((day, dayIdx) => {
+                      const slots = availability.filter(a => a.day_of_week === dayIdx && a.is_available !== false);
+                      const isToday = new Date().getDay() === dayIdx;
+                      const hasSlots = slots.length > 0;
+                      return (
+                        <div
+                          key={dayIdx}
+                          className={`relative rounded-xl p-2 text-center transition-all ${
+                            isToday
+                              ? "bg-primary/10 ring-2 ring-primary/30"
+                              : hasSlots
+                              ? "bg-muted/50"
+                              : "bg-muted/20 opacity-50"
+                          }`}
+                        >
+                          <p className={`text-[10px] font-semibold uppercase tracking-wider ${
+                            isToday ? "text-primary" : "text-muted-foreground"
+                          }`}>
+                            {day.slice(0, 3)}
+                          </p>
+                          {isToday && (
+                            <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
+                          )}
+                          {hasSlots ? (
+                            <div className="mt-1.5 space-y-1">
+                              {slots.map((slot, si) => (
+                                <div
+                                  key={si}
+                                  className={`rounded-md px-1 py-1 text-[9px] font-medium leading-tight ${
+                                    isToday
+                                      ? "bg-primary/20 text-primary"
+                                      : "bg-accent/60 text-accent-foreground"
+                                  }`}
+                                >
+                                  {slot.start_time.slice(0, 5)}
+                                  <span className="block text-[8px] opacity-70">–{slot.end_time.slice(0, 5)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-[9px] text-muted-foreground">Off</p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
