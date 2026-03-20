@@ -211,27 +211,12 @@ const DoctorDetail = () => {
                 )}
                 {doctor.license_number && (
                   <div className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div><p className="text-xs text-muted-foreground">License / Certificate</p><p className="text-sm font-medium text-foreground">{doctor.license_number}</p></div>
-                  </div>
-                )}
-                {doctor.languages && doctor.languages.length > 0 && (
-                  <div className="flex items-start gap-3">
-                    <Languages className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <ShieldCheck className="mt-0.5 h-4 w-4 text-success" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Languages</p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {doctor.languages.map(l => <Badge key={l} variant="secondary" className="text-xs">{l}</Badge>)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {id && (
-                  <div className="flex items-start gap-3">
-                    <FileText className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs text-muted-foreground">Doctor ID</p>
-                      <p className="text-sm font-mono text-foreground select-all">{id}</p>
+                      <p className="text-xs text-muted-foreground">Credentials</p>
+                      <p className="text-sm font-medium text-success flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5" /> Verified by Platform
+                      </p>
                     </div>
                   </div>
                 )}
