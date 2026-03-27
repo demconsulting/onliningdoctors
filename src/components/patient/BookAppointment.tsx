@@ -452,9 +452,20 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                         const name = doc.profile?.full_name || "Doctor";
                         const initials = name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
                         const isSelected = selectedDoctor === doc.profile_id;
-                        const feeSymbol = getCurrencySymbol(
-                          doc.profile?.country || patientCountry || geo?.countryCode || geo?.countryName
-                        );
+                        const docCountry = doc.profile?.country || "";
+                        const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
+                        const docCountryNameToCode: Record<string, string> = {
+                          "South Africa": "ZA", "Nigeria": "NG", "Kenya": "KE", "Ghana": "GH",
+                          "Tanzania": "TZ", "Uganda": "UG", "Egypt": "EG", "Ethiopia": "ET",
+                          "Rwanda": "RW", "United States": "US", "United Kingdom": "GB", "India": "IN",
+                          "Botswana": "BW", "Zimbabwe": "ZW", "Mozambique": "MZ", "Namibia": "NA",
+                          "Angola": "AO", "Democratic Republic of the Congo": "CD", "Cameroon": "CM",
+                          "Ivory Coast": "CI", "Senegal": "SN", "Mali": "ML", "Madagascar": "MG",
+                          "Malawi": "MW", "Zambia": "ZM", "Canada": "CA", "Australia": "AU",
+                          "Germany": "DE", "France": "FR",
+                        };
+                        const dCountryCode = docCountry.length === 2 ? docCountry.toUpperCase() : docCountryNameToCode[docCountry] || null;
+                        const feeCurrencyCode = (dCountryCode && COUNTRY_CURRENCY[dCountryCode]?.currency) || "";
                         return (
                           <div
                             key={doc.profile_id}
