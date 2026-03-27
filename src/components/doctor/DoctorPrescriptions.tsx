@@ -28,12 +28,15 @@ interface PrescriptionRow {
   patientName: string;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 const DoctorPrescriptions = ({ user }: DoctorPrescriptionsProps) => {
   const [prescriptions, setPrescriptions] = useState<PrescriptionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchPrescriptions = async () => {
     setLoading(true);
@@ -92,6 +95,13 @@ const DoctorPrescriptions = ({ user }: DoctorPrescriptionsProps) => {
       rx.medications.some((m: any) => m.name?.toLowerCase().includes(q))
     );
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((safeCurrentPage - 1) * ITEMS_PER_PAGE, safeCurrentPage * ITEMS_PER_PAGE);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setCurrentPage(1); }, [search, dateFrom, dateTo]);
 
   const clearFilters = () => {
     setSearch("");
@@ -184,7 +194,7 @@ const DoctorPrescriptions = ({ user }: DoctorPrescriptionsProps) => {
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map(rx => (
+            {paginated.map(rx => (
               <div key={rx.id} className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex-1">
@@ -225,6 +235,57 @@ const DoctorPrescriptions = ({ user }: DoctorPrescriptionsProps) => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filtered.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-muted-foreground">
+              Page {safeCurrentPage} of {totalPages}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+                className="text-xs"
+              >
+                Previous
+              </Button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 1)
+                .reduce<number[]>((acc, p) => {
+                  if (acc.length > 0 && p - acc[acc.length - 1] > 1) acc.push(-1);
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, i) =>
+                  p === -1 ? (
+                    <span key={`ellipsis-${i}`} className="flex items-center px-1 text-xs text-muted-foreground">…</span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={p === safeCurrentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(p)}
+                      className="text-xs min-w-[32px]"
+                    >
+                      {p}
+                    </Button>
+                  )
+                )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safeCurrentPage >= totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+                className="text-xs"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
