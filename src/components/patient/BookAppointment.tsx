@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { getCurrencySymbol } from "@/lib/currency";
+import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { format, getDay, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -263,7 +263,22 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       const timing = (payConfig?.payment_timing as string) || "at_booking";
 
       if (timing === "at_booking") {
-        const currency = geo?.currency || "NGN";
+        // Derive currency from the doctor's registered country
+        const doctorCountry = selectedDoc?.profile?.country || "";
+        const countryNameToCode: Record<string, string> = {
+          "South Africa": "ZA", "Nigeria": "NG", "Kenya": "KE", "Ghana": "GH",
+          "Tanzania": "TZ", "Uganda": "UG", "Egypt": "EG", "Ethiopia": "ET",
+          "Rwanda": "RW", "United States": "US", "United Kingdom": "GB", "India": "IN",
+          "Botswana": "BW", "Zimbabwe": "ZW", "Mozambique": "MZ", "Namibia": "NA",
+          "Angola": "AO", "Democratic Republic of the Congo": "CD", "Cameroon": "CM",
+          "Ivory Coast": "CI", "Senegal": "SN", "Mali": "ML", "Madagascar": "MG",
+          "Malawi": "MW", "Zambia": "ZM", "Canada": "CA", "Australia": "AU",
+          "Germany": "DE", "France": "FR",
+        };
+        const dCode = doctorCountry.length === 2
+          ? doctorCountry.toUpperCase()
+          : countryNameToCode[doctorCountry] || null;
+        const currency = (dCode && COUNTRY_CURRENCY[dCode]?.currency) || "NGN";
         const callbackUrl = `${window.location.origin}/dashboard`;
 
         try {
