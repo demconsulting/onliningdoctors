@@ -90,7 +90,7 @@ const NotificationBell = () => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
+      <PopoverContent className="w-80 p-0 max-h-[70vh] flex flex-col" align="end" sideOffset={8} avoidCollisions>
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h4 className="text-sm font-semibold text-foreground">Notifications</h4>
           {unreadCount > 0 && (
