@@ -10,6 +10,7 @@ import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import DocumentSharingToggle from "@/components/patient/DocumentSharingToggle";
+import PrescriptionView from "@/components/doctor/PrescriptionView";
 
 interface AppointmentListProps {
   user: SupaUser;
@@ -207,6 +208,12 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                      </div>
                    );
                  })()}
+                {/* Prescription view for completed appointments */}
+                {apt.status === "completed" && (
+                  <div className="mt-2">
+                    <PrescriptionView appointmentId={apt.id} viewAs="patient" />
+                  </div>
+                )}
                 {/* Document sharing toggle for active appointments */}
                 {(apt.status === "pending" || apt.status === "confirmed" || apt.status === "completed") && (
                   <DocumentSharingToggle

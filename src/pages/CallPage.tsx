@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import VideoCall from "@/components/call/VideoCall";
 import ConsultationNotes from "@/components/call/ConsultationNotes";
+import PrescriptionForm from "@/components/doctor/PrescriptionForm";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
