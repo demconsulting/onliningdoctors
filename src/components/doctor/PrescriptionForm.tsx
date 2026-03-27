@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, FileText, Save, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, Trash2, FileText, Save, Upload, BookTemplate } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Medication {
@@ -43,6 +44,8 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
   const [signatureUrl, setSignatureUrl] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingSig, setUploadingSig] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,6 +85,13 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
           setSignatureUrl((recent as any).doctor_signature_url || "");
         }
       }
+      // Load templates
+      const { data: tpls } = await supabase
+        .from("prescription_templates" as any)
+        .select("id, name, condition, diagnosis, medications, pharmacy_notes, warnings, refill_count")
+        .eq("doctor_id", doctorId)
+        .order("name");
+      setTemplates((tpls as any[]) || []);
       setLoading(false);
     };
     load();
