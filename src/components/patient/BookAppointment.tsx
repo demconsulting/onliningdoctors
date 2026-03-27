@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { getCurrencySymbol } from "@/lib/currency";
+import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { format, getDay, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 
