@@ -263,7 +263,31 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       const timing = (payConfig?.payment_timing as string) || "at_booking";
 
       if (timing === "at_booking") {
-        const currency = geo?.currency || "NGN";
+        // Derive currency from the doctor's registered country
+        const doctorCountry = selectedDoc?.profile?.country;
+        const doctorCountryCode = doctorCountry?.length === 2
+          ? doctorCountry.toUpperCase()
+          : Object.entries(COUNTRY_CURRENCY).find(
+              ([, v]) => false // fallback below
+            )?.[0];
+        // Use currency.ts lookup: get code from country name or code
+        const resolvedSymbol = getCurrencySymbol(doctorCountry);
+        // Map symbol back to currency code using COUNTRY_CURRENCY
+        const countryNameToCodeLocal: Record<string, string> = {
+          "South Africa": "ZA", "Nigeria": "NG", "Kenya": "KE", "Ghana": "GH",
+          "Tanzania": "TZ", "Uganda": "UG", "Egypt": "EG", "Ethiopia": "ET",
+          "Rwanda": "RW", "United States": "US", "United Kingdom": "GB", "India": "IN",
+          "Botswana": "BW", "Zimbabwe": "ZW", "Mozambique": "MZ", "Namibia": "NA",
+          "Angola": "AO", "Democratic Republic of the Congo": "CD", "Cameroon": "CM",
+          "Ivory Coast": "CI", "Senegal": "SN", "Mali": "ML", "Madagascar": "MG",
+          "Malawi": "MW", "Zambia": "ZM", "Canada": "CA", "Australia": "AU",
+          "Germany": "DE", "France": "FR",
+        };
+        const dCode = doctorCountry?.length === 2
+          ? doctorCountry.toUpperCase()
+          : countryNameToCodeLocal[doctorCountry || ""] || null;
+        const currencyInfo = dCode ? COUNTRY_CURRENCY[dCode] : null;
+        const currency = currencyInfo?.currency || "NGN";
         const callbackUrl = `${window.location.origin}/dashboard`;
 
         try {
