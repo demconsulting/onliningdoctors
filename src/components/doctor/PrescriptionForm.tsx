@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, FileText, Save, Upload } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Plus, Trash2, FileText, Save, Upload, BookTemplate } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Medication {
@@ -43,6 +44,8 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
   const [signatureUrl, setSignatureUrl] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingSig, setUploadingSig] = useState(false);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,6 +85,13 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
           setSignatureUrl((recent as any).doctor_signature_url || "");
         }
       }
+      // Load templates
+      const { data: tpls } = await supabase
+        .from("prescription_templates" as any)
+        .select("id, name, condition, diagnosis, medications, pharmacy_notes, warnings, refill_count")
+        .eq("doctor_id", doctorId)
+        .order("name");
+      setTemplates((tpls as any[]) || []);
       setLoading(false);
     };
     load();
@@ -104,6 +114,44 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
     else setSignatureUrl(path);
     setter(false);
     toast({ title: `${type === "logo" ? "Logo" : "Signature"} uploaded` });
+  };
+
+  const applyTemplate = (templateId: string) => {
+    const t = templates.find(tp => tp.id === templateId);
+    if (!t) return;
+    setDiagnosis(t.diagnosis || "");
+    setMedications(t.medications?.length ? t.medications : [{ ...emptyMed }]);
+    setPharmacyNotes(t.pharmacy_notes || "");
+    setWarnings(t.warnings || "");
+    setRefillCount(t.refill_count || 0);
+    toast({ title: `Template "${t.name}" applied` });
+  };
+
+  const saveAsTemplate = async () => {
+    const templateName = prompt("Template name:");
+    if (!templateName?.trim()) return;
+    setSavingTemplate(true);
+    const { error } = await supabase.from("prescription_templates" as any).insert({
+      doctor_id: doctorId,
+      name: templateName.trim(),
+      diagnosis,
+      medications: medications.filter(m => m.name.trim()),
+      pharmacy_notes: pharmacyNotes || null,
+      warnings: warnings || null,
+      refill_count: refillCount,
+    });
+    setSavingTemplate(false);
+    if (error) toast({ variant: "destructive", title: "Error", description: error.message });
+    else {
+      toast({ title: "Saved as template" });
+      // Reload templates
+      const { data: tpls } = await supabase
+        .from("prescription_templates" as any)
+        .select("id, name, condition, diagnosis, medications, pharmacy_notes, warnings, refill_count")
+        .eq("doctor_id", doctorId)
+        .order("name");
+      setTemplates((tpls as any[]) || []);
+    }
   };
 
   const updateMed = (idx: number, field: keyof Medication, value: string) => {
@@ -172,6 +220,25 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
           <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
         ) : (
           <div className="space-y-5">
+            {/* Template Selector */}
+            {templates.length > 0 && !existingId && (
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-dashed border-primary/30 bg-primary/5">
+                <BookTemplate className="h-4 w-4 text-primary shrink-0" />
+                <Select onValueChange={applyTemplate}>
+                  <SelectTrigger className="flex-1 h-8 text-xs">
+                    <SelectValue placeholder="Load from template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map(t => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} {t.condition ? `(${t.condition})` : ""} — {t.medications?.length || 0} meds
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Logo & Signature Uploads */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -283,10 +350,18 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
               </div>
             </div>
 
-            <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {existingId ? "Update Prescription" : "Create Prescription"}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={saving} className="flex-1 gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {existingId ? "Update Prescription" : "Create Prescription"}
+              </Button>
+              {!existingId && medications.some(m => m.name.trim()) && (
+                <Button variant="outline" onClick={saveAsTemplate} disabled={savingTemplate} className="gap-1.5" title="Save current medications as a reusable template">
+                  {savingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookTemplate className="h-4 w-4" />}
+                  Save Template
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </DialogContent>

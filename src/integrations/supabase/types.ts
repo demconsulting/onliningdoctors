@@ -977,6 +977,56 @@ export type Database = {
         }
         Relationships: []
       }
+      prescription_templates: {
+        Row: {
+          condition: string | null
+          created_at: string
+          diagnosis: string | null
+          doctor_id: string
+          id: string
+          medications: Json
+          name: string
+          pharmacy_notes: string | null
+          refill_count: number | null
+          updated_at: string
+          warnings: string | null
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id: string
+          id?: string
+          medications?: Json
+          name: string
+          pharmacy_notes?: string | null
+          refill_count?: number | null
+          updated_at?: string
+          warnings?: string | null
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id?: string
+          id?: string
+          medications?: Json
+          name?: string
+          pharmacy_notes?: string | null
+          refill_count?: number | null
+          updated_at?: string
+          warnings?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescription_templates_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescriptions: {
         Row: {
           allergies_noted: string | null
