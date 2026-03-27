@@ -116,6 +116,44 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
     toast({ title: `${type === "logo" ? "Logo" : "Signature"} uploaded` });
   };
 
+  const applyTemplate = (templateId: string) => {
+    const t = templates.find(tp => tp.id === templateId);
+    if (!t) return;
+    setDiagnosis(t.diagnosis || "");
+    setMedications(t.medications?.length ? t.medications : [{ ...emptyMed }]);
+    setPharmacyNotes(t.pharmacy_notes || "");
+    setWarnings(t.warnings || "");
+    setRefillCount(t.refill_count || 0);
+    toast({ title: `Template "${t.name}" applied` });
+  };
+
+  const saveAsTemplate = async () => {
+    const templateName = prompt("Template name:");
+    if (!templateName?.trim()) return;
+    setSavingTemplate(true);
+    const { error } = await supabase.from("prescription_templates" as any).insert({
+      doctor_id: doctorId,
+      name: templateName.trim(),
+      diagnosis,
+      medications: medications.filter(m => m.name.trim()),
+      pharmacy_notes: pharmacyNotes || null,
+      warnings: warnings || null,
+      refill_count: refillCount,
+    });
+    setSavingTemplate(false);
+    if (error) toast({ variant: "destructive", title: "Error", description: error.message });
+    else {
+      toast({ title: "Saved as template" });
+      // Reload templates
+      const { data: tpls } = await supabase
+        .from("prescription_templates" as any)
+        .select("id, name, condition, diagnosis, medications, pharmacy_notes, warnings, refill_count")
+        .eq("doctor_id", doctorId)
+        .order("name");
+      setTemplates((tpls as any[]) || []);
+    }
+  };
+
   const updateMed = (idx: number, field: keyof Medication, value: string) => {
     setMedications(prev => prev.map((m, i) => i === idx ? { ...m, [field]: value } : m));
   };
