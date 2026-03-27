@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp, BookTemplate } from "lucide-react";
+import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp, BookTemplate, FileText } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
@@ -12,6 +12,7 @@ import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
 import DoctorEarnings from "@/components/doctor/DoctorEarnings";
 import PrescriptionTemplates from "@/components/doctor/PrescriptionTemplates";
+import DoctorPrescriptions from "@/components/doctor/DoctorPrescriptions";
 
 const DoctorDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -94,9 +95,12 @@ const DoctorDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-auto">
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 lg:w-auto">
             <TabsTrigger value="appointments" className="gap-1.5">
-              <Calendar className="h-4 w-4" /> Appointments
+              <Calendar className="h-4 w-4" /> <span className="hidden sm:inline">Appointments</span><span className="sm:hidden">Appts</span>
+            </TabsTrigger>
+            <TabsTrigger value="prescriptions" className="gap-1.5">
+              <FileText className="h-4 w-4" /> <span className="hidden sm:inline">Prescriptions</span><span className="sm:hidden">Rx</span>
             </TabsTrigger>
             <TabsTrigger value="earnings" className="gap-1.5">
               <TrendingUp className="h-4 w-4" /> Earnings
@@ -105,7 +109,7 @@ const DoctorDashboard = () => {
               <BookTemplate className="h-4 w-4" /> Templates
             </TabsTrigger>
             <TabsTrigger value="availability" className="gap-1.5">
-              <Clock className="h-4 w-4" /> Availability
+              <Clock className="h-4 w-4" /> <span className="hidden sm:inline">Availability</span><span className="sm:hidden">Avail</span>
             </TabsTrigger>
             <TabsTrigger value="pricing" className="gap-1.5">
               <DollarSign className="h-4 w-4" /> Pricing
@@ -117,6 +121,9 @@ const DoctorDashboard = () => {
 
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
+          </TabsContent>
+          <TabsContent value="prescriptions">
+            <DoctorPrescriptions user={user} />
           </TabsContent>
           <TabsContent value="earnings">
             <DoctorEarnings user={user} doctorCountry={doctorCountry} />
