@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import VideoCall from "@/components/call/VideoCall";
 import ConsultationNotes from "@/components/call/ConsultationNotes";
+import PrescriptionForm from "@/components/doctor/PrescriptionForm";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +17,8 @@ const CallPage = () => {
   const [isInitiator, setIsInitiator] = useState(false);
   const [isDoctor, setIsDoctor] = useState(false);
   const [doctorId, setDoctorId] = useState("");
+  const [patientId, setPatientId] = useState("");
+  const [patientName, setPatientName] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -43,6 +46,10 @@ const CallPage = () => {
       setIsInitiator(uid === apt.doctor_id);
       setIsDoctor(uid === apt.doctor_id);
       setDoctorId(apt.doctor_id);
+      setPatientId(apt.patient_id);
+      // Fetch patient name for prescription
+      const { data: patProfile } = await supabase.from("profiles").select("full_name").eq("id", apt.patient_id).single();
+      setPatientName(patProfile?.full_name || "Patient");
       setLoading(false);
     };
     init();
@@ -87,12 +94,22 @@ const CallPage = () => {
               onEnd={() => navigate(-1)}
             />
           </div>
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-4">
             <ConsultationNotes
               appointmentId={appointmentId!}
               doctorId={doctorId}
               isDoctor={isDoctor}
             />
+            {isDoctor && (
+              <div className="flex gap-2">
+                <PrescriptionForm
+                  appointmentId={appointmentId!}
+                  doctorId={doctorId}
+                  patientId={patientId}
+                  patientName={patientName}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
