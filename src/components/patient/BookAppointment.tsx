@@ -264,16 +264,8 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
       if (timing === "at_booking") {
         // Derive currency from the doctor's registered country
-        const doctorCountry = selectedDoc?.profile?.country;
-        const doctorCountryCode = doctorCountry?.length === 2
-          ? doctorCountry.toUpperCase()
-          : Object.entries(COUNTRY_CURRENCY).find(
-              ([, v]) => false // fallback below
-            )?.[0];
-        // Use currency.ts lookup: get code from country name or code
-        const resolvedSymbol = getCurrencySymbol(doctorCountry);
-        // Map symbol back to currency code using COUNTRY_CURRENCY
-        const countryNameToCodeLocal: Record<string, string> = {
+        const doctorCountry = selectedDoc?.profile?.country || "";
+        const countryNameToCode: Record<string, string> = {
           "South Africa": "ZA", "Nigeria": "NG", "Kenya": "KE", "Ghana": "GH",
           "Tanzania": "TZ", "Uganda": "UG", "Egypt": "EG", "Ethiopia": "ET",
           "Rwanda": "RW", "United States": "US", "United Kingdom": "GB", "India": "IN",
@@ -283,11 +275,10 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
           "Malawi": "MW", "Zambia": "ZM", "Canada": "CA", "Australia": "AU",
           "Germany": "DE", "France": "FR",
         };
-        const dCode = doctorCountry?.length === 2
+        const dCode = doctorCountry.length === 2
           ? doctorCountry.toUpperCase()
-          : countryNameToCodeLocal[doctorCountry || ""] || null;
-        const currencyInfo = dCode ? COUNTRY_CURRENCY[dCode] : null;
-        const currency = currencyInfo?.currency || "NGN";
+          : countryNameToCode[doctorCountry] || null;
+        const currency = (dCode && COUNTRY_CURRENCY[dCode]?.currency) || "NGN";
         const callbackUrl = `${window.location.origin}/dashboard`;
 
         try {
