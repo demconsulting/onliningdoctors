@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CreditCard, Shield, Banknote, Settings2, AlertTriangle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Loader2, CreditCard, Shield, Banknote, Settings2, AlertTriangle, ToggleLeft, ToggleRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const CURRENCIES = [
@@ -66,6 +67,8 @@ const AdminPaymentConfig = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<PaystackConfig>(DEFAULT_CONFIG);
+  const [showModeConfirm, setShowModeConfirm] = useState(false);
+  const [pendingMode, setPendingMode] = useState<"test" | "live">("test");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -134,34 +137,82 @@ const AdminPaymentConfig = () => {
           <CardDescription>Configure your Paystack integration keys and environment mode.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="flex items-center justify-between rounded-lg border border-border p-4">
-            <div>
-              <Label className="text-base font-medium">Environment Mode</Label>
-              <p className="text-sm text-muted-foreground mt-1">
-                {config.mode === "test" ? "Using test keys — no real charges" : "Using live keys — real transactions"}
-              </p>
+          <div className={`flex items-center justify-between rounded-lg border-2 p-5 transition-colors ${config.mode === "live" ? "border-destructive bg-destructive/5" : "border-green-500/50 bg-green-500/5"}`}>
+            <div className="flex items-center gap-3">
+              {config.mode === "test" ? (
+                <ToggleLeft className="h-8 w-8 text-green-600" />
+              ) : (
+                <ToggleRight className="h-8 w-8 text-destructive" />
+              )}
+              <div>
+                <Label className="text-base font-bold">Environment Mode</Label>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {config.mode === "test"
+                    ? "Test mode — no real charges will be processed"
+                    : "Live mode — real payments are being processed"}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant={config.mode === "test" ? "secondary" : "destructive"} className="text-xs">
-                {config.mode === "test" ? "TEST" : "LIVE"}
+              <Badge
+                variant={config.mode === "test" ? "secondary" : "destructive"}
+                className="text-sm px-3 py-1 font-bold"
+              >
+                {config.mode === "test" ? "🧪 TEST" : "🔴 LIVE"}
               </Badge>
-              <Switch
-                checked={config.mode === "live"}
-                onCheckedChange={(checked) =>
-                  setConfig((prev) => ({ ...prev, mode: checked ? "live" : "test" }))
-                }
-              />
+              <Button
+                variant={config.mode === "test" ? "destructive" : "outline"}
+                size="sm"
+                onClick={() => {
+                  const newMode = config.mode === "test" ? "live" : "test";
+                  setPendingMode(newMode);
+                  setShowModeConfirm(true);
+                }}
+              >
+                Switch to {config.mode === "test" ? "Live" : "Test"}
+              </Button>
             </div>
           </div>
 
           {config.mode === "live" && (
             <div className="flex items-start gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3">
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-              <p className="text-sm text-destructive">
-                Live mode is active. Real payments will be processed. Ensure your Paystack secret key is configured in Supabase Edge Function secrets.
-              </p>
+              <div className="text-sm text-destructive">
+                <p className="font-semibold">Live mode is active</p>
+                <p>Real payments will be processed. Ensure your <strong>PAYSTACK_LIVE_SECRET_KEY</strong> is set in Supabase Edge Function secrets.</p>
+              </div>
             </div>
           )}
+
+          <AlertDialog open={showModeConfirm} onOpenChange={setShowModeConfirm}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Switch to {pendingMode === "live" ? "Live" : "Test"} Mode?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {pendingMode === "live"
+                    ? "Switching to live mode will process real payments. Make sure your live Paystack secret key (PAYSTACK_LIVE_SECRET_KEY) is configured in Supabase secrets. This change takes effect after you save."
+                    : "Switching to test mode will stop processing real payments. Only test transactions will be processed using your test secret key (PAYSTACK_TEST_SECRET_KEY). This change takes effect after you save."}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className={pendingMode === "live" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+                  onClick={() => {
+                    setConfig((prev) => ({ ...prev, mode: pendingMode }));
+                    toast({
+                      title: `Mode changed to ${pendingMode}`,
+                      description: "Remember to save your configuration for changes to take effect.",
+                    });
+                  }}
+                >
+                  Yes, switch to {pendingMode}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           <div className="space-y-3">
             <div>

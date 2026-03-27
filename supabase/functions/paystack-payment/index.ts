@@ -15,13 +15,32 @@ serve(async (req) => {
   }
 
   try {
-    const PAYSTACK_SECRET = Deno.env.get("PAYSTACK_SECRET_KEY");
+    // Determine mode from config to pick the right secret key
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+    const { data: configRow } = await supabaseAdmin
+      .from("site_content")
+      .select("value")
+      .eq("key", "paystack_config")
+      .maybeSingle();
+    const paymentConfig = (configRow?.value as Record<string, unknown>) || {};
+    const envMode = (paymentConfig.mode as string) || "test";
+
+    // Use mode-specific secret keys, with fallback to generic PAYSTACK_SECRET_KEY
+    const PAYSTACK_SECRET = envMode === "live"
+      ? (Deno.env.get("PAYSTACK_LIVE_SECRET_KEY") || Deno.env.get("PAYSTACK_SECRET_KEY"))
+      : (Deno.env.get("PAYSTACK_TEST_SECRET_KEY") || Deno.env.get("PAYSTACK_SECRET_KEY"));
+
     if (!PAYSTACK_SECRET) {
       return new Response(
-        JSON.stringify({ error: "Paystack secret key not configured" }),
+        JSON.stringify({ error: `Paystack ${envMode} secret key not configured` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("Paystack environment mode:", envMode);
 
     const url = new URL(req.url);
     let action = url.searchParams.get("action");
