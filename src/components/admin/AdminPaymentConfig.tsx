@@ -233,9 +233,24 @@ const AdminPaymentConfig = () => {
                 className="mt-1 font-mono text-sm"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Secret keys are stored securely in Supabase Edge Function secrets — never in the browser.
-            </p>
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <div>
+                <Label className="text-sm font-semibold">Secret Keys</Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_TEST_SECRET_KEY</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_LIVE_SECRET_KEY</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
+                </p>
+              </div>
+              <a
+                href={`https://supabase.com/dashboard/project/${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'ufgbavxidpmikiwicifv'}/settings/functions`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button type="button" variant="outline" size="sm" className="gap-2 mt-1">
+                  <Settings2 className="h-4 w-4" />
+                  Update Secret Keys in Supabase
+                </Button>
+              </a>
+            </div>
           </div>
         </CardContent>
       </Card>
