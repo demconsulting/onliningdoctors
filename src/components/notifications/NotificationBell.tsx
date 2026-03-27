@@ -99,7 +99,7 @@ const NotificationBell = () => {
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-80">
+        <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(70vh - 48px)' }}>
           {notifications.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">No notifications</div>
           ) : (
