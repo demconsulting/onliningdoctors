@@ -220,6 +220,25 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
           <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
         ) : (
           <div className="space-y-5">
+            {/* Template Selector */}
+            {templates.length > 0 && !existingId && (
+              <div className="flex items-center gap-2 p-3 rounded-lg border border-dashed border-primary/30 bg-primary/5">
+                <BookTemplate className="h-4 w-4 text-primary shrink-0" />
+                <Select onValueChange={applyTemplate}>
+                  <SelectTrigger className="flex-1 h-8 text-xs">
+                    <SelectValue placeholder="Load from template..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map(t => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} {t.condition ? `(${t.condition})` : ""} — {t.medications?.length || 0} meds
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Logo & Signature Uploads */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
