@@ -350,10 +350,18 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
               </div>
             </div>
 
-            <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {existingId ? "Update Prescription" : "Create Prescription"}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={saving} className="flex-1 gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {existingId ? "Update Prescription" : "Create Prescription"}
+              </Button>
+              {!existingId && medications.some(m => m.name.trim()) && (
+                <Button variant="outline" onClick={saveAsTemplate} disabled={savingTemplate} className="gap-1.5" title="Save current medications as a reusable template">
+                  {savingTemplate ? <Loader2 className="h-4 w-4 animate-spin" /> : <BookTemplate className="h-4 w-4" />}
+                  Save Template
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </DialogContent>
