@@ -52,7 +52,7 @@ const AdminLegalDocuments = () => {
     
     const parsedDocs = (docsRes.data || []).map(d => ({
       ...d,
-      sections: (Array.isArray(d.sections) ? d.sections : []) as LegalSection[],
+      sections: (Array.isArray(d.sections) ? d.sections : []) as unknown as LegalSection[],
     }));
     
     setDocs(parsedDocs);
