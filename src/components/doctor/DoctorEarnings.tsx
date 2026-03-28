@@ -3,15 +3,129 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, TrendingUp, Calendar, Percent } from "lucide-react";
-import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear, subMonths, startOfDay, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, isSameDay, isSameWeek, isSameMonth } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface DoctorEarningsProps {
   user: User;
   doctorCountry?: string | null;
 }
+
+const EarningsChart = ({
+  payments,
+  commissionRate,
+  period,
+  formatAmount,
+}: {
+  payments: any[];
+  commissionRate: number;
+  period: "week" | "month" | "year" | "all";
+  formatAmount: (n: number) => string;
+}) => {
+  const chartData = useMemo(() => {
+    if (payments.length === 0) return [];
+
+    const now = new Date();
+
+    if (period === "week") {
+      // Daily for current week
+      const start = startOfWeek(now, { weekStartsOn: 1 });
+      const days = eachDayOfInterval({ start, end: now });
+      return days.map((day) => {
+        const dayPayments = payments.filter((p) => p.paid_at && isSameDay(new Date(p.paid_at), day));
+        const revenue = dayPayments.reduce((s, p) => s + Number(p.amount), 0);
+        return {
+          label: format(day, "EEE"),
+          revenue,
+          net: revenue * (1 - commissionRate / 100),
+        };
+      });
+    }
+
+    if (period === "month") {
+      // Daily for current month
+      const start = startOfMonth(now);
+      const days = eachDayOfInterval({ start, end: now });
+      return days.map((day) => {
+        const dayPayments = payments.filter((p) => p.paid_at && isSameDay(new Date(p.paid_at), day));
+        const revenue = dayPayments.reduce((s, p) => s + Number(p.amount), 0);
+        return {
+          label: format(day, "d"),
+          revenue,
+          net: revenue * (1 - commissionRate / 100),
+        };
+      });
+    }
+
+    if (period === "year") {
+      // Monthly for current year
+      const start = startOfYear(now);
+      const months = eachMonthOfInterval({ start, end: now });
+      return months.map((month) => {
+        const monthPayments = payments.filter((p) => p.paid_at && isSameMonth(new Date(p.paid_at), month));
+        const revenue = monthPayments.reduce((s, p) => s + Number(p.amount), 0);
+        return {
+          label: format(month, "MMM"),
+          revenue,
+          net: revenue * (1 - commissionRate / 100),
+        };
+      });
+    }
+
+    // All time — monthly for last 12 months
+    const months = eachMonthOfInterval({ start: subMonths(now, 11), end: now });
+    return months.map((month) => {
+      const monthPayments = payments.filter((p) => p.paid_at && isSameMonth(new Date(p.paid_at), month));
+      const revenue = monthPayments.reduce((s, p) => s + Number(p.amount), 0);
+      return {
+        label: format(month, "MMM yy"),
+        revenue,
+        net: revenue * (1 - commissionRate / 100),
+      };
+    });
+  }, [payments, period, commissionRate]);
+
+  if (chartData.length === 0) {
+    return <p className="text-sm text-muted-foreground text-center py-8">No data to display.</p>;
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(142 76% 36%)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="hsl(142 76% 36%)" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+        <XAxis dataKey="label" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+        <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} width={60} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 8,
+            color: "hsl(var(--foreground))",
+          }}
+          formatter={(value: number, name: string) => [
+            formatAmount(value),
+            name === "revenue" ? "Revenue" : "Net Earnings",
+          ]}
+        />
+        <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#revenueGrad)" strokeWidth={2} />
+        <Area type="monotone" dataKey="net" stroke="hsl(142 76% 36%)" fill="url(#netGrad)" strokeWidth={2} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+};
 
 const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
   const [loading, setLoading] = useState(true);
@@ -151,6 +265,21 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Earnings Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Revenue Trend — {periodLabel}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EarningsChart
+            payments={filteredPayments}
+            commissionRate={commissionRate}
+            period={period}
+            formatAmount={formatAmount}
+          />
+        </CardContent>
+      </Card>
 
       {/* Payment History */}
       <Card>
