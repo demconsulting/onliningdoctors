@@ -155,10 +155,10 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
       {/* Payment History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Consultation Payment History</CardTitle>
+          <CardTitle className="text-lg">Payment History — {periodLabel}</CardTitle>
         </CardHeader>
         <CardContent>
-          {payments.length === 0 ? (
+          {filteredPayments.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No completed consultations yet.
             </p>
