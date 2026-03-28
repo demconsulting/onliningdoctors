@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -31,6 +31,8 @@ const items = [
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
   { title: "Payments", key: "payments", icon: Receipt },
   { title: "Payouts", key: "payouts", icon: Wallet },
+  { title: "Countries", key: "countries", icon: Globe },
+  { title: "Legal Documents", key: "legal-documents", icon: FileText },
   { title: "AI Assistant", key: "ai-assistant", icon: Bot },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
