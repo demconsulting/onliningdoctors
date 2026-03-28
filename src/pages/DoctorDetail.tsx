@@ -81,7 +81,14 @@ const DoctorDetail = () => {
           .eq("is_active", true)
           .order("price"),
       ]);
-      if (docRes.data) setDoctor(docRes.data as unknown as DoctorData);
+      if (docRes.data) {
+        const doc = docRes.data as any;
+        if (doc.is_suspended) {
+          setLoading(false);
+          return; // Don't show suspended doctors
+        }
+        setDoctor(doc as unknown as DoctorData);
+      }
       if (availRes.data) setAvailability(availRes.data);
       if (tierRes.data) setTiers(tierRes.data);
       setLoading(false);
