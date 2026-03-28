@@ -102,7 +102,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
                 <DollarSign className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue ({periodLabel})</p>
                 <p className="text-xl font-bold text-foreground">{formatAmount(totalRevenue)}</p>
               </div>
             </div>
