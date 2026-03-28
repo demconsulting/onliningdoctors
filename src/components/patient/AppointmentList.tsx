@@ -348,6 +348,29 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={!!cancelDialogId} onOpenChange={(open) => { if (!open) { setCancelDialogId(null); setCancelReason(""); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancel Appointment</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">Please provide a reason for cancelling this appointment.</p>
+        <Textarea
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          placeholder="e.g. Schedule conflict, feeling better..."
+          rows={3}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setCancelDialogId(null); setCancelReason(""); }}>Go Back</Button>
+          <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
+            {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Cancel Appointment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
