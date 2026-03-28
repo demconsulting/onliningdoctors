@@ -88,6 +88,13 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
       }
     }
 
+    // Sync consultation_fee on doctors table with lowest active tier price
+    const activeTiers = tiers.filter(t => t.is_active && t.price > 0);
+    if (activeTiers.length > 0) {
+      const lowestPrice = Math.min(...activeTiers.map(t => t.price));
+      await supabase.from("doctors").update({ consultation_fee: lowestPrice }).eq("profile_id", user.id);
+    }
+
     setSaving(false);
     toast({ title: "Pricing tiers saved" });
     fetchTiers();

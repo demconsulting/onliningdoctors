@@ -268,7 +268,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
             </div>
             <div className="space-y-2">
               <Label>Consultation Fee</Label>
-              <Input type="number" min={0} value={doctor.consultation_fee} onChange={(e) => setDoctor({ ...doctor, consultation_fee: Number(e.target.value) })} />
+              <Input type="number" min={0} value={doctor.consultation_fee} readOnly disabled className="bg-muted" />
+              <p className="text-xs text-muted-foreground">Auto-synced from your lowest active pricing tier. Update it in the Pricing tab.</p>
             </div>
           </div>
           <div className="space-y-2">
