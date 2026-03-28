@@ -145,7 +145,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Consultations</p>
-                <p className="text-xl font-bold text-foreground">{payments.length}</p>
+                <p className="text-xl font-bold text-foreground">{filteredPayments.length}</p>
               </div>
             </div>
           </CardContent>
