@@ -364,6 +364,33 @@ export type Database = {
         }
         Relationships: []
       }
+      countries: {
+        Row: {
+          code: string
+          created_at: string
+          currency_code: string
+          currency_symbol: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency_code: string
+          currency_symbol: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency_code?: string
+          currency_symbol?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       doctor_availability: {
         Row: {
           created_at: string
@@ -739,6 +766,50 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      legal_documents: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          document_type: string
+          heading: string
+          id: string
+          is_default: boolean
+          last_updated: string
+          sections: Json
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          document_type: string
+          heading: string
+          id?: string
+          is_default?: boolean
+          last_updated?: string
+          sections?: Json
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          document_type?: string
+          heading?: string
+          id?: string
+          is_default?: boolean
+          last_updated?: string
+          sections?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_documents_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+        ]
       }
       notifications: {
         Row: {
