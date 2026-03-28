@@ -164,7 +164,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
             </p>
           ) : (
             <div className="space-y-3">
-              {payments.map((p) => {
+              {filteredPayments.map((p) => {
                 const commission = Number(p.amount) * (commissionRate / 100);
                 const net = Number(p.amount) - commission;
                 return (
