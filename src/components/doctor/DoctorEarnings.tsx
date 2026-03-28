@@ -17,6 +17,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [commissionRate, setCommissionRate] = useState(15);
+  const [period, setPeriod] = useState<"week" | "month" | "year" | "all">("all");
 
   useEffect(() => {
     const load = async () => {
