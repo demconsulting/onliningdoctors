@@ -155,6 +155,11 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                         <span>{apt.duration_minutes} min</span>
                       </div>
                       {apt.reason && <p className="mt-1 text-xs text-muted-foreground italic">Reason: {apt.reason}</p>}
+                      {apt.status === "cancelled" && apt.cancellation_reason && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                          <AlertCircle className="h-3 w-3" /> Cancellation reason: {apt.cancellation_reason}
+                        </p>
+                      )}
                     </div>
                   </div>
                   {(() => {
@@ -261,6 +266,30 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
         )}
       </CardContent>
     </Card>
+
+    {/* Decline Reason Dialog */}
+    <Dialog open={!!declineDialogId} onOpenChange={(open) => { if (!open) { setDeclineDialogId(null); setDeclineReason(""); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Decline Appointment</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">Please provide a reason for declining this appointment. The patient will see this reason.</p>
+        <Textarea
+          value={declineReason}
+          onChange={(e) => setDeclineReason(e.target.value)}
+          placeholder="e.g. Schedule conflict, patient needs a different specialist..."
+          rows={3}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setDeclineDialogId(null); setDeclineReason(""); }}>Cancel</Button>
+          <Button variant="destructive" onClick={handleDecline} disabled={declining}>
+            {declining ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Decline Appointment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
