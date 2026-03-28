@@ -71,6 +71,19 @@ const NotificationBell = () => {
     fetchNotifications();
   };
 
+  const deleteOldNotifications = async () => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("user_id", session.user.id)
+      .lt("created_at", oneMonthAgo.toISOString());
+    fetchNotifications();
+  };
+
   const typeIcons: Record<string, string> = {
     appointment: "📅",
     review: "⭐",
