@@ -61,17 +61,26 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
 
   useEffect(() => { fetchAppointments(); }, [user.id]);
 
-  const handleCancel = async (id: string) => {
+  const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancel = async () => {
+    if (!cancelDialogId) return;
+    setCancelling(true);
     const { error } = await supabase
       .from("appointments")
-      .update({ status: "cancelled" })
-      .eq("id", id)
+      .update({ status: "cancelled", cancellation_reason: cancelReason.trim() || "Cancelled by patient" })
+      .eq("id", cancelDialogId)
       .eq("patient_id", user.id);
 
+    setCancelling(false);
     if (error) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } else {
       toast({ title: "Appointment cancelled" });
+      setCancelDialogId(null);
+      setCancelReason("");
       fetchAppointments();
     }
   };
