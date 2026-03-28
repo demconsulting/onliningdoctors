@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, User, Loader2, FileText, Video } from "lucide-react";
+import { Calendar, Clock, User, Loader2, FileText, Video, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PatientDocuments from "@/components/doctor/PatientDocuments";
 import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
 import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
@@ -36,6 +37,9 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [savingNote, setSavingNote] = useState<string | null>(null);
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [sharingMap, setSharingMap] = useState<Record<string, boolean>>({});
+  const [declineDialogId, setDeclineDialogId] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+  const [declining, setDeclining] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
