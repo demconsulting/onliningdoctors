@@ -153,6 +153,21 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
         </Card>
       </div>
 
+      {/* Earnings Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Revenue Trend — {periodLabel}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EarningsChart
+            payments={filteredPayments}
+            commissionRate={commissionRate}
+            period={period}
+            formatAmount={formatAmount}
+          />
+        </CardContent>
+      </Card>
+
       {/* Payment History */}
       <Card>
         <CardHeader>
