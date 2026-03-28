@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, TrendingUp, Calendar, Percent } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DoctorEarningsProps {
   user: User;
@@ -16,6 +17,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [commissionRate, setCommissionRate] = useState(15);
+  const [period, setPeriod] = useState<"week" | "month" | "year" | "all">("all");
 
   useEffect(() => {
     const load = async () => {
@@ -47,6 +49,16 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
     load();
   }, [user.id]);
 
+  const filteredPayments = useMemo(() => {
+    if (period === "all") return payments;
+    const now = new Date();
+    let cutoff: Date;
+    if (period === "week") cutoff = startOfWeek(now, { weekStartsOn: 1 });
+    else if (period === "month") cutoff = startOfMonth(now);
+    else cutoff = startOfYear(now);
+    return payments.filter((p) => p.paid_at && new Date(p.paid_at) >= cutoff);
+  }, [payments, period]);
+
   if (loading) {
     return (
       <div className="flex justify-center py-10">
@@ -55,9 +67,11 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
     );
   }
 
-  const totalRevenue = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalRevenue = filteredPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalCommission = totalRevenue * (commissionRate / 100);
   const netEarnings = totalRevenue - totalCommission;
+
+  const periodLabel = period === "week" ? "This Week" : period === "month" ? "This Month" : period === "year" ? "This Year" : "All Time";
 
   // Determine currency: use doctor's country mapping, then payment data, then fallback
   const countryCode = doctorCountry?.length === 2 ? doctorCountry.toUpperCase() : undefined;
@@ -69,6 +83,16 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Period Selector */}
+      <Tabs value={period} onValueChange={(v) => setPeriod(v as any)}>
+        <TabsList>
+          <TabsTrigger value="week">This Week</TabsTrigger>
+          <TabsTrigger value="month">This Month</TabsTrigger>
+          <TabsTrigger value="year">This Year</TabsTrigger>
+          <TabsTrigger value="all">All Time</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -78,7 +102,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
                 <DollarSign className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue ({periodLabel})</p>
                 <p className="text-xl font-bold text-foreground">{formatAmount(totalRevenue)}</p>
               </div>
             </div>
@@ -121,7 +145,7 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Consultations</p>
-                <p className="text-xl font-bold text-foreground">{payments.length}</p>
+                <p className="text-xl font-bold text-foreground">{filteredPayments.length}</p>
               </div>
             </div>
           </CardContent>
@@ -131,16 +155,16 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
       {/* Payment History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Consultation Payment History</CardTitle>
+          <CardTitle className="text-lg">Payment History — {periodLabel}</CardTitle>
         </CardHeader>
         <CardContent>
-          {payments.length === 0 ? (
+          {filteredPayments.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
               No completed consultations yet.
             </p>
           ) : (
             <div className="space-y-3">
-              {payments.map((p) => {
+              {filteredPayments.map((p) => {
                 const commission = Number(p.amount) * (commissionRate / 100);
                 const net = Number(p.amount) - commission;
                 return (
