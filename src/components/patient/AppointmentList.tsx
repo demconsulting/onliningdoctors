@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, Clock, User, Loader2, Video, Star, Pencil, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
@@ -61,17 +63,26 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
 
   useEffect(() => { fetchAppointments(); }, [user.id]);
 
-  const handleCancel = async (id: string) => {
+  const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancel = async () => {
+    if (!cancelDialogId) return;
+    setCancelling(true);
     const { error } = await supabase
       .from("appointments")
-      .update({ status: "cancelled" })
-      .eq("id", id)
+      .update({ status: "cancelled", cancellation_reason: cancelReason.trim() || "Cancelled by patient" })
+      .eq("id", cancelDialogId)
       .eq("patient_id", user.id);
 
+    setCancelling(false);
     if (error) {
       toast({ variant: "destructive", title: "Error", description: error.message });
     } else {
       toast({ title: "Appointment cancelled" });
+      setCancelDialogId(null);
+      setCancelReason("");
       fetchAppointments();
     }
   };
@@ -90,6 +101,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-display">
@@ -172,6 +184,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                       <span>{apt.duration_minutes} min</span>
                     </div>
                     {apt.reason && <p className="mt-1 text-xs text-muted-foreground">{apt.reason}</p>}
+                    {apt.status === "cancelled" && apt.cancellation_reason && (
+                      <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                        <AlertCircle className="h-3 w-3" /> {apt.cancellation_reason}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {(() => {
@@ -200,7 +217,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                            </Button>
                          )}
                          {!isExpired && (apt.status === "pending" || apt.status === "confirmed") && (
-                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
+                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
                              Cancel
                            </Button>
                          )}
@@ -320,7 +337,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                       <Button variant="default" size="sm" className="gap-1 text-xs" onClick={() => navigate(`/dashboard?activeTab=book`)}>
                         Complete Payment
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
                         Cancel
                       </Button>
                     </div>
@@ -332,6 +349,29 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         )}
       </CardContent>
     </Card>
+
+    <Dialog open={!!cancelDialogId} onOpenChange={(open) => { if (!open) { setCancelDialogId(null); setCancelReason(""); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cancel Appointment</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">Please provide a reason for cancelling this appointment.</p>
+        <Textarea
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          placeholder="e.g. Schedule conflict, feeling better..."
+          rows={3}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setCancelDialogId(null); setCancelReason(""); }}>Go Back</Button>
+          <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
+            {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Cancel Appointment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 

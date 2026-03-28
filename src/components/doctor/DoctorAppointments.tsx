@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, User, Loader2, FileText, Video } from "lucide-react";
+import { Calendar, Clock, User, Loader2, FileText, Video, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PatientDocuments from "@/components/doctor/PatientDocuments";
 import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
 import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
@@ -36,6 +37,9 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [savingNote, setSavingNote] = useState<string | null>(null);
   const [expandedDocs, setExpandedDocs] = useState<Set<string>>(new Set());
   const [sharingMap, setSharingMap] = useState<Record<string, boolean>>({});
+  const [declineDialogId, setDeclineDialogId] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+  const [declining, setDeclining] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -71,10 +75,21 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
 
   useEffect(() => { fetchAppointments(); }, [user.id]);
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("appointments").update({ status }).eq("id", id).eq("doctor_id", user.id);
+  const updateStatus = async (id: string, status: string, cancellation_reason?: string) => {
+    const updateData: any = { status };
+    if (cancellation_reason) updateData.cancellation_reason = cancellation_reason;
+    const { error } = await supabase.from("appointments").update(updateData).eq("id", id).eq("doctor_id", user.id);
     if (error) toast({ variant: "destructive", title: "Error", description: error.message });
     else { toast({ title: `Appointment ${status}` }); fetchAppointments(); }
+  };
+
+  const handleDecline = async () => {
+    if (!declineDialogId) return;
+    setDeclining(true);
+    await updateStatus(declineDialogId, "cancelled", declineReason.trim() || "Declined by doctor");
+    setDeclining(false);
+    setDeclineDialogId(null);
+    setDeclineReason("");
   };
 
   const saveNote = async (id: string) => {
@@ -92,6 +107,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -140,6 +156,11 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                         <span>{apt.duration_minutes} min</span>
                       </div>
                       {apt.reason && <p className="mt-1 text-xs text-muted-foreground italic">Reason: {apt.reason}</p>}
+                      {apt.status === "cancelled" && apt.cancellation_reason && (
+                        <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                          <AlertCircle className="h-3 w-3" /> Cancellation reason: {apt.cancellation_reason}
+                        </p>
+                      )}
                     </div>
                   </div>
                   {(() => {
@@ -154,7 +175,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                         {!isExpired && apt.status === "pending" && (
                           <>
                             <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "confirmed")} className="text-primary">Confirm</Button>
-                            <Button size="sm" variant="ghost" onClick={() => updateStatus(apt.id, "cancelled")} className="text-destructive">Decline</Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setDeclineDialogId(apt.id); setDeclineReason(""); }} className="text-destructive">Decline</Button>
                           </>
                         )}
                         {!isExpired && apt.status === "confirmed" && (
@@ -246,6 +267,30 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
         )}
       </CardContent>
     </Card>
+
+    {/* Decline Reason Dialog */}
+    <Dialog open={!!declineDialogId} onOpenChange={(open) => { if (!open) { setDeclineDialogId(null); setDeclineReason(""); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Decline Appointment</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">Please provide a reason for declining this appointment. The patient will see this reason.</p>
+        <Textarea
+          value={declineReason}
+          onChange={(e) => setDeclineReason(e.target.value)}
+          placeholder="e.g. Schedule conflict, patient needs a different specialist..."
+          rows={3}
+        />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setDeclineDialogId(null); setDeclineReason(""); }}>Cancel</Button>
+          <Button variant="destructive" onClick={handleDecline} disabled={declining}>
+            {declining ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Decline Appointment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
