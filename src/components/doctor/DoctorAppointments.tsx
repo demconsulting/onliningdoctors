@@ -75,10 +75,21 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
 
   useEffect(() => { fetchAppointments(); }, [user.id]);
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("appointments").update({ status }).eq("id", id).eq("doctor_id", user.id);
+  const updateStatus = async (id: string, status: string, cancellation_reason?: string) => {
+    const updateData: any = { status };
+    if (cancellation_reason) updateData.cancellation_reason = cancellation_reason;
+    const { error } = await supabase.from("appointments").update(updateData).eq("id", id).eq("doctor_id", user.id);
     if (error) toast({ variant: "destructive", title: "Error", description: error.message });
     else { toast({ title: `Appointment ${status}` }); fetchAppointments(); }
+  };
+
+  const handleDecline = async () => {
+    if (!declineDialogId) return;
+    setDeclining(true);
+    await updateStatus(declineDialogId, "cancelled", declineReason.trim() || "Declined by doctor");
+    setDeclining(false);
+    setDeclineDialogId(null);
+    setDeclineReason("");
   };
 
   const saveNote = async (id: string) => {
