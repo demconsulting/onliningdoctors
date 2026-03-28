@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, Clock, User, Loader2, Video, Star, Pencil, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import type { User as SupaUser } from "@supabase/supabase-js";
@@ -181,6 +183,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                       <span>{apt.duration_minutes} min</span>
                     </div>
                     {apt.reason && <p className="mt-1 text-xs text-muted-foreground">{apt.reason}</p>}
+                    {apt.status === "cancelled" && apt.cancellation_reason && (
+                      <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                        <AlertCircle className="h-3 w-3" /> {apt.cancellation_reason}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {(() => {
