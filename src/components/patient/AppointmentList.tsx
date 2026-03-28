@@ -209,7 +209,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                            </Button>
                          )}
                          {!isExpired && (apt.status === "pending" || apt.status === "confirmed") && (
-                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
+                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
                              Cancel
                            </Button>
                          )}
@@ -329,7 +329,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                       <Button variant="default" size="sm" className="gap-1 text-xs" onClick={() => navigate(`/dashboard?activeTab=book`)}>
                         Complete Payment
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleCancel(apt.id)}>
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
                         Cancel
                       </Button>
                     </div>
