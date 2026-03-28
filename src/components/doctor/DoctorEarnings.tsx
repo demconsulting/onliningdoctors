@@ -83,6 +83,16 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Period Selector */}
+      <Tabs value={period} onValueChange={(v) => setPeriod(v as any)}>
+        <TabsList>
+          <TabsTrigger value="week">This Week</TabsTrigger>
+          <TabsTrigger value="month">This Month</TabsTrigger>
+          <TabsTrigger value="year">This Year</TabsTrigger>
+          <TabsTrigger value="all">All Time</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
