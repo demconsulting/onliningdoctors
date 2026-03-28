@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, DollarSign, TrendingUp, Calendar, Percent } from "lucide-react";
-import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear, subMonths, startOfDay, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, isSameDay, isSameWeek, isSameMonth } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface DoctorEarningsProps {
   user: User;
