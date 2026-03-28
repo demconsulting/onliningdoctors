@@ -116,7 +116,6 @@ const NotificationBell = () => {
               Delete old
             </Button>
           </div>
-          )}
         </div>
         <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(70vh - 48px)' }}>
           {notifications.length === 0 ? (
