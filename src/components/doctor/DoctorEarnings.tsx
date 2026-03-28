@@ -49,6 +49,16 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
     load();
   }, [user.id]);
 
+  const filteredPayments = useMemo(() => {
+    if (period === "all") return payments;
+    const now = new Date();
+    let cutoff: Date;
+    if (period === "week") cutoff = startOfWeek(now, { weekStartsOn: 1 });
+    else if (period === "month") cutoff = startOfMonth(now);
+    else cutoff = startOfYear(now);
+    return payments.filter((p) => p.paid_at && new Date(p.paid_at) >= cutoff);
+  }, [payments, period]);
+
   if (loading) {
     return (
       <div className="flex justify-center py-10">
@@ -57,9 +67,11 @@ const DoctorEarnings = ({ user, doctorCountry }: DoctorEarningsProps) => {
     );
   }
 
-  const totalRevenue = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalRevenue = filteredPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const totalCommission = totalRevenue * (commissionRate / 100);
   const netEarnings = totalRevenue - totalCommission;
+
+  const periodLabel = period === "week" ? "This Week" : period === "month" ? "This Month" : period === "year" ? "This Year" : "All Time";
 
   // Determine currency: use doctor's country mapping, then payment data, then fallback
   const countryCode = doctorCountry?.length === 2 ? doctorCountry.toUpperCase() : undefined;
