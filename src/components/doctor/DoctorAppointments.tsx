@@ -107,6 +107,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
