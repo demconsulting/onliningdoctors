@@ -169,7 +169,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                         {!isExpired && apt.status === "pending" && (
                           <>
                             <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "confirmed")} className="text-primary">Confirm</Button>
-                            <Button size="sm" variant="ghost" onClick={() => updateStatus(apt.id, "cancelled")} className="text-destructive">Decline</Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setDeclineDialogId(apt.id); setDeclineReason(""); }} className="text-destructive">Decline</Button>
                           </>
                         )}
                         {!isExpired && apt.status === "confirmed" && (
