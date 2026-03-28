@@ -71,6 +71,19 @@ const NotificationBell = () => {
     fetchNotifications();
   };
 
+  const deleteOldNotifications = async () => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("user_id", session.user.id)
+      .lt("created_at", oneMonthAgo.toISOString());
+    fetchNotifications();
+  };
+
   const typeIcons: Record<string, string> = {
     appointment: "📅",
     review: "⭐",
@@ -93,11 +106,16 @@ const NotificationBell = () => {
       <PopoverContent className="w-80 p-0 max-h-[70vh] flex flex-col" align="end" sideOffset={8} avoidCollisions>
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h4 className="text-sm font-semibold text-foreground">Notifications</h4>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="text-xs text-primary h-auto p-0" onClick={markAllRead}>
-              Mark all read
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="text-xs text-primary h-auto p-0" onClick={markAllRead}>
+                Mark all read
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="text-xs text-destructive h-auto p-0" onClick={deleteOldNotifications}>
+              Delete old
             </Button>
-          )}
+          </div>
         </div>
         <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(70vh - 48px)' }}>
           {notifications.length === 0 ? (
