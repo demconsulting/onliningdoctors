@@ -1,0 +1,4 @@
+
+ALTER TABLE public.doctors
+  ADD COLUMN IF NOT EXISTS is_suspended BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS suspension_reason TEXT DEFAULT NULL;

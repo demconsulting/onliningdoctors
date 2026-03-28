@@ -551,6 +551,7 @@ export type Database = {
           hospital_affiliation: string | null
           id: string
           is_available: boolean | null
+          is_suspended: boolean
           is_verified: boolean
           languages: string[] | null
           license_document_path: string | null
@@ -558,6 +559,7 @@ export type Database = {
           profile_id: string
           rating: number | null
           specialty_id: string | null
+          suspension_reason: string | null
           title: string | null
           total_reviews: number | null
           updated_at: string
@@ -571,6 +573,7 @@ export type Database = {
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
+          is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
           license_document_path?: string | null
@@ -578,6 +581,7 @@ export type Database = {
           profile_id: string
           rating?: number | null
           specialty_id?: string | null
+          suspension_reason?: string | null
           title?: string | null
           total_reviews?: number | null
           updated_at?: string
@@ -591,6 +595,7 @@ export type Database = {
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
+          is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
           license_document_path?: string | null
@@ -598,6 +603,7 @@ export type Database = {
           profile_id?: string
           rating?: number | null
           specialty_id?: string | null
+          suspension_reason?: string | null
           title?: string | null
           total_reviews?: number | null
           updated_at?: string
