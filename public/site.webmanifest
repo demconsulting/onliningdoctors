@@ -1,0 +1,14 @@
+{
+  "name": "Onlining Doctors",
+  "short_name": "Onlining Doctors",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#4fd1c5",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
