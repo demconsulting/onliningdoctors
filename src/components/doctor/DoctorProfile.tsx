@@ -213,6 +213,87 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         </CardContent>
       </Card>
 
+      {/* Practice / Company Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-display">
+            <Building2 className="h-5 w-5 text-primary" /> Practice / Company Details
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">These details will appear on your prescriptions.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Practice / Company Logo</Label>
+            <div className="flex items-center gap-4">
+              {practiceLogoSignedUrl && (
+                <div className="h-16 w-32 rounded border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
+                  <img src={practiceLogoSignedUrl} alt="Practice Logo" className="max-h-full max-w-full object-contain" />
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={practiceLogoRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                      return;
+                    }
+                    setUploadingPracticeLogo(true);
+                    const ext = file.name.split(".").pop();
+                    const path = `${user.id}/practice_logo_${Date.now()}.${ext}`;
+                    const { error } = await supabase.storage.from("prescription-assets").upload(path, file, { upsert: true });
+                    if (error) {
+                      toast({ variant: "destructive", title: "Upload failed", description: error.message });
+                    } else {
+                      setDoctor(prev => ({ ...prev, practice_logo_url: path }));
+                      const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(path, 3600);
+                      if (url) setPracticeLogoSignedUrl(url.signedUrl);
+                      toast({ title: "Practice logo uploaded" });
+                    }
+                    setUploadingPracticeLogo(false);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => practiceLogoRef.current?.click()}
+                  disabled={uploadingPracticeLogo}
+                >
+                  {uploadingPracticeLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {doctor.practice_logo_url ? "Replace Logo" : "Upload Logo"}
+                </Button>
+                {doctor.practice_logo_url && !practiceLogoSignedUrl && (
+                  <span className="flex items-center gap-1 text-sm text-green-600">
+                    <FileCheck className="h-4 w-4" /> Uploaded
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Practice / Company Name</Label>
+              <Input value={doctor.practice_name} onChange={(e) => setDoctor({ ...doctor, practice_name: e.target.value })} placeholder="e.g. City Medical Centre" />
+            </div>
+            <div className="space-y-2">
+              <Label>Practice Email</Label>
+              <Input type="email" value={doctor.practice_email} onChange={(e) => setDoctor({ ...doctor, practice_email: e.target.value })} placeholder="e.g. info@citymedicine.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Practice Phone</Label>
+              <Input value={doctor.practice_phone} onChange={(e) => setDoctor({ ...doctor, practice_phone: e.target.value })} placeholder="e.g. +27 21 123 4567" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Your address from Personal Information above will also appear on prescriptions.</p>
+        </CardContent>
+
       <Card>
         <CardHeader>
           <CardTitle className="font-display">Professional Details</CardTitle>

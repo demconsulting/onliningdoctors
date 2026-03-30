@@ -47,23 +47,24 @@ const PrescriptionView = ({ appointmentId, viewAs }: PrescriptionViewProps) => {
 
         // Load profiles
         const [docRes, patRes] = await Promise.all([
-          supabase.from("profiles").select("full_name, phone, city, state, country").eq("id", rx.doctor_id).single(),
+          supabase.from("profiles").select("full_name, phone, city, state, country, address").eq("id", rx.doctor_id).single(),
           supabase.from("profiles").select("full_name, phone, date_of_birth, gender").eq("id", rx.patient_id).single(),
         ]);
         setDoctorProfile(docRes.data);
         setPatientProfile(patRes.data);
 
-        // Load doctor details
+        // Load doctor details including practice fields
         const { data: docDetail } = await supabase
           .from("doctors")
-          .select("title, license_number, specialty_id, hospital_affiliation, education")
+          .select("title, license_number, specialty_id, hospital_affiliation, education, practice_name, practice_email, practice_phone, practice_logo_url")
           .eq("profile_id", rx.doctor_id)
           .single();
         if (docDetail) setDoctorProfile((prev: any) => ({ ...prev, ...docDetail }));
 
-        // Get signed URLs for logo/signature
-        if (rx.doctor_logo_url) {
-          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(rx.doctor_logo_url, 3600);
+        // Get signed URLs for logo/signature — prefer practice_logo_url from doctor record
+        const logoPath = (docDetail as any)?.practice_logo_url || rx.doctor_logo_url;
+        if (logoPath) {
+          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(logoPath, 3600);
           if (url) setLogoSignedUrl(url.signedUrl);
         }
         if (rx.doctor_signature_url) {
