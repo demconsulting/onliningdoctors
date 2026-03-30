@@ -150,18 +150,27 @@ const PrescriptionView = ({ appointmentId, viewAs }: PrescriptionViewProps) => {
                   <img src={logoSignedUrl} alt="Practice Logo" className="h-16 w-auto object-contain" crossOrigin="anonymous" />
                 )}
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  {doctorProfile?.practice_name && (
+                    <h2 className="text-lg font-bold text-gray-900 mb-0.5">{doctorProfile.practice_name}</h2>
+                  )}
+                  <p className="text-base font-semibold text-gray-800">
                     {doctorProfile?.title ? `${doctorProfile.title} ` : "Dr. "}{doctorProfile?.full_name || ""}
-                  </h2>
+                  </p>
                   {doctorProfile?.education && <p className="text-xs text-gray-600">{doctorProfile.education}</p>}
                   {doctorProfile?.hospital_affiliation && <p className="text-xs text-gray-600">{doctorProfile.hospital_affiliation}</p>}
                   {doctorProfile?.license_number && <p className="text-xs text-gray-500">License: {doctorProfile.license_number}</p>}
+                  {doctorProfile?.address && <p className="text-xs text-gray-500">{doctorProfile.address}</p>}
                   {(doctorProfile?.city || doctorProfile?.state || doctorProfile?.country) && (
                     <p className="text-xs text-gray-500">
                       {[doctorProfile?.city, doctorProfile?.state, doctorProfile?.country].filter(Boolean).join(", ")}
                     </p>
                   )}
-                  {doctorProfile?.phone && <p className="text-xs text-gray-500">Tel: {doctorProfile.phone}</p>}
+                  {(doctorProfile?.practice_phone || doctorProfile?.phone) && (
+                    <p className="text-xs text-gray-500">Tel: {doctorProfile.practice_phone || doctorProfile.phone}</p>
+                  )}
+                  {doctorProfile?.practice_email && (
+                    <p className="text-xs text-gray-500">Email: {doctorProfile.practice_email}</p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
