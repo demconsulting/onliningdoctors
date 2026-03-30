@@ -559,6 +559,10 @@ export type Database = {
           languages: string[] | null
           license_document_path: string | null
           license_number: string | null
+          practice_email: string | null
+          practice_logo_url: string | null
+          practice_name: string | null
+          practice_phone: string | null
           profile_id: string
           rating: number | null
           specialty_id: string | null
@@ -581,6 +585,10 @@ export type Database = {
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
+          practice_email?: string | null
+          practice_logo_url?: string | null
+          practice_name?: string | null
+          practice_phone?: string | null
           profile_id: string
           rating?: number | null
           specialty_id?: string | null
@@ -603,6 +611,10 @@ export type Database = {
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
+          practice_email?: string | null
+          practice_logo_url?: string | null
+          practice_name?: string | null
+          practice_phone?: string | null
           profile_id?: string
           rating?: number | null
           specialty_id?: string | null
