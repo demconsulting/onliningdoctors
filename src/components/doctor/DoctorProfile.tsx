@@ -57,10 +57,17 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     consultation_fee: 0,
     languages: [] as string[],
     is_available: true,
+    practice_name: "",
+    practice_email: "",
+    practice_phone: "",
+    practice_logo_url: "",
   });
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
+  const [uploadingPracticeLogo, setUploadingPracticeLogo] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
+  const practiceLogoRef = useRef<HTMLInputElement>(null);
+  const [practiceLogoSignedUrl, setPracticeLogoSignedUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
