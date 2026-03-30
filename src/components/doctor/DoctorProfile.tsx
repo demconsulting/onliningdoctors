@@ -293,6 +293,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           </div>
           <p className="text-xs text-muted-foreground">Your address from Personal Information above will also appear on prescriptions.</p>
         </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
