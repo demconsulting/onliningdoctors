@@ -92,19 +92,29 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       }
 
       if (doctorRes.data) {
+        const d = doctorRes.data as any;
         setDoctor({
-          title: doctorRes.data.title || "",
-          bio: doctorRes.data.bio || "",
-          specialty_id: doctorRes.data.specialty_id || "",
-          education: doctorRes.data.education || "",
-          experience_years: doctorRes.data.experience_years || 0,
-          hospital_affiliation: doctorRes.data.hospital_affiliation || "",
-          license_number: doctorRes.data.license_number || "",
-          consultation_fee: doctorRes.data.consultation_fee || 0,
-          languages: doctorRes.data.languages || [],
-          is_available: doctorRes.data.is_available ?? true,
+          title: d.title || "",
+          bio: d.bio || "",
+          specialty_id: d.specialty_id || "",
+          education: d.education || "",
+          experience_years: d.experience_years || 0,
+          hospital_affiliation: d.hospital_affiliation || "",
+          license_number: d.license_number || "",
+          consultation_fee: d.consultation_fee || 0,
+          languages: d.languages || [],
+          is_available: d.is_available ?? true,
+          practice_name: d.practice_name || "",
+          practice_email: d.practice_email || "",
+          practice_phone: d.practice_phone || "",
+          practice_logo_url: d.practice_logo_url || "",
         });
-        setLicenseDocPath((doctorRes.data as any).license_document_path || null);
+        setLicenseDocPath(d.license_document_path || null);
+        // Load signed URL for practice logo
+        if (d.practice_logo_url) {
+          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(d.practice_logo_url, 3600);
+          if (url) setPracticeLogoSignedUrl(url.signedUrl);
+        }
       }
 
       if (specRes.data) setSpecialties(specRes.data);
