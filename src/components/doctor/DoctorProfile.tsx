@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Save, Stethoscope, Upload, FileCheck } from "lucide-react";
+import { Loader2, Save, Stethoscope, Upload, FileCheck, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
@@ -57,10 +57,17 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     consultation_fee: 0,
     languages: [] as string[],
     is_available: true,
+    practice_name: "",
+    practice_email: "",
+    practice_phone: "",
+    practice_logo_url: "",
   });
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
+  const [uploadingPracticeLogo, setUploadingPracticeLogo] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
+  const practiceLogoRef = useRef<HTMLInputElement>(null);
+  const [practiceLogoSignedUrl, setPracticeLogoSignedUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -85,19 +92,29 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       }
 
       if (doctorRes.data) {
+        const d = doctorRes.data as any;
         setDoctor({
-          title: doctorRes.data.title || "",
-          bio: doctorRes.data.bio || "",
-          specialty_id: doctorRes.data.specialty_id || "",
-          education: doctorRes.data.education || "",
-          experience_years: doctorRes.data.experience_years || 0,
-          hospital_affiliation: doctorRes.data.hospital_affiliation || "",
-          license_number: doctorRes.data.license_number || "",
-          consultation_fee: doctorRes.data.consultation_fee || 0,
-          languages: doctorRes.data.languages || [],
-          is_available: doctorRes.data.is_available ?? true,
+          title: d.title || "",
+          bio: d.bio || "",
+          specialty_id: d.specialty_id || "",
+          education: d.education || "",
+          experience_years: d.experience_years || 0,
+          hospital_affiliation: d.hospital_affiliation || "",
+          license_number: d.license_number || "",
+          consultation_fee: d.consultation_fee || 0,
+          languages: d.languages || [],
+          is_available: d.is_available ?? true,
+          practice_name: d.practice_name || "",
+          practice_email: d.practice_email || "",
+          practice_phone: d.practice_phone || "",
+          practice_logo_url: d.practice_logo_url || "",
         });
-        setLicenseDocPath((doctorRes.data as any).license_document_path || null);
+        setLicenseDocPath(d.license_document_path || null);
+        // Load signed URL for practice logo
+        if (d.practice_logo_url) {
+          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(d.practice_logo_url, 3600);
+          if (url) setPracticeLogoSignedUrl(url.signedUrl);
+        }
       }
 
       if (specRes.data) setSpecialties(specRes.data);
@@ -119,7 +136,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       supabase.from("profiles").update(profilePayload).eq("id", user.id),
       supabase.from("doctors").update({
         ...doctor,
-      }).eq("profile_id", user.id),
+      } as any).eq("profile_id", user.id),
     ]);
 
     setSaving(false);
@@ -193,6 +210,88 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               onCityChange={(v) => setProfile((prev) => ({ ...prev, city: v }))}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Practice / Company Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 font-display">
+            <Building2 className="h-5 w-5 text-primary" /> Practice / Company Details
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">These details will appear on your prescriptions.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Practice / Company Logo</Label>
+            <div className="flex items-center gap-4">
+              {practiceLogoSignedUrl && (
+                <div className="h-16 w-32 rounded border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
+                  <img src={practiceLogoSignedUrl} alt="Practice Logo" className="max-h-full max-w-full object-contain" />
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  ref={practiceLogoRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                      return;
+                    }
+                    setUploadingPracticeLogo(true);
+                    const ext = file.name.split(".").pop();
+                    const path = `${user.id}/practice_logo_${Date.now()}.${ext}`;
+                    const { error } = await supabase.storage.from("prescription-assets").upload(path, file, { upsert: true });
+                    if (error) {
+                      toast({ variant: "destructive", title: "Upload failed", description: error.message });
+                    } else {
+                      setDoctor(prev => ({ ...prev, practice_logo_url: path }));
+                      const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(path, 3600);
+                      if (url) setPracticeLogoSignedUrl(url.signedUrl);
+                      toast({ title: "Practice logo uploaded" });
+                    }
+                    setUploadingPracticeLogo(false);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => practiceLogoRef.current?.click()}
+                  disabled={uploadingPracticeLogo}
+                >
+                  {uploadingPracticeLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {doctor.practice_logo_url ? "Replace Logo" : "Upload Logo"}
+                </Button>
+                {doctor.practice_logo_url && !practiceLogoSignedUrl && (
+                  <span className="flex items-center gap-1 text-sm text-green-600">
+                    <FileCheck className="h-4 w-4" /> Uploaded
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Practice / Company Name</Label>
+              <Input value={doctor.practice_name} onChange={(e) => setDoctor({ ...doctor, practice_name: e.target.value })} placeholder="e.g. City Medical Centre" />
+            </div>
+            <div className="space-y-2">
+              <Label>Practice Email</Label>
+              <Input type="email" value={doctor.practice_email} onChange={(e) => setDoctor({ ...doctor, practice_email: e.target.value })} placeholder="e.g. info@citymedicine.com" />
+            </div>
+            <div className="space-y-2">
+              <Label>Practice Phone</Label>
+              <Input value={doctor.practice_phone} onChange={(e) => setDoctor({ ...doctor, practice_phone: e.target.value })} placeholder="e.g. +27 21 123 4567" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Your address from Personal Information above will also appear on prescriptions.</p>
         </CardContent>
       </Card>
 

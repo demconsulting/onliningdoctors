@@ -72,16 +72,25 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
         setLogoUrl(d.doctor_logo_url || "");
         setSignatureUrl(d.doctor_signature_url || "");
       } else {
-        // Load saved logo/sig from most recent prescription
+        // Load saved logo/sig from doctor record or most recent prescription
+        const { data: docRecord } = await supabase
+          .from("doctors")
+          .select("practice_logo_url")
+          .eq("profile_id", doctorId)
+          .single();
+        if ((docRecord as any)?.practice_logo_url) {
+          setLogoUrl((docRecord as any).practice_logo_url);
+        }
+        // Load signature from most recent prescription
         const { data: recent } = await supabase
           .from("prescriptions" as any)
-          .select("doctor_logo_url, doctor_signature_url")
+          .select("doctor_signature_url")
           .eq("doctor_id", doctorId)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         if (recent) {
-          setLogoUrl((recent as any).doctor_logo_url || "");
+          if (!logoUrl) setLogoUrl((recent as any).doctor_logo_url || "");
           setSignatureUrl((recent as any).doctor_signature_url || "");
         }
       }

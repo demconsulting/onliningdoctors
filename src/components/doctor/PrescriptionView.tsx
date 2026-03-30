@@ -47,23 +47,24 @@ const PrescriptionView = ({ appointmentId, viewAs }: PrescriptionViewProps) => {
 
         // Load profiles
         const [docRes, patRes] = await Promise.all([
-          supabase.from("profiles").select("full_name, phone, city, state, country").eq("id", rx.doctor_id).single(),
+          supabase.from("profiles").select("full_name, phone, city, state, country, address").eq("id", rx.doctor_id).single(),
           supabase.from("profiles").select("full_name, phone, date_of_birth, gender").eq("id", rx.patient_id).single(),
         ]);
         setDoctorProfile(docRes.data);
         setPatientProfile(patRes.data);
 
-        // Load doctor details
+        // Load doctor details including practice fields
         const { data: docDetail } = await supabase
           .from("doctors")
-          .select("title, license_number, specialty_id, hospital_affiliation, education")
+          .select("title, license_number, specialty_id, hospital_affiliation, education, practice_name, practice_email, practice_phone, practice_logo_url")
           .eq("profile_id", rx.doctor_id)
           .single();
         if (docDetail) setDoctorProfile((prev: any) => ({ ...prev, ...docDetail }));
 
-        // Get signed URLs for logo/signature
-        if (rx.doctor_logo_url) {
-          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(rx.doctor_logo_url, 3600);
+        // Get signed URLs for logo/signature — prefer practice_logo_url from doctor record
+        const logoPath = (docDetail as any)?.practice_logo_url || rx.doctor_logo_url;
+        if (logoPath) {
+          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(logoPath, 3600);
           if (url) setLogoSignedUrl(url.signedUrl);
         }
         if (rx.doctor_signature_url) {
@@ -149,18 +150,27 @@ const PrescriptionView = ({ appointmentId, viewAs }: PrescriptionViewProps) => {
                   <img src={logoSignedUrl} alt="Practice Logo" className="h-16 w-auto object-contain" crossOrigin="anonymous" />
                 )}
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  {doctorProfile?.practice_name && (
+                    <h2 className="text-lg font-bold text-gray-900 mb-0.5">{doctorProfile.practice_name}</h2>
+                  )}
+                  <p className="text-base font-semibold text-gray-800">
                     {doctorProfile?.title ? `${doctorProfile.title} ` : "Dr. "}{doctorProfile?.full_name || ""}
-                  </h2>
+                  </p>
                   {doctorProfile?.education && <p className="text-xs text-gray-600">{doctorProfile.education}</p>}
                   {doctorProfile?.hospital_affiliation && <p className="text-xs text-gray-600">{doctorProfile.hospital_affiliation}</p>}
                   {doctorProfile?.license_number && <p className="text-xs text-gray-500">License: {doctorProfile.license_number}</p>}
+                  {doctorProfile?.address && <p className="text-xs text-gray-500">{doctorProfile.address}</p>}
                   {(doctorProfile?.city || doctorProfile?.state || doctorProfile?.country) && (
                     <p className="text-xs text-gray-500">
                       {[doctorProfile?.city, doctorProfile?.state, doctorProfile?.country].filter(Boolean).join(", ")}
                     </p>
                   )}
-                  {doctorProfile?.phone && <p className="text-xs text-gray-500">Tel: {doctorProfile.phone}</p>}
+                  {(doctorProfile?.practice_phone || doctorProfile?.phone) && (
+                    <p className="text-xs text-gray-500">Tel: {doctorProfile.practice_phone || doctorProfile.phone}</p>
+                  )}
+                  {doctorProfile?.practice_email && (
+                    <p className="text-xs text-gray-500">Email: {doctorProfile.practice_email}</p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
