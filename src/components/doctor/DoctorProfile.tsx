@@ -136,7 +136,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       supabase.from("profiles").update(profilePayload).eq("id", user.id),
       supabase.from("doctors").update({
         ...doctor,
-      }).eq("profile_id", user.id),
+      } as any).eq("profile_id", user.id),
     ]);
 
     setSaving(false);
