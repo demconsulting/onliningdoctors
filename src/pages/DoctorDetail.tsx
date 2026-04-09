@@ -52,11 +52,20 @@ interface PricingTier {
   is_active: boolean | null;
 }
 
+interface ConsultationCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  min_price: number;
+  max_price: number;
+}
+
 const DoctorDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [doctor, setDoctor] = useState<DoctorData | null>(null);
   const [availability, setAvailability] = useState<Availability[]>([]);
   const [tiers, setTiers] = useState<PricingTier[]>([]);
+  const [category, setCategory] = useState<ConsultationCategory | null>(null);
   const [loading, setLoading] = useState(true);
   const cs = doctor ? getCurrencySymbol(doctor.profile?.country) : "";
 
@@ -85,9 +94,19 @@ const DoctorDetail = () => {
         const doc = docRes.data as any;
         if (doc.is_suspended) {
           setLoading(false);
-          return; // Don't show suspended doctors
+          return;
         }
         setDoctor(doc as unknown as DoctorData);
+
+        // Fetch consultation category if set
+        if (doc.consultation_category_id) {
+          const { data: catData } = await supabase
+            .from("consultation_categories")
+            .select("*")
+            .eq("id", doc.consultation_category_id)
+            .single();
+          if (catData) setCategory(catData as ConsultationCategory);
+        }
       }
       if (availRes.data) setAvailability(availRes.data);
       if (tierRes.data) setTiers(tierRes.data);
