@@ -331,15 +331,23 @@ const DoctorDetail = () => {
                 <CardTitle className="flex items-center gap-2 font-display text-base"><DollarSign className="h-4 w-4 text-primary" /> Pricing</CardTitle>
               </CardHeader>
               <CardContent>
-                {tiers.length === 0 ? (
-                  <div>
-                    {doctor.consultation_fee != null ? (
-                      <p className="text-sm text-muted-foreground">Standard consultation: <span className="font-semibold text-foreground">{cs}{Number(doctor.consultation_fee).toFixed(0)}</span></p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No pricing info available.</p>
-                    )}
+                {/* Show consultation category if set */}
+                {category && doctor.consultation_fee != null ? (
+                  <div className="space-y-3">
+                    <div className="rounded-lg border border-border p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-foreground">{category.name}</span>
+                        <span className="text-lg font-bold text-primary">{cs}{Number(doctor.consultation_fee).toFixed(0)}</span>
+                      </div>
+                      {category.description && (
+                        <p className="text-xs text-muted-foreground">{category.description}</p>
+                      )}
+                      <Badge variant="outline" className="text-xs">
+                        Range: {cs}{category.min_price} – {cs}{category.max_price}
+                      </Badge>
+                    </div>
                   </div>
-                ) : (
+                ) : tiers.length > 0 ? (
                   <div className="space-y-3">
                     {tiers.map(tier => (
                       <div key={tier.id} className="rounded-lg border border-border p-3 space-y-1">
@@ -354,6 +362,10 @@ const DoctorDetail = () => {
                       </div>
                     ))}
                   </div>
+                ) : doctor.consultation_fee != null ? (
+                  <p className="text-sm text-muted-foreground">Standard consultation: <span className="font-semibold text-foreground">{cs}{Number(doctor.consultation_fee).toFixed(0)}</span></p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No pricing info available.</p>
                 )}
               </CardContent>
             </Card>
