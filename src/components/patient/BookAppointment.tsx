@@ -531,6 +531,32 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
           {/* Step 3: Date & Time — availability-aware */}
           {selectedDoctor && (
             <>
+              {/* Category & Fee Summary */}
+              {(() => {
+                const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
+                const cat = (selectedDoc as any)?.consultation_category;
+                const fee = selectedDoc?.consultation_fee;
+                const docCountry = selectedDoc?.profile?.country || "";
+                const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
+                if (cat && fee) {
+                  return (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{cat.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{cat.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">{feeSymbol}{Number(fee).toFixed(0)}</p>
+                          <p className="text-[10px] text-muted-foreground">Consultation fee</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
               {loadingAvailability ? (
                 <div className="flex items-center justify-center gap-2 py-6">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
