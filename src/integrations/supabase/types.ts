@@ -255,6 +255,42 @@ export type Database = {
         }
         Relationships: []
       }
+      consultation_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          max_price: number
+          min_price: number
+          name: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_price: number
+          min_price: number
+          name: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          max_price?: number
+          min_price?: number
+          name?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       consultation_notes: {
         Row: {
           appointment_id: string
@@ -547,6 +583,7 @@ export type Database = {
       doctors: {
         Row: {
           bio: string | null
+          consultation_category_id: string | null
           consultation_fee: number | null
           created_at: string
           education: string | null
@@ -573,6 +610,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          consultation_category_id?: string | null
           consultation_fee?: number | null
           created_at?: string
           education?: string | null
@@ -599,6 +637,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          consultation_category_id?: string | null
           consultation_fee?: number | null
           created_at?: string
           education?: string | null
@@ -624,6 +663,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "doctors_consultation_category_id_fkey"
+            columns: ["consultation_category_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "doctors_profile_id_fkey"
             columns: ["profile_id"]
