@@ -26,6 +26,7 @@ import AdminPayouts from "@/components/admin/AdminPayouts";
 import AdminAIAssistant from "@/components/admin/AdminAIAssistant";
 import AdminCountries from "@/components/admin/AdminCountries";
 import AdminLegalDocuments from "@/components/admin/AdminLegalDocuments";
+import AdminConsultationCategories from "@/components/admin/AdminConsultationCategories";
 import { Loader2 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -80,6 +81,7 @@ const AdminDashboard = () => {
       case "specialties": return <AdminSpecialties />;
       case "contacts": return <AdminContacts />;
       case "faqs": return <AdminFaqs />;
+      case "consultation-categories": return <AdminConsultationCategories />;
       case "payment-config": return <AdminPaymentConfig />;
       case "payments": return <AdminPayments />;
       case "payouts": return <AdminPayouts />;

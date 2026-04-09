@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
@@ -138,9 +139,10 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     setSelectedDoctor("");
     supabase
       .from("doctors")
-      .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name)")
+      .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
       .eq("specialty_id", selectedSpecialty)
       .eq("is_available", true)
+      .eq("is_suspended", false)
       .then(({ data }) => {
         if (data) setDoctors(data);
         setLoadingDoctors(false);
@@ -496,9 +498,12 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                                   {(doc.rating ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
                                   )}
-                                  {doc.consultation_fee != null && (
-                                    <span className="flex items-center gap-0.5"><Coins className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}{feeCurrencyCode ? ` ${feeCurrencyCode}` : ""}</span>
-                                  )}
+                                    {doc.consultation_fee != null && (
+                                      <span className="flex items-center gap-0.5"><Coins className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}{feeCurrencyCode ? ` ${feeCurrencyCode}` : ""}</span>
+                                    )}
+                                    {(doc as any).consultation_category?.name && (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{(doc as any).consultation_category.name}</Badge>
+                                    )}
                                   {(doc.experience_years ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {doc.experience_years} yrs</span>
                                   )}
@@ -526,6 +531,32 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
           {/* Step 3: Date & Time — availability-aware */}
           {selectedDoctor && (
             <>
+              {/* Category & Fee Summary */}
+              {(() => {
+                const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
+                const cat = (selectedDoc as any)?.consultation_category;
+                const fee = selectedDoc?.consultation_fee;
+                const docCountry = selectedDoc?.profile?.country || "";
+                const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
+                if (cat && fee) {
+                  return (
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{cat.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{cat.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">{feeSymbol}{Number(fee).toFixed(0)}</p>
+                          <p className="text-[10px] text-muted-foreground">Consultation fee</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
               {loadingAvailability ? (
                 <div className="flex items-center justify-center gap-2 py-6">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
