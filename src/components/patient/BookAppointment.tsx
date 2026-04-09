@@ -496,9 +496,12 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                                   {(doc.rating ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Star className="h-3 w-3 fill-warning text-warning" /> {Number(doc.rating).toFixed(1)} ({doc.total_reviews ?? 0})</span>
                                   )}
-                                  {doc.consultation_fee != null && (
-                                    <span className="flex items-center gap-0.5"><Coins className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}{feeCurrencyCode ? ` ${feeCurrencyCode}` : ""}</span>
-                                  )}
+                                    {doc.consultation_fee != null && (
+                                      <span className="flex items-center gap-0.5"><Coins className="h-3 w-3" /> {feeSymbol}{Number(doc.consultation_fee).toFixed(0)}{feeCurrencyCode ? ` ${feeCurrencyCode}` : ""}</span>
+                                    )}
+                                    {(doc as any).consultation_category?.name && (
+                                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{(doc as any).consultation_category.name}</Badge>
+                                    )}
                                   {(doc.experience_years ?? 0) > 0 && (
                                     <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" /> {doc.experience_years} yrs</span>
                                   )}
