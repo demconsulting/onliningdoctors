@@ -139,9 +139,10 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     setSelectedDoctor("");
     supabase
       .from("doctors")
-      .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name)")
+      .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
       .eq("specialty_id", selectedSpecialty)
       .eq("is_available", true)
+      .eq("is_suspended", false)
       .then(({ data }) => {
         if (data) setDoctors(data);
         setLoadingDoctors(false);
