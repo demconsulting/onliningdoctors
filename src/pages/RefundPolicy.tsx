@@ -49,7 +49,7 @@ const fallbackRefundPolicy: LegalDocument = {
     {
       title: "8. Contact Us",
       content:
-        "For refund-related inquiries, please contact our support team at support@doctorsonlining.com or via WhatsApp at +27 60 544 5802.",
+        "For refund-related inquiries, please contact our support team at support2@doctorsonlining.com or via WhatsApp at +27 60 544 5802.",
     },
   ],
 };
