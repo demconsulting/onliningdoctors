@@ -18,6 +18,7 @@ import DoctorBenefits from "./pages/DoctorBenefits";
 
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import RefundPolicy from "./pages/RefundPolicy";
 import Doctors from "./pages/Doctors";
 import DoctorDetail from "./pages/DoctorDetail";
 import NotFound from "./pages/NotFound";
@@ -47,6 +48,7 @@ const App = () => (
           
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <ChatWidget />

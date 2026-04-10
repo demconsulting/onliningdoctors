@@ -91,8 +91,14 @@ const AdminLegalDocuments = () => {
     fetchData();
   };
 
+  const headingForType = (type: string) => {
+    if (type === "terms") return "Terms of Service";
+    if (type === "privacy") return "Privacy Policy";
+    return "Refund Policy";
+  };
+
   const handleCreateDefault = async (type: string) => {
-    const heading = type === "terms" ? "Terms of Service" : "Privacy Policy";
+    const heading = headingForType(type);
     const { error } = await supabase.from("legal_documents").insert({
       document_type: type,
       heading,
@@ -108,9 +114,7 @@ const AdminLegalDocuments = () => {
   const handleAddOverride = async (type: string) => {
     if (!addCountry) { toast.error("Select a country"); return; }
     const country = countries.find(c => c.code === addCountry);
-    const heading = type === "terms" 
-      ? `Terms of Service — ${country?.name || addCountry}` 
-      : `Privacy Policy — ${country?.name || addCountry}`;
+    const heading = `${headingForType(type)} — ${country?.name || addCountry}`;
     
     const { error } = await supabase.from("legal_documents").insert({
       document_type: type,
@@ -332,9 +336,11 @@ const AdminLegalDocuments = () => {
         <TabsList>
           <TabsTrigger value="terms">Terms of Service</TabsTrigger>
           <TabsTrigger value="privacy">Privacy Policy</TabsTrigger>
+          <TabsTrigger value="refund">Refund Policy</TabsTrigger>
         </TabsList>
         <TabsContent value="terms" className="mt-4">{renderTab("terms")}</TabsContent>
         <TabsContent value="privacy" className="mt-4">{renderTab("privacy")}</TabsContent>
+        <TabsContent value="refund" className="mt-4">{renderTab("refund")}</TabsContent>
       </Tabs>
     </div>
   );
