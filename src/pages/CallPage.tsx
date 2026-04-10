@@ -81,9 +81,14 @@ const CallPage = () => {
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <main className="container mx-auto flex-1 px-4 py-6">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 gap-1">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-1">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Button>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-900/30 px-3 py-1 text-xs font-medium text-amber-800 dark:text-amber-300">
+            Non-emergency consultation only
+          </span>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <VideoCall

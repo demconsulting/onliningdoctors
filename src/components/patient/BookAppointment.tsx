@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Calendar, Loader2, Star, MapPin, ExternalLink, Coins, Clock, Search, Ch
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import SuggestionChips from "@/components/shared/SuggestionChips";
+import ConsentCheckboxes from "@/components/patient/ConsentCheckboxes";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { format, getDay, isBefore, startOfDay } from "date-fns";
@@ -94,7 +95,12 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [loadingAvailability, setLoadingAvailability] = useState(false);
   const [hasUnpaidAppointments, setHasUnpaidAppointments] = useState(false);
   const [checkingUnpaid, setCheckingUnpaid] = useState(true);
+  const [consentGranted, setConsentGranted] = useState(false);
   const { toast } = useToast();
+
+  const handleConsentChange = useCallback((granted: boolean) => {
+    setConsentGranted(granted);
+  }, []);
 
   // Check for unpaid appointments - block booking if any exist
   useEffect(() => {
@@ -225,9 +231,14 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDoctor || !selectedDate || !time) {
-      toast({ variant: "destructive", title: "Please fill all required fields" });
+    if (!selectedDoctor || !selectedDate || !time || !consentGranted) {
+      toast({ variant: "destructive", title: "Please fill all required fields and provide consent" });
       return;
+    }
+
+    // Store consent if needed
+    if ((window as any).__storePatientConsent) {
+      await (window as any).__storePatientConsent();
     }
 
     const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
@@ -659,7 +670,8 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                     />
                     <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
                   </div>
-                  <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
+                  <ConsentCheckboxes userId={user.id} onConsentGiven={handleConsentChange} />
+                  <Button type="submit" disabled={loading || !consentGranted} className="gap-2 gradient-primary border-0 text-primary-foreground">
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
                     Book Appointment
                   </Button>

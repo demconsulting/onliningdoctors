@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
+import MedicalDisclaimerBanner from "@/components/layout/MedicalDisclaimerBanner";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/landing/HeroSection";
 import StatsSection from "@/components/landing/StatsSection";
@@ -57,6 +58,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <MedicalDisclaimerBanner />
       <Navbar />
       <main className="flex-1">
         {sections

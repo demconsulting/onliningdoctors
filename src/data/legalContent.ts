@@ -97,6 +97,11 @@ const baseTermsSections: LegalSection[] = [
     content:
       "For questions, concerns, or complaints about these Terms of Service, please contact us at: Email: legal@onliningdoctors.com | Support: support@onliningdoctors.com | Website: www.onliningdoctors.com. We aim to respond to all enquiries within 5 business days.",
   },
+  {
+    title: "18. Limitation of Services and Emergency Disclaimer",
+    content:
+      "Doctors Onlining provides healthcare services via telemedicine and is not intended for emergency medical conditions. The services offered are limited to non-emergency consultations only. Users agree that they will not use the platform in emergencies and will seek immediate in-person medical attention where necessary. No guarantee of diagnosis is provided without a physical examination, and users must seek in-person care when advised by a healthcare provider. The platform is not liable for any misuse in emergency situations. In an emergency, users must call 10177 (South Africa Ambulance Services) or visit their nearest emergency facility immediately. All healthcare consultations are conducted by independently licensed practitioners, and Doctors Onlining acts solely as an intermediary facilitating telemedicine connections.",
+  },
 ];
 
 const basePrivacySections: LegalSection[] = [

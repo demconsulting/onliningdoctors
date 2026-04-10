@@ -938,6 +938,36 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_consents: {
+        Row: {
+          consent_text: string
+          consent_type: string
+          consent_version: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_text: string
+          consent_type: string
+          consent_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_text?: string
+          consent_type?: string
+          consent_version?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       patient_documents: {
         Row: {
           created_at: string
