@@ -735,6 +735,33 @@ export type Database = {
           },
         ]
       }
+      email_events: {
+        Row: {
+          created_at: string
+          email: string
+          event_type: string
+          id: string
+          message_id: string | null
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          event_type: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          event_type?: string
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       faq_articles: {
         Row: {
           answer: string | null
