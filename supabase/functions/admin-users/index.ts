@@ -68,7 +68,7 @@ serve(async (req) => {
 
     // Action: send password reset email
     if (action === "reset-password") {
-      const { email } = await req.json();
+      const email = bodyData?.email;
       if (!email) {
         return new Response(JSON.stringify({ error: "Email required" }), {
           status: 400,
