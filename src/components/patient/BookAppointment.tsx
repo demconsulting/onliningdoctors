@@ -670,7 +670,8 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
                     />
                     <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} placeholder="Or describe your symptoms..." maxLength={500} />
                   </div>
-                  <Button type="submit" disabled={loading} className="gap-2 gradient-primary border-0 text-primary-foreground">
+                  <ConsentCheckboxes userId={user.id} onConsentGiven={handleConsentChange} />
+                  <Button type="submit" disabled={loading || !consentGranted} className="gap-2 gradient-primary border-0 text-primary-foreground">
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Calendar className="h-4 w-4" />}
                     Book Appointment
                   </Button>
