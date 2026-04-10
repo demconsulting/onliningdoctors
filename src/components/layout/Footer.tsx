@@ -97,7 +97,7 @@ const Footer = () => {
             <div className="flex flex-col gap-2">
               <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms & Conditions</Link>
               <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy (POPIA)</Link>
-              <a href="#refund" className="text-sm text-muted-foreground hover:text-foreground">Refund Policy</a>
+              <Link to="/refund-policy" className="text-sm text-muted-foreground hover:text-foreground">Refund Policy</Link>
               <a href="#corporate" className="text-sm text-muted-foreground hover:text-foreground">Corporate Portal</a>
               <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">Admin Login</Link>
             </div>
