@@ -101,7 +101,7 @@ const AdminUsers = () => {
     if (!email) { toast({ variant: "destructive", title: "No email found for this user" }); return; }
     setResettingId(userId);
     try {
-      const res = await supabase.functions.invoke("admin-users?action=reset-password", { body: { email } });
+      const res = await supabase.functions.invoke("admin-users", { body: { action: "reset-password", email } });
       if (res.error) throw res.error;
       toast({ title: "Password reset sent", description: `Reset email sent to ${email}` });
     } catch (e: any) {
