@@ -67,15 +67,6 @@ serve(async (req) => {
         });
       }
 
-      // Use the admin API to generate a recovery link
-      const { data, error } = await serviceClient.auth.admin.generateLink({
-        type: "recovery",
-        email,
-      });
-
-      if (error) throw error;
-
-      // Send the reset email via Supabase's built-in method
       const { error: resetError } = await serviceClient.auth.resetPasswordForEmail(email, {
         redirectTo: `${req.headers.get("origin") || Deno.env.get("SUPABASE_URL")}/reset-password`,
       });
