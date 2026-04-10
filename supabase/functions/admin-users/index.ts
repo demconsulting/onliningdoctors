@@ -49,8 +49,17 @@ serve(async (req) => {
       });
     }
 
+    // Support action from query param or body
     const url = new URL(req.url);
-    const action = url.searchParams.get("action");
+    let action = url.searchParams.get("action");
+    let bodyData: any = null;
+
+    if (req.method === "POST" || req.method === "PUT" || req.method === "PATCH") {
+      try {
+        bodyData = await req.json();
+        if (bodyData?.action) action = bodyData.action;
+      } catch { /* no body */ }
+    }
 
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -59,7 +68,7 @@ serve(async (req) => {
 
     // Action: send password reset email
     if (action === "reset-password") {
-      const { email } = await req.json();
+      const email = bodyData?.email;
       if (!email) {
         return new Response(JSON.stringify({ error: "Email required" }), {
           status: 400,
