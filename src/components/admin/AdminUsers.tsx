@@ -117,6 +117,7 @@ const AdminUsers = () => {
       if (!roleRecord) throw new Error("Role record not found");
       const { error } = await supabase.from("user_roles").update({ role: newRole }).eq("id", roleRecord.id);
       if (error) throw error;
+      if (newRole === "doctor") await ensureDoctorProfile(userId);
       toast({ title: "Role updated", description: `Changed from ${currentRole} to ${newRole}` });
       await fetchData();
     } catch (e: any) {
@@ -143,11 +144,24 @@ const AdminUsers = () => {
     } finally { setUpdatingRole(null); }
   };
 
+  const ensureDoctorProfile = async (userId: string) => {
+    const existing = doctors.find((d) => d.profile_id === userId);
+    if (!existing) {
+      const { error } = await supabase.from("doctors").insert({
+        profile_id: userId,
+        is_verified: false,
+        is_available: false,
+      });
+      if (error) throw error;
+    }
+  };
+
   const handleAddRole = async (userId: string, role: AppRole) => {
     setUpdatingRole(userId);
     try {
       const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
       if (error) throw error;
+      if (role === "doctor") await ensureDoctorProfile(userId);
       toast({ title: "Role added", description: `Added ${role} role` });
       await fetchData();
     } catch (e: any) {
