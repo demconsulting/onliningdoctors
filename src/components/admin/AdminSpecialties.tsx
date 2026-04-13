@@ -64,12 +64,17 @@ const AdminSpecialties = () => {
 
   const deleteSpecialty = async (id: string) => {
     if (!confirm("Are you sure you want to delete this specialty? It will fail if any doctors are assigned to it.")) return;
-    const { error } = await supabase.from("specialties").delete().eq("id", id);
+    const { error, count } = await supabase.from("specialties").delete({ count: "exact" }).eq("id", id);
     if (error) {
-      const msg = error.message.includes("foreign key") || error.message.includes("violates")
-        ? "Cannot delete: doctors are still assigned to this specialty."
-        : error.message;
+      let msg = error.message;
+      if (error.message.includes("foreign key") || error.code === "23503") {
+        msg = "Cannot delete: doctors are still assigned to this specialty.";
+      } else if (error.message.includes("row-level security") || error.code === "42501") {
+        msg = "Permission denied. You may not have admin access.";
+      }
       toast({ variant: "destructive", title: "Error deleting", description: msg });
+    } else if (count === 0) {
+      toast({ variant: "destructive", title: "Error deleting", description: "Permission denied or specialty not found." });
     } else {
       toast({ title: "Specialty deleted" });
       fetchSpecialties();
