@@ -92,7 +92,7 @@ const DoctorDetail = () => {
       ]);
       if (docRes.data) {
         const doc = docRes.data as any;
-        if (doc.is_suspended) {
+        if (doc.is_suspended || !doc.is_verified) {
           setLoading(false);
           return;
         }
