@@ -73,6 +73,8 @@ const AdminSpecialties = () => {
         msg = "Permission denied. You may not have admin access.";
       }
       toast({ variant: "destructive", title: "Error deleting", description: msg });
+    } else if (count === 0) {
+      toast({ variant: "destructive", title: "Error deleting", description: "Permission denied or specialty not found." });
     } else {
       toast({ title: "Specialty deleted" });
       fetchSpecialties();
