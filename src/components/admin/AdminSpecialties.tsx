@@ -63,9 +63,13 @@ const AdminSpecialties = () => {
   };
 
   const deleteSpecialty = async (id: string) => {
-    await supabase.from("specialties").delete().eq("id", id);
-    toast({ title: "Specialty deleted" });
-    fetchSpecialties();
+    const { error } = await supabase.from("specialties").delete().eq("id", id);
+    if (error) {
+      toast({ variant: "destructive", title: "Error deleting", description: error.message });
+    } else {
+      toast({ title: "Specialty deleted" });
+      fetchSpecialties();
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
