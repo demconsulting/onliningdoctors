@@ -63,9 +63,17 @@ const AdminSpecialties = () => {
   };
 
   const deleteSpecialty = async (id: string) => {
-    await supabase.from("specialties").delete().eq("id", id);
-    toast({ title: "Specialty deleted" });
-    fetchSpecialties();
+    if (!confirm("Are you sure you want to delete this specialty? It will fail if any doctors are assigned to it.")) return;
+    const { error } = await supabase.from("specialties").delete().eq("id", id);
+    if (error) {
+      const msg = error.message.includes("foreign key") || error.message.includes("violates")
+        ? "Cannot delete: doctors are still assigned to this specialty."
+        : error.message;
+      toast({ variant: "destructive", title: "Error deleting", description: msg });
+    } else {
+      toast({ title: "Specialty deleted" });
+      fetchSpecialties();
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
