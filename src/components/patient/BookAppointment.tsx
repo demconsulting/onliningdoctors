@@ -356,6 +356,32 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     );
   }
 
+  const cancelUnpaidAppointments = async () => {
+    setLoading(true);
+    try {
+      const { data: unpaid } = await supabase
+        .from("appointments")
+        .select("id")
+        .eq("patient_id", user.id)
+        .eq("status", "awaiting_payment");
+
+      if (unpaid && unpaid.length > 0) {
+        for (const appt of unpaid) {
+          await supabase
+            .from("appointments")
+            .update({ status: "cancelled", cancellation_reason: "Incomplete booking cancelled by patient" })
+            .eq("id", appt.id);
+        }
+      }
+      setHasUnpaidAppointments(false);
+      toast({ title: "Incomplete bookings cancelled", description: "You can now start a new booking." });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Error", description: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (hasUnpaidAppointments) {
     return (
       <Card>
@@ -369,13 +395,14 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
               <Coins className="h-8 w-8 text-destructive" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">Complete Your Pending Payment</h3>
+            <h3 className="text-lg font-semibold text-foreground">Incomplete Booking Found</h3>
             <p className="max-w-md text-sm text-muted-foreground">
-              You have an unpaid appointment. Please complete the payment or cancel the pending appointment before booking a new one.
+              You have an incomplete booking awaiting payment. Cancel it to start a new booking, or complete the payment.
             </p>
-            <p className="text-xs text-muted-foreground">
-              Check the <strong>Archived — Unpaid</strong> section in your Appointments tab.
-            </p>
+            <Button onClick={cancelUnpaidAppointments} disabled={loading} variant="destructive">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Cancel & Start Over
+            </Button>
           </div>
         </CardContent>
       </Card>
