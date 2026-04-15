@@ -101,7 +101,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   };
 
   // Only show confirmed, completed, or cancelled appointments to doctors (exclude awaiting_payment and pending)
-  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled"].includes(a.status));
+  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show"].includes(a.status));
   const filtered = filter === "all" ? confirmedAppointments : confirmedAppointments.filter(a => a.status === filter);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -122,6 +122,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
               <SelectItem value="confirmed">Confirmed</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="no_show">No Show</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -184,6 +185,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                               <Video className="h-3.5 w-3.5" /> Call
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "completed")} className="text-success">Complete</Button>
+                            <Button size="sm" variant="ghost" onClick={() => updateStatus(apt.id, "no_show")} className="text-muted-foreground">No Show</Button>
                           </>
                         )}
                       </div>
