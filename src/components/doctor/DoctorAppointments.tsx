@@ -40,6 +40,8 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [declineDialogId, setDeclineDialogId] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState("");
   const [declining, setDeclining] = useState(false);
+  const [noShowDialogId, setNoShowDialogId] = useState<string | null>(null);
+  const [markingNoShow, setMarkingNoShow] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -185,7 +187,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                               <Video className="h-3.5 w-3.5" /> Call
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => updateStatus(apt.id, "completed")} className="text-success">Complete</Button>
-                            <Button size="sm" variant="ghost" onClick={() => updateStatus(apt.id, "no_show")} className="text-muted-foreground">No Show</Button>
+                            <Button size="sm" variant="ghost" onClick={() => setNoShowDialogId(apt.id)} className="text-muted-foreground">No Show</Button>
                           </>
                         )}
                       </div>
@@ -288,6 +290,29 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
           <Button variant="destructive" onClick={handleDecline} disabled={declining}>
             {declining ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
             Decline Appointment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* No Show Confirmation Dialog */}
+    <Dialog open={!!noShowDialogId} onOpenChange={(open) => { if (!open) setNoShowDialogId(null); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Mark as No Show</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">Are you sure the patient did not attend this appointment? This will notify the patient and the admin team.</p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setNoShowDialogId(null)}>Cancel</Button>
+          <Button variant="destructive" disabled={markingNoShow} onClick={async () => {
+            if (!noShowDialogId) return;
+            setMarkingNoShow(true);
+            await updateStatus(noShowDialogId, "no_show");
+            setMarkingNoShow(false);
+            setNoShowDialogId(null);
+          }}>
+            {markingNoShow ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Confirm No Show
           </Button>
         </DialogFooter>
       </DialogContent>
