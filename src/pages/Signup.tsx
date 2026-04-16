@@ -49,7 +49,7 @@ const Signup = () => {
               <Stethoscope className="h-6 w-6 text-primary-foreground" />
             </div>
             <CardTitle className="font-display text-2xl">Create your account</CardTitle>
-            <CardDescription>Join Onlining Doctors for online healthcare</CardDescription>
+            <CardDescription>Join Doctors Onlining for video consultations with qualified doctors</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSignup} className="space-y-4">

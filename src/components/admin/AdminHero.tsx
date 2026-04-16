@@ -26,7 +26,7 @@ interface HeroContent {
 }
 
 const defaultHero: HeroContent = {
-  badge: "Trusted Online Healthcare",
+  badge: "Trusted Video Consultations",
   title: "Your Doctor,",
   highlight: "One Click Away",
   subtitle: "",

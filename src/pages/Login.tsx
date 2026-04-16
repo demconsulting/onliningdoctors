@@ -60,7 +60,7 @@ const Login = () => {
               <Stethoscope className="h-6 w-6 text-primary-foreground" />
             </div>
             <CardTitle className="font-display text-2xl">Welcome back</CardTitle>
-            <CardDescription>Log in to your Doco account</CardDescription>
+            <CardDescription>Log in to your Doctors Onlining account</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
