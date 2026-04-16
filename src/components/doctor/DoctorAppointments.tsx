@@ -104,7 +104,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   };
 
   // Only show confirmed, completed, or cancelled appointments to doctors (exclude awaiting_payment and pending)
-  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show"].includes(a.status));
+  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show", "doctor_no_show"].includes(a.status));
   const filtered = filter === "all" ? confirmedAppointments : confirmedAppointments.filter(a => a.status === filter);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
