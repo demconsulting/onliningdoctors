@@ -60,7 +60,7 @@ const Footer = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
                 <Stethoscope className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-display text-lg font-bold">Onlining Doctors</span>
+              <span className="font-display text-lg font-bold">Doctors Onlining</span>
             </Link>
             <p className="mb-4 text-sm text-muted-foreground">{content.tagline}</p>
             <div className="space-y-2">
@@ -109,7 +109,7 @@ const Footer = () => {
       <div className="border-t border-border bg-muted/40">
         <div className="container mx-auto px-4 py-4 text-center text-xs text-muted-foreground space-y-1">
           <p className="font-medium text-foreground/70">
-            Doctors Onlining is a telemedicine platform and does not provide emergency medical care.
+            Doctors Onlining is a video consultation platform and does not provide emergency medical care.
           </p>
           <p>
             In an emergency, call <a href="tel:10177" className="font-semibold text-destructive underline">10177</a> or visit your nearest hospital.

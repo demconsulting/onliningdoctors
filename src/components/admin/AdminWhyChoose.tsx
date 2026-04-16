@@ -22,8 +22,8 @@ interface WhyChooseContent {
 }
 
 const defaultContent: WhyChooseContent = {
-  heading: "Why Choose Onlining Doctors?",
-  subheading: "Experience healthcare reimagined with our comprehensive telemedicine platform",
+  heading: "Why Choose Doctors Onlining?",
+  subheading: "Experience healthcare reimagined with our video consultation platform for non-emergency care",
   features: [],
 };
 

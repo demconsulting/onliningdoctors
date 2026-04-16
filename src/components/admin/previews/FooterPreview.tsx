@@ -22,7 +22,7 @@ const FooterPreview = ({ content }: { content: FooterContent }) => (
         <div className="flex h-4 w-4 items-center justify-center rounded gradient-primary">
           <Stethoscope className="h-2.5 w-2.5 text-primary-foreground" />
         </div>
-        <span className="font-display text-xs font-bold">Onlining Doctors</span>
+        <span className="font-display text-xs font-bold">Doctors Onlining</span>
       </div>
       <p className="text-muted-foreground mb-1">{content.tagline}</p>
       <p className="text-muted-foreground">Email: <span className="text-primary">{content.email}</span></p>

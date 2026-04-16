@@ -9,8 +9,8 @@ interface Feature { icon: string; title: string; description: string; }
 interface WhyChooseContent { heading: string; subheading: string; features: Feature[]; }
 
 const fallback: WhyChooseContent = {
-  heading: "Why Choose Onlining Doctors?",
-  subheading: "Experience healthcare reimagined with our comprehensive telemedicine platform",
+  heading: "Why Choose Doctors Onlining?",
+  subheading: "Experience healthcare reimagined with our video consultation platform for non-emergency care",
   features: [
     { icon: "Video", title: "HD Video Consultations", description: "Connect face-to-face with doctors through secure, high-quality video calls from anywhere." },
     { icon: "Calendar", title: "Easy Scheduling", description: "Book appointments instantly or schedule for later. Get reminders and manage everything in one place." },

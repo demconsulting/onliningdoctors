@@ -18,7 +18,7 @@ interface DoctorCTAContent {
 
 const defaultContent: DoctorCTAContent = {
   heading: "Are You a Doctor?",
-  subheading: "Join our platform and reach thousands of patients seeking quality healthcare. Expand your practice with flexible online consultations.",
+  subheading: "Join Doctors Onlining and reach thousands of patients seeking non-emergency medical care. Expand your practice with flexible video consultations.",
   register_text: "Register as a Doctor",
   login_text: "Sign in as Doctor",
 };

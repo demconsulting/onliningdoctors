@@ -15,7 +15,7 @@ interface HeroContent {
 }
 
 const fallback: HeroContent = {
-  badge: "Trusted Online Healthcare",
+  badge: "Trusted Video Consultations",
   title: "Your Doctor,",
   highlight: "One Click Away",
   subtitle: "Connect with certified specialists via secure video consultations. Book appointments, share documents, and get care — all from home.",

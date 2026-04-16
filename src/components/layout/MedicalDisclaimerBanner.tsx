@@ -25,7 +25,7 @@ const MedicalDisclaimerBanner = () => {
         <div className="flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
           <p className="text-sm text-foreground">
-            <span className="font-semibold">Doctors Onlining</span> provides telemedicine services for{" "}
+            <span className="font-semibold">Doctors Onlining</span> is a video consultation platform for{" "}
             <span className="font-semibold">non-emergency medical consultations only</span>.
             If you are experiencing a medical emergency, please call{" "}
             <a href="tel:10177" className="font-bold text-destructive underline">10177</a>{" "}
