@@ -27,6 +27,7 @@ const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   no_show: "bg-muted text-muted-foreground border-border",
+  doctor_no_show: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
@@ -103,7 +104,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   };
 
   // Only show confirmed, completed, or cancelled appointments to doctors (exclude awaiting_payment and pending)
-  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show"].includes(a.status));
+  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show", "doctor_no_show"].includes(a.status));
   const filtered = filter === "all" ? confirmedAppointments : confirmedAppointments.filter(a => a.status === filter);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;

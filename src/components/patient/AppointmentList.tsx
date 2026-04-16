@@ -24,6 +24,7 @@ const statusColors: Record<string, string> = {
   completed: "bg-success/10 text-success border-success/20",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   no_show: "bg-muted text-muted-foreground border-border",
+  doctor_no_show: "bg-destructive/10 text-destructive border-destructive/20",
   awaiting_payment: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
@@ -66,6 +67,8 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   const [cancelDialogId, setCancelDialogId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  const [noShowDialogId, setNoShowDialogId] = useState<string | null>(null);
+  const [reportingNoShow, setReportingNoShow] = useState(false);
 
   const handleCancel = async () => {
     if (!cancelDialogId) return;
@@ -202,8 +205,8 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                            <AlertCircle className="h-4 w-4 text-destructive animate-pulse" />
                          )}
                          <Badge variant="outline" className={displayStatus === "expired" ? "bg-muted text-muted-foreground border-border" : (statusColors[apt.status] || "")}>
-                           {displayStatus === "expired" ? "past" : displayStatus === "awaiting_payment" ? "Payment Pending" : apt.status}
-                         </Badge>
+                            {displayStatus === "expired" ? "past" : displayStatus === "awaiting_payment" ? "Payment Pending" : apt.status === "doctor_no_show" ? "Doctor No-Show" : apt.status}
+                          </Badge>
                        </div>
                        <div className="flex flex-wrap gap-2">
                          {displayStatus === "awaiting_payment" && (
@@ -211,16 +214,27 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                              Complete Payment
                            </Button>
                          )}
-                         {!isExpired && apt.status === "confirmed" && (
-                           <Button variant="outline" size="sm" className="gap-1 text-primary" onClick={() => navigate(`/call/${apt.id}`)}>
-                             <Video className="h-3.5 w-3.5" /> Join Call
-                           </Button>
-                         )}
-                         {!isExpired && (apt.status === "pending" || apt.status === "confirmed") && (
-                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
-                             Cancel
-                           </Button>
-                         )}
+                          {!isExpired && apt.status === "confirmed" && (
+                            <>
+                              <Button variant="outline" size="sm" className="gap-1 text-primary" onClick={() => navigate(`/call/${apt.id}`)}>
+                                <Video className="h-3.5 w-3.5" /> Join Call
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
+                                Cancel
+                              </Button>
+                            </>
+                          )}
+                          {/* Show "Report Doctor No-Show" after appointment time has passed */}
+                          {isExpired && apt.status === "confirmed" && (
+                            <Button variant="ghost" size="sm" className="text-destructive text-xs" onClick={() => setNoShowDialogId(apt.id)}>
+                              <AlertCircle className="h-3.5 w-3.5 mr-1" /> Report Doctor No-Show
+                            </Button>
+                          )}
+                          {!isExpired && apt.status === "pending" && (
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => { setCancelDialogId(apt.id); setCancelReason(""); }}>
+                              Cancel
+                            </Button>
+                          )}
                        </div>
                      </div>
                    );
@@ -367,6 +381,41 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
           <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
             {cancelling ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
             Cancel Appointment
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Doctor No-Show Confirmation Dialog */}
+    <Dialog open={!!noShowDialogId} onOpenChange={(open) => { if (!open) setNoShowDialogId(null); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Report Doctor No-Show</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Are you sure the doctor did not attend this appointment? This will be reported to the admin team for review and the doctor will be notified.
+        </p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setNoShowDialogId(null)}>Go Back</Button>
+          <Button variant="destructive" disabled={reportingNoShow} onClick={async () => {
+            if (!noShowDialogId) return;
+            setReportingNoShow(true);
+            const { error } = await supabase
+              .from("appointments")
+              .update({ status: "doctor_no_show" })
+              .eq("id", noShowDialogId)
+              .eq("patient_id", user.id);
+            setReportingNoShow(false);
+            if (error) {
+              toast({ variant: "destructive", title: "Error", description: error.message });
+            } else {
+              toast({ title: "Doctor no-show reported", description: "The admin team has been notified." });
+              setNoShowDialogId(null);
+              fetchAppointments();
+            }
+          }}>
+            {reportingNoShow ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Report No-Show
           </Button>
         </DialogFooter>
       </DialogContent>
