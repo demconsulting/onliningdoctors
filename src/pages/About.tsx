@@ -1,10 +1,16 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Heart, Users, Award, Shield } from "lucide-react";
+import Seo from "@/components/seo/Seo";
 
 const About = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="About Doctors Onlining | Trusted Video Consultations"
+        description="Learn about Doctors Onlining, a secure video consultation platform connecting patients with qualified doctors for non-emergency medical care."
+        path="/about"
+      />
       <Navbar />
       <main className="flex-1">
         {/* Hero */}

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Seo from "@/components/seo/Seo";
 
 const Contact = () => {
   const [name, setName] = useState("");
@@ -39,6 +40,11 @@ const Contact = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="Contact Doctors Onlining | Support & Booking Help"
+        description="Contact Doctors Onlining for support, booking assistance, and general enquiries about secure video consultations and non-emergency care."
+        path="/contact"
+      />
       <Navbar />
       <main className="flex-1 py-16">
         <div className="container mx-auto px-4">

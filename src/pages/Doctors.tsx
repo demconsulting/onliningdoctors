@@ -12,6 +12,7 @@ import DoctorCardNew from "@/components/doctors/DoctorCardNew";
 import WhatsAppButton from "@/components/doctors/WhatsAppButton";
 import type { Doctor } from "@/components/doctors/DoctorCardNew";
 import { Loader2, Stethoscope } from "lucide-react";
+import Seo from "@/components/seo/Seo";
 
 interface Specialty {
   id: string;
@@ -96,6 +97,11 @@ const Doctors = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="Find Licensed Doctors Online | Doctors Onlining"
+        description="Browse licensed South African doctors available for secure video-based, non-emergency consultations. Compare specialties, pricing, ratings, and availability."
+        path="/doctors"
+      />
       <Navbar />
       <MedicalDisclaimerBanner />
 
