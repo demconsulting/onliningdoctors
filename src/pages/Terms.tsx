@@ -6,6 +6,7 @@ import { getTerms, LegalDocument } from "@/data/legalContent";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import PdfDownloadButton from "@/components/shared/PdfDownloadButton";
+import Seo from "@/components/seo/Seo";
 
 const Terms = () => {
   const { geo, loading: geoLoading } = useGeoLocation();
@@ -53,6 +54,11 @@ const Terms = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="Terms and Conditions | Doctors Onlining"
+        description="Read the Doctors Onlining terms and conditions for using our video consultation platform for non-emergency medical care."
+        path="/terms"
+      />
       <Navbar />
       <main className="flex-1 py-16">
         <div className="container mx-auto px-4">

@@ -15,6 +15,7 @@ import {
   GraduationCap, Building2, Languages, CalendarPlus, ShieldCheck,
   FileText, ChevronLeft,
 } from "lucide-react";
+import Seo from "@/components/seo/Seo";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -146,9 +147,17 @@ const DoctorDetail = () => {
   const name = doctor.profile?.full_name || "Doctor";
   const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
   const displayName = `${doctor.title || "Dr."} ${name}`;
+  const seoTitle = `${displayName} | ${doctor.specialty?.name || "Doctor"} Online Consultation`;
+  const seoDescription = `${displayName}${doctor.specialty?.name ? ` is a ${doctor.specialty.name}` : ""} on Doctors Onlining, offering secure video consultations for non-emergency care${doctor.profile?.country ? ` in ${doctor.profile.country}` : ""}.`;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        path={`/doctors/${doctor.profile_id}`}
+        image={doctor.profile?.avatar_url || undefined}
+      />
       <Navbar />
 
       <main className="flex-1">

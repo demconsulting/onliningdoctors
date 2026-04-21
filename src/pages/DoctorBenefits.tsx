@@ -8,6 +8,7 @@ import {
   Stethoscope, ArrowRight, Clock, Wallet, ShieldCheck,
   Globe, BarChart3, CalendarCheck, Video, Users, Headphones,
 } from "lucide-react";
+import Seo from "@/components/seo/Seo";
 
 const benefits = [
   {
@@ -71,6 +72,11 @@ const DoctorBenefits = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="For Doctors | Grow Your Practice with Doctors Onlining"
+        description="Join Doctors Onlining to offer secure video consultations, manage your schedule, and grow your medical practice online across South Africa."
+        path="/doctor-benefits"
+      />
       <Navbar />
 
       {/* Hero */}

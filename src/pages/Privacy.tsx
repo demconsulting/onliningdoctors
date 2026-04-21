@@ -6,6 +6,7 @@ import { getPrivacy, LegalDocument } from "@/data/legalContent";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import PdfDownloadButton from "@/components/shared/PdfDownloadButton";
+import Seo from "@/components/seo/Seo";
 
 const Privacy = () => {
   const { geo, loading: geoLoading } = useGeoLocation();
@@ -51,6 +52,11 @@ const Privacy = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="Privacy Policy | Doctors Onlining"
+        description="Review the Doctors Onlining privacy policy and how we protect personal and healthcare information in line with POPIA."
+        path="/privacy"
+      />
       <Navbar />
       <main className="flex-1 py-16">
         <div className="container mx-auto px-4">

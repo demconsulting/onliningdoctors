@@ -9,6 +9,7 @@ import WhyChooseSection from "@/components/landing/WhyChooseSection";
 import FindDoctorSection from "@/components/landing/FindDoctorSection";
 import DoctorCTASection from "@/components/landing/DoctorCTASection";
 import FAQSection from "@/components/landing/FAQSection";
+import Seo from "@/components/seo/Seo";
 
 interface SectionConfig {
   key: string;
@@ -58,6 +59,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Seo
+        title="Doctors Onlining | Video Consultations in South Africa"
+        description="Doctors Onlining is a video consultation platform connecting patients with qualified doctors for fast, secure, non-emergency care anywhere in South Africa."
+        path="/"
+      />
       <MedicalDisclaimerBanner />
       <Navbar />
       <main className="flex-1">
