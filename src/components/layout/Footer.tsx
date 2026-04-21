@@ -78,7 +78,7 @@ const Footer = () => {
             <h4 className="mb-3 font-display font-semibold text-foreground">For Patients</h4>
             <div className="flex flex-col gap-2">
               <Link to="/doctors" className="text-sm text-muted-foreground hover:text-foreground">Find Doctors</Link>
-              <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">Book Appointment</Link>
+              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link>
               <a href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground">How It Works</a>
             </div>
           </div>
@@ -86,9 +86,9 @@ const Footer = () => {
           <div>
             <h4 className="mb-3 font-display font-semibold text-foreground">For Doctors</h4>
             <div className="flex flex-col gap-2">
-              <Link to="/doctor-signup" className="text-sm text-muted-foreground hover:text-foreground">Register</Link>
-              <a href="#benefits" className="text-sm text-muted-foreground hover:text-foreground">Benefits</a>
-              <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">Doctor Login</Link>
+              <Link to="/doctor-benefits" className="text-sm text-muted-foreground hover:text-foreground">Benefits</Link>
+              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Support</Link>
+              <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About Us</Link>
             </div>
           </div>
 
@@ -98,8 +98,7 @@ const Footer = () => {
               <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground">Terms & Conditions</Link>
               <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy (POPIA)</Link>
               <Link to="/refund-policy" className="text-sm text-muted-foreground hover:text-foreground">Refund Policy</Link>
-              <a href="#corporate" className="text-sm text-muted-foreground hover:text-foreground">Corporate Portal</a>
-              <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">Admin Login</Link>
+              <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</Link>
             </div>
           </div>
         </div>

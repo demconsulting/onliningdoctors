@@ -6,6 +6,7 @@ import { LegalDocument } from "@/data/legalContent";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import PdfDownloadButton from "@/components/shared/PdfDownloadButton";
+import Seo from "@/components/seo/Seo";
 
 const fallbackRefundPolicy: LegalDocument = {
   heading: "Refund Policy",
@@ -98,6 +99,11 @@ const RefundPolicy = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <Seo
+        title="Refund Policy | Doctors Onlining"
+        description="Read the Doctors Onlining refund policy for cancelled or disrupted non-emergency video consultations."
+        path="/refund-policy"
+      />
       <Navbar />
       <main className="flex-1 py-16">
         <div className="container mx-auto px-4">
