@@ -63,13 +63,33 @@ const AdminSpecialties = () => {
   };
 
   const deleteSpecialty = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this specialty? It will fail if any doctors are assigned to it.")) return;
+    // Check how many doctors are assigned
+    const { count: assignedCount } = await supabase
+      .from("doctors")
+      .select("id", { count: "exact", head: true })
+      .eq("specialty_id", id);
+
+    const warning = assignedCount && assignedCount > 0
+      ? `This specialty is assigned to ${assignedCount} doctor(s). Deleting it will unassign them (their specialty will be cleared). Continue?`
+      : "Are you sure you want to delete this specialty?";
+    if (!confirm(warning)) return;
+
+    // Unassign doctors first to avoid FK violation
+    if (assignedCount && assignedCount > 0) {
+      const { error: updateError } = await supabase
+        .from("doctors")
+        .update({ specialty_id: null })
+        .eq("specialty_id", id);
+      if (updateError) {
+        toast({ variant: "destructive", title: "Error unassigning doctors", description: updateError.message });
+        return;
+      }
+    }
+
     const { error, count } = await supabase.from("specialties").delete({ count: "exact" }).eq("id", id);
     if (error) {
       let msg = error.message;
-      if (error.message.includes("foreign key") || error.code === "23503") {
-        msg = "Cannot delete: doctors are still assigned to this specialty.";
-      } else if (error.message.includes("row-level security") || error.code === "42501") {
+      if (error.message.includes("row-level security") || error.code === "42501") {
         msg = "Permission denied. You may not have admin access.";
       }
       toast({ variant: "destructive", title: "Error deleting", description: msg });
