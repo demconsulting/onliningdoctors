@@ -159,6 +159,7 @@ export type Database = {
         Row: {
           cancellation_reason: string | null
           created_at: string
+          dependent_id: string | null
           doctor_id: string
           duration_minutes: number
           id: string
@@ -173,6 +174,7 @@ export type Database = {
         Insert: {
           cancellation_reason?: string | null
           created_at?: string
+          dependent_id?: string | null
           doctor_id: string
           duration_minutes?: number
           id?: string
@@ -187,6 +189,7 @@ export type Database = {
         Update: {
           cancellation_reason?: string | null
           created_at?: string
+          dependent_id?: string | null
           doctor_id?: string
           duration_minutes?: number
           id?: string
@@ -296,6 +299,7 @@ export type Database = {
           appointment_id: string
           content: string
           created_at: string
+          dependent_id: string | null
           doctor_id: string
           id: string
           summary: string | null
@@ -305,6 +309,7 @@ export type Database = {
           appointment_id: string
           content?: string
           created_at?: string
+          dependent_id?: string | null
           doctor_id: string
           id?: string
           summary?: string | null
@@ -314,6 +319,7 @@ export type Database = {
           appointment_id?: string
           content?: string
           created_at?: string
+          dependent_id?: string | null
           doctor_id?: string
           id?: string
           summary?: string | null
@@ -427,6 +433,120 @@ export type Database = {
           currency_symbol?: string
           is_active?: boolean
           name?: string
+        }
+        Relationships: []
+      }
+      dependent_consents: {
+        Row: {
+          consent_text: string
+          consent_type: string
+          consent_version: string
+          created_at: string
+          dependent_id: string
+          id: string
+          ip_address: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_text: string
+          consent_type: string
+          consent_version?: string
+          created_at?: string
+          dependent_id: string
+          id?: string
+          ip_address?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_text?: string
+          consent_type?: string
+          consent_version?: string
+          created_at?: string
+          dependent_id?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dependents: {
+        Row: {
+          allergies: string | null
+          allow_login: boolean
+          chronic_conditions: string | null
+          consent_accepted_at: string | null
+          consent_version: string | null
+          created_at: string
+          date_of_birth: string
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string
+          gender: string | null
+          guardian_consent_accepted_at: string
+          guardian_id: string
+          id: string
+          invitation_sent_at: string | null
+          invitation_status: string
+          invitation_token: string | null
+          is_minor: boolean
+          linked_user_id: string | null
+          medical_notes: string | null
+          phone: string | null
+          relationship: string
+          updated_at: string
+        }
+        Insert: {
+          allergies?: string | null
+          allow_login?: boolean
+          chronic_conditions?: string | null
+          consent_accepted_at?: string | null
+          consent_version?: string | null
+          created_at?: string
+          date_of_birth: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name: string
+          gender?: string | null
+          guardian_consent_accepted_at?: string
+          guardian_id: string
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_status?: string
+          invitation_token?: string | null
+          is_minor?: boolean
+          linked_user_id?: string | null
+          medical_notes?: string | null
+          phone?: string | null
+          relationship: string
+          updated_at?: string
+        }
+        Update: {
+          allergies?: string | null
+          allow_login?: boolean
+          chronic_conditions?: string | null
+          consent_accepted_at?: string | null
+          consent_version?: string | null
+          created_at?: string
+          date_of_birth?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string
+          gender?: string | null
+          guardian_consent_accepted_at?: string
+          guardian_id?: string
+          id?: string
+          invitation_sent_at?: string | null
+          invitation_status?: string
+          invitation_token?: string | null
+          is_minor?: boolean
+          linked_user_id?: string | null
+          medical_notes?: string | null
+          phone?: string | null
+          relationship?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1227,6 +1347,7 @@ export type Database = {
           allergies_noted: string | null
           appointment_id: string
           created_at: string
+          dependent_id: string | null
           diagnosis: string | null
           doctor_id: string
           doctor_logo_url: string | null
@@ -1244,6 +1365,7 @@ export type Database = {
           allergies_noted?: string | null
           appointment_id: string
           created_at?: string
+          dependent_id?: string | null
           diagnosis?: string | null
           doctor_id: string
           doctor_logo_url?: string | null
@@ -1261,6 +1383,7 @@ export type Database = {
           allergies_noted?: string | null
           appointment_id?: string
           created_at?: string
+          dependent_id?: string | null
           diagnosis?: string | null
           doctor_id?: string
           doctor_logo_url?: string | null

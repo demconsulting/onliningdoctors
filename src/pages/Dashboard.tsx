@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, User, Calendar, FileText, HeartPulse } from "lucide-react";
+import { Loader2, User, Calendar, FileText, HeartPulse, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import ProfileEdit from "@/components/patient/ProfileEdit";
@@ -12,6 +12,7 @@ import MedicalInfo from "@/components/patient/MedicalInfo";
 import AppointmentList from "@/components/patient/AppointmentList";
 import BookAppointment from "@/components/patient/BookAppointment";
 import DocumentUpload from "@/components/patient/DocumentUpload";
+import FamilyMembers from "@/components/patient/FamilyMembers";
 import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
 
 const Dashboard = () => {
@@ -88,12 +89,15 @@ const Dashboard = () => {
         <ReviewPromptBanner user={user} onSwitchToAppointments={() => setActiveTab("appointments")} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-auto lg:grid-cols-5">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-6">
             <TabsTrigger value="appointments" className="gap-1.5">
               <Calendar className="h-4 w-4" /> Appointments
             </TabsTrigger>
             <TabsTrigger value="book" className="gap-1.5">
               <Calendar className="h-4 w-4" /> Book
+            </TabsTrigger>
+            <TabsTrigger value="family" className="gap-1.5">
+              <Users className="h-4 w-4" /> Family
             </TabsTrigger>
             <TabsTrigger value="profile" className="gap-1.5">
               <User className="h-4 w-4" /> Profile
@@ -111,6 +115,9 @@ const Dashboard = () => {
           </TabsContent>
           <TabsContent value="book">
             <BookAppointment user={user} onBooked={() => setActiveTab("appointments")} />
+          </TabsContent>
+          <TabsContent value="family">
+            <FamilyMembers user={user} />
           </TabsContent>
           <TabsContent value="profile">
             <ProfileEdit user={user} />

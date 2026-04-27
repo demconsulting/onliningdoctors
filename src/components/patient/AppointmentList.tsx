@@ -42,7 +42,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
     const [aptRes, reviewRes] = await Promise.all([
       supabase
         .from("appointments")
-        .select("*, doctor:doctor_id(full_name, avatar_url)")
+        .select("*, doctor:doctor_id(full_name, avatar_url), dependent:dependent_id(full_name, relationship)")
         .eq("patient_id", user.id)
         .order("scheduled_at", { ascending: false }),
       supabase
@@ -175,6 +175,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                     <p className="font-medium text-foreground">
                       {apt.doctor?.full_name || "Doctor"}
                     </p>
+                    {apt.dependent && (
+                      <p className="text-xs text-primary mt-0.5">
+                        For: {apt.dependent.full_name} ({apt.dependent.relationship})
+                      </p>
+                    )}
                     <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />

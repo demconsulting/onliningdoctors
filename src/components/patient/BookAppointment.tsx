@@ -81,6 +81,8 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [patientCountry, setPatientCountry] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
+  const [dependents, setDependents] = useState<any[]>([]);
+  const [forWhom, setForWhom] = useState<string>("self"); // "self" or dependent id
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,6 +99,13 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [checkingUnpaid, setCheckingUnpaid] = useState(true);
   const [consentGranted, setConsentGranted] = useState(false);
   const { toast } = useToast();
+
+  // Load dependents
+  useEffect(() => {
+    supabase.from("dependents").select("id, full_name, relationship").eq("guardian_id", user.id).then(({ data }) => {
+      if (data) setDependents(data);
+    });
+  }, [user.id]);
 
   const handleConsentChange = useCallback((granted: boolean) => {
     setConsentGranted(granted);
@@ -253,6 +262,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     const { data: apptData, error } = await supabase.from("appointments").insert({
       patient_id: user.id,
       doctor_id: selectedDoctor,
+      dependent_id: forWhom === "self" ? null : forWhom,
       scheduled_at: scheduledAt,
       duration_minutes: 30,
       reason: reason.trim() || null,
@@ -418,6 +428,25 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleBook} className="space-y-5">
+          {/* Step 0: Who is this for? */}
+          <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+            <Label>Who is this consultation for? *</Label>
+            <Select value={forWhom} onValueChange={setForWhom}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="self">Myself</SelectItem>
+                {dependents.map(d => (
+                  <SelectItem key={d.id} value={d.id}>{d.full_name} ({d.relationship})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {dependents.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Want to book for a family member? Add them in the <strong>Family</strong> tab first.
+              </p>
+            )}
+          </div>
+
           {/* Step 1: Specialty */}
           <div className="space-y-2">
             <Label>1. Choose Specialty</Label>
