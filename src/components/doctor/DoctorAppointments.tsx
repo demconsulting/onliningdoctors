@@ -50,7 +50,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
     const [aptRes, sharingRes] = await Promise.all([
       supabase
         .from("appointments")
-        .select("*, patient:patient_id(full_name, avatar_url, phone)")
+        .select("*, patient:patient_id(full_name, avatar_url, phone), dependent:dependent_id(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes)")
         .eq("doctor_id", user.id)
         .order("scheduled_at", { ascending: false }),
       supabase
@@ -146,7 +146,14 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                       <User className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-foreground">{apt.patient?.full_name || "Patient"}</p>
+                      <p className="font-medium text-foreground">
+                        {apt.dependent ? apt.dependent.full_name : (apt.patient?.full_name || "Patient")}
+                      </p>
+                      {apt.dependent && (
+                        <p className="text-xs text-primary mt-0.5">
+                          Dependent of {apt.patient?.full_name || "main member"} • {apt.dependent.relationship}
+                        </p>
+                      )}
                       {apt.patient?.phone && <p className="text-xs text-muted-foreground">{apt.patient.phone}</p>}
                       <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
@@ -160,6 +167,12 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                         <span>{apt.duration_minutes} min</span>
                       </div>
                       {apt.reason && <p className="mt-1 text-xs text-muted-foreground italic">Reason: {apt.reason}</p>}
+                      {apt.dependent && (apt.dependent.allergies || apt.dependent.chronic_conditions) && (
+                        <div className="mt-2 rounded border border-warning/30 bg-warning/5 p-2 text-xs">
+                          {apt.dependent.allergies && <p><strong>Allergies:</strong> {apt.dependent.allergies}</p>}
+                          {apt.dependent.chronic_conditions && <p><strong>Chronic conditions:</strong> {apt.dependent.chronic_conditions}</p>}
+                        </div>
+                      )}
                       {apt.status === "cancelled" && apt.cancellation_reason && (
                         <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
                           <AlertCircle className="h-3 w-3" /> Cancellation reason: {apt.cancellation_reason}
