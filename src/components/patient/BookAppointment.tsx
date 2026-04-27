@@ -262,6 +262,7 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
     const { data: apptData, error } = await supabase.from("appointments").insert({
       patient_id: user.id,
       doctor_id: selectedDoctor,
+      dependent_id: forWhom === "self" ? null : forWhom,
       scheduled_at: scheduledAt,
       duration_minutes: 30,
       reason: reason.trim() || null,
