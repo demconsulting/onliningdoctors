@@ -428,6 +428,25 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleBook} className="space-y-5">
+          {/* Step 0: Who is this for? */}
+          <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+            <Label>Who is this consultation for? *</Label>
+            <Select value={forWhom} onValueChange={setForWhom}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="self">Myself</SelectItem>
+                {dependents.map(d => (
+                  <SelectItem key={d.id} value={d.id}>{d.full_name} ({d.relationship})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {dependents.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Want to book for a family member? Add them in the <strong>Family</strong> tab first.
+              </p>
+            )}
+          </div>
+
           {/* Step 1: Specialty */}
           <div className="space-y-2">
             <Label>1. Choose Specialty</Label>
