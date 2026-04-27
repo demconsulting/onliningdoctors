@@ -81,6 +81,8 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [patientCountry, setPatientCountry] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
   const [specialties, setSpecialties] = useState<any[]>([]);
+  const [dependents, setDependents] = useState<any[]>([]);
+  const [forWhom, setForWhom] = useState<string>("self"); // "self" or dependent id
   const [selectedSpecialty, setSelectedSpecialty] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,6 +99,13 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
   const [checkingUnpaid, setCheckingUnpaid] = useState(true);
   const [consentGranted, setConsentGranted] = useState(false);
   const { toast } = useToast();
+
+  // Load dependents
+  useEffect(() => {
+    supabase.from("dependents").select("id, full_name, relationship").eq("guardian_id", user.id).then(({ data }) => {
+      if (data) setDependents(data);
+    });
+  }, [user.id]);
 
   const handleConsentChange = useCallback((granted: boolean) => {
     setConsentGranted(granted);
