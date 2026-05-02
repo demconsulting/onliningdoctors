@@ -25,7 +25,8 @@ serve(async (req) => {
 
   try {
     // Detect country via ip-api
-    const ipRes = await fetch("http://ip-api.com/json/?fields=countryCode,country");
+    // Use HTTPS endpoint to prevent MITM tampering of the country/currency response.
+    const ipRes = await fetch("https://ipapi.co/json/");
     
     let countryCode = "ZA";
     let countryName = "South Africa";
