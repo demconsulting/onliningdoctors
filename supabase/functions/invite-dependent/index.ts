@@ -102,13 +102,13 @@ Deno.serve(async (req) => {
     if (!resendRes.ok) {
       const errText = await resendRes.text();
       console.error("Resend error:", errText);
-      return json({ error: "Failed to send email", details: errText }, 500);
+      return json({ error: "Failed to send invitation email." }, 500);
     }
 
     return json({ success: true });
   } catch (err) {
-    console.error(err);
-    return json({ error: (err as Error).message }, 500);
+    console.error("invite-dependent error:", err);
+    return json({ error: "An internal error occurred. Please try again." }, 500);
   }
 });
 
