@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Loader2, Search, FileText, CalendarIcon, X, Eye } from "lucide-react";
 import { format, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { User } from "@supabase/supabase-js";
-import PrescriptionView from "@/components/doctor/PrescriptionView";
+
+const PrescriptionView = lazy(() => import("@/components/doctor/PrescriptionView"));
 
 interface DoctorPrescriptionsProps {
   user: User;
@@ -210,7 +211,9 @@ const DoctorPrescriptions = ({ user }: DoctorPrescriptionsProps) => {
                       </p>
                     )}
                   </div>
-                  <PrescriptionView appointmentId={rx.appointment_id} viewAs="doctor" />
+                  <Suspense fallback={null}>
+                    <PrescriptionView appointmentId={rx.appointment_id} viewAs="doctor" />
+                  </Suspense>
                 </div>
 
                 {/* Medications summary */}
