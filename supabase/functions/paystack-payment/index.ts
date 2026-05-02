@@ -380,7 +380,21 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
-      const newStatus = txData.status === "success" ? "success" : "failed";
+      // SECURITY: Compare paid amount against the server-recorded expected
+      // amount before confirming.
+      const { data: existingPayment } = await serviceClient
+        .from("payments")
+        .select("appointment_id, amount")
+        .eq("paystack_reference", reference)
+        .maybeSingle();
+
+      const paidAmount = (txData.amount ?? 0) / 100;
+      const amountMatches =
+        existingPayment &&
+        Math.abs(Number(existingPayment.amount) - paidAmount) <= 0.01;
+
+      const newStatus =
+        txData.status === "success" && amountMatches ? "success" : "failed";
 
       const { data: paymentRows } = await serviceClient
         .from("payments")
@@ -389,12 +403,12 @@ serve(async (req) => {
           paid_at: txData.paid_at || null,
           payment_method: txData.channel || null,
           fee_amount: txData.fees ? txData.fees / 100 : null,
-          metadata: txData,
+          metadata: { ...txData, amount_match: amountMatches },
         })
         .eq("paystack_reference", reference)
         .select("appointment_id");
 
-      // Confirm the appointment if payment succeeded
+      // Confirm the appointment only if payment succeeded AND amount matches
       if (newStatus === "success" && paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
         await serviceClient
           .from("appointments")
