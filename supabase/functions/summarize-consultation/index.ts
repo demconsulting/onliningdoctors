@@ -115,7 +115,7 @@ Be concise but thorough. Use medical terminology where appropriate. If a section
   } catch (e) {
     console.error("summarize-consultation error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Failed to generate consultation summary. Please try again." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
