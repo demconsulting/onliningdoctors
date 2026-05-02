@@ -86,14 +86,21 @@ const Navbar = () => {
         </div>
 
         {/* Mobile toggle */}
-        <button className="md:hidden" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        <button
+          type="button"
+          className="md:hidden"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+          aria-controls="mobile-menu"
+        >
+          {isOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
         </button>
       </div>
 
       {/* Mobile menu */}
       {isOpen && (
-        <div className="border-t border-border bg-card p-4 md:hidden">
+        <div id="mobile-menu" className="border-t border-border bg-card p-4 md:hidden">
           <div className="flex flex-col gap-3">
             <Link to="/doctors" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Find Doctors</Link>
             <a href="/#how-it-works" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>How It Works</a>
