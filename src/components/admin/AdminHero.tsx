@@ -122,7 +122,6 @@ const AdminHero = () => {
           </div>
         </div>
 
-        <div className="space-y-3">
         <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
