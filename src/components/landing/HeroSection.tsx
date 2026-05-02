@@ -71,11 +71,10 @@ const HeroSection = () => {
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
       <img
         src={heroBg}
-        srcSet={`${heroBgMobile} 768w, ${heroBg} 1920w`}
-        sizes="(max-width: 768px) 100vw, 1920px"
         alt=""
         width={1920}
         height={1080}
+        loading="eager"
         {...({ fetchpriority: "high" } as { fetchpriority: string })}
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
