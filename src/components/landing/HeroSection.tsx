@@ -28,14 +28,40 @@ const fallback: HeroContent = {
   ],
 };
 
+// Public-path video so it streams from /public/hero-bg.mp4 instead of being
+// inlined into the JS bundle. Drop the .mp4 into /public/ to enable it.
+const HERO_VIDEO_SRC = "/hero-bg.mp4";
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const [hero, setHero] = useState<HeroContent>(fallback);
+  const [showVideo, setShowVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
 
   useEffect(() => {
     supabase.from("site_content").select("value").eq("key", "hero").single().then(({ data }) => {
       if (data?.value) setHero(data.value as unknown as HeroContent);
     });
+  }, []);
+
+  // Progressive enhancement: load the video only on desktop, after first paint,
+  // and skip it entirely on slow / data-saver connections so we never hurt LCP.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!isDesktop || prefersReducedMotion) return;
+
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (conn?.saveData) return;
+    if (conn?.effectiveType && /(^|-)(2g|3g)$/.test(conn.effectiveType)) return;
+
+    const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    const trigger = () => setShowVideo(true);
+    const id = typeof win.requestIdleCallback === "function"
+      ? win.requestIdleCallback(trigger, { timeout: 2500 })
+      : window.setTimeout(trigger, 1500);
+    return () => { if (typeof id === "number") clearTimeout(id); };
   }, []);
 
   return (
@@ -49,6 +75,18 @@ const HeroSection = () => {
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
       />
+      {showVideo && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          src={HERO_VIDEO_SRC}
+          onCanPlay={() => setVideoReady(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-100" : "opacity-0"}`}
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-transparent" />
       <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
         <div className="max-w-2xl text-left">
