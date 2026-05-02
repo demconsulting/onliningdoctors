@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import AppointmentList from "@/components/patient/AppointmentList";
 import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
+import { DashboardShellSkeleton } from "@/components/shared/RouteSkeletons";
 
 // Lazy-load secondary tabs. Only "appointments" is shown by default, so the
 // other panels (location selectors, file uploads, large forms) shouldn't ship
@@ -80,11 +81,7 @@ const Dashboard = () => {
   }, [user, verifyPayment]);
 
   if (loading || !user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DashboardShellSkeleton />;
   }
 
   return (

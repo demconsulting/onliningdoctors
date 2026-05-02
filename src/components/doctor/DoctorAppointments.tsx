@@ -16,6 +16,7 @@ import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
 import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
 import PrescriptionForm from "@/components/doctor/PrescriptionForm";
 import PrescriptionView from "@/components/doctor/PrescriptionView";
+import { AppointmentListSkeleton } from "@/components/shared/RouteSkeletons";
 
 interface DoctorAppointmentsProps {
   user: SupaUser;
@@ -107,7 +108,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show", "doctor_no_show"].includes(a.status));
   const filtered = filter === "all" ? confirmedAppointments : confirmedAppointments.filter(a => a.status === filter);
 
-  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (loading) return <AppointmentListSkeleton count={3} />;
 
   return (
     <>
