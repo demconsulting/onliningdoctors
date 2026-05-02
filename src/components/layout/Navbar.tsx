@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Stethoscope } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import NotificationBell from "@/components/notifications/NotificationBell";
+
+const NotificationBell = lazy(() => import("@/components/notifications/NotificationBell"));
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -68,7 +69,9 @@ const Navbar = () => {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
-              <NotificationBell />
+              <Suspense fallback={null}>
+                <NotificationBell />
+              </Suspense>
               {isAdmin && (
                 <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>Admin</Button>
               )}
