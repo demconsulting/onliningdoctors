@@ -133,7 +133,9 @@ const DoctorDashboard = () => {
             <DoctorPrescriptions user={user} />
           </TabsContent>
           <TabsContent value="earnings">
-            <DoctorEarnings user={user} doctorCountry={doctorCountry} />
+            <Suspense fallback={<TabFallback />}>
+              <DoctorEarnings user={user} doctorCountry={doctorCountry} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="templates">
             <PrescriptionTemplates user={user} />
