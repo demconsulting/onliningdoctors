@@ -11,6 +11,24 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // SECURITY: Only allow invocation by trusted callers (Supabase Cron / admins).
+  // Require an Authorization header containing either the service-role key or
+  // a configured CRON_SECRET. This prevents anonymous attackers from spamming
+  // doctors with renewal notifications.
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const cronSecret = Deno.env.get("CRON_SECRET") || "";
+  const isAuthorized =
+    token.length > 0 && (token === serviceKey || (cronSecret && token === cronSecret));
+
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -18,6 +36,10 @@ Deno.serve(async (req) => {
     );
 
     // Get all verified doctors in South Africa
+    const { data: doctors, error } = await supabase
+      .from("doctors")
+      .select("profile_id, profile:profiles!doctors_profile_id_fkey(full_name, country)")
+      .eq("is_verified", true);
     const { data: doctors, error } = await supabase
       .from("doctors")
       .select("profile_id, profile:profiles!doctors_profile_id_fkey(full_name, country)")

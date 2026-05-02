@@ -492,7 +492,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages, conversationId, sessionId, userId, channel } = await req.json();
+    const { messages, conversationId, sessionId, channel } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY)
@@ -501,6 +501,28 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // SECURITY: Derive userId from the JWT — never trust a client-supplied
+    // userId (which would let any unauthenticated caller impersonate any user
+    // and read their appointments / payments via the service-role client).
+    let userId: string | null = null;
+    const authHeader = req.headers.get("Authorization") || "";
+    if (authHeader.toLowerCase().startsWith("bearer ")) {
+      const jwt = authHeader.slice(7).trim();
+      try {
+        const anonClient = createClient(
+          supabaseUrl,
+          Deno.env.get("SUPABASE_ANON_KEY")!,
+          { global: { headers: { Authorization: `Bearer ${jwt}` } } }
+        );
+        const { data, error } = await anonClient.auth.getUser();
+        if (!error && data?.user?.id) {
+          userId = data.user.id;
+        }
+      } catch (_) {
+        userId = null;
+      }
+    }
 
     // Create or reuse conversation
     let convId = conversationId;

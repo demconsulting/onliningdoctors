@@ -86,13 +86,45 @@ serve(async (req) => {
 
       if (event.event === "charge.success") {
         const reference = event.data.reference;
+        const paidAmount = (event.data.amount ?? 0) / 100; // smallest unit -> major
         const serviceClient = createClient(
           Deno.env.get("SUPABASE_URL")!,
           Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
         );
 
-        // Update payment status
-        const { data: paymentRows } = await serviceClient
+        // Look up the expected amount we recorded server-side at init
+        const { data: existingPayment } = await serviceClient
+          .from("payments")
+          .select("appointment_id, amount, currency")
+          .eq("paystack_reference", reference)
+          .maybeSingle();
+
+        if (!existingPayment) {
+          console.error("Webhook: unknown payment reference", reference);
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // SECURITY: Reject underpayment / overpayment mismatches.
+        if (Math.abs(Number(existingPayment.amount) - paidAmount) > 0.01) {
+          console.error(
+            "Webhook amount mismatch",
+            { reference, expected: existingPayment.amount, paid: paidAmount }
+          );
+          await serviceClient
+            .from("payments")
+            .update({
+              status: "failed",
+              metadata: { ...event.data, mismatch: true, expected: existingPayment.amount },
+            })
+            .eq("paystack_reference", reference);
+          return new Response(JSON.stringify({ received: true, mismatch: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        await serviceClient
           .from("payments")
           .update({
             status: "success",
@@ -100,15 +132,13 @@ serve(async (req) => {
             payment_method: event.data.channel,
             metadata: event.data,
           })
-          .eq("paystack_reference", reference)
-          .select("appointment_id");
+          .eq("paystack_reference", reference);
 
-        // Confirm the appointment now that payment succeeded
-        if (paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
+        if (existingPayment.appointment_id) {
           await serviceClient
             .from("appointments")
             .update({ status: "confirmed" })
-            .eq("id", paymentRows[0].appointment_id)
+            .eq("id", existingPayment.appointment_id)
             .eq("status", "awaiting_payment");
         }
 
@@ -148,15 +178,83 @@ serve(async (req) => {
 
     // --- Initialize payment ---
     if (action === "initialize") {
-      const { appointment_id, amount, currency, email, doctor_id, callback_url } =
+      const { appointment_id, currency, email, doctor_id, callback_url } =
         bodyJson as any;
 
-      if (!appointment_id || !amount || !email || !doctor_id) {
+      if (!appointment_id || !email || !doctor_id) {
         return new Response(
           JSON.stringify({ error: "Missing required fields" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      // SECURITY: Always derive the amount server-side from the appointment's
+      // pricing tier or the doctor's consultation fee. NEVER trust a
+      // client-supplied amount, which would allow underpayment bypass.
+      const serverFeeClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+
+      const { data: apptRow, error: apptErr } = await serverFeeClient
+        .from("appointments")
+        .select("id, patient_id, doctor_id, pricing_tier_id")
+        .eq("id", appointment_id)
+        .single();
+
+      if (apptErr || !apptRow) {
+        return new Response(
+          JSON.stringify({ error: "Appointment not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // The caller must own the appointment
+      if (apptRow.patient_id !== user.id) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (apptRow.doctor_id !== doctor_id) {
+        return new Response(
+          JSON.stringify({ error: "Doctor mismatch for appointment" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Resolve fee from pricing tier first, then fall back to consultation_fee
+      let serverAmount: number | null = null;
+      if (apptRow.pricing_tier_id) {
+        const { data: tier } = await serverFeeClient
+          .from("doctor_pricing_tiers")
+          .select("price, doctor_id, is_active")
+          .eq("id", apptRow.pricing_tier_id)
+          .single();
+        if (tier && tier.doctor_id === doctor_id && tier.is_active) {
+          serverAmount = Number(tier.price);
+        }
+      }
+      if (serverAmount === null || !Number.isFinite(serverAmount)) {
+        const { data: doctorRow } = await serverFeeClient
+          .from("doctors")
+          .select("consultation_fee")
+          .eq("profile_id", doctor_id)
+          .single();
+        if (doctorRow?.consultation_fee != null) {
+          serverAmount = Number(doctorRow.consultation_fee);
+        }
+      }
+
+      if (!serverAmount || serverAmount <= 0) {
+        return new Response(
+          JSON.stringify({ error: "Doctor's consultation fee is not configured" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const amount = serverAmount;
 
       // Load payment config for fee_bearer
       const { data: configData } = await supabase
@@ -282,7 +380,21 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
-      const newStatus = txData.status === "success" ? "success" : "failed";
+      // SECURITY: Compare paid amount against the server-recorded expected
+      // amount before confirming.
+      const { data: existingPayment } = await serviceClient
+        .from("payments")
+        .select("appointment_id, amount")
+        .eq("paystack_reference", reference)
+        .maybeSingle();
+
+      const paidAmount = (txData.amount ?? 0) / 100;
+      const amountMatches =
+        existingPayment &&
+        Math.abs(Number(existingPayment.amount) - paidAmount) <= 0.01;
+
+      const newStatus =
+        txData.status === "success" && amountMatches ? "success" : "failed";
 
       const { data: paymentRows } = await serviceClient
         .from("payments")
@@ -291,12 +403,12 @@ serve(async (req) => {
           paid_at: txData.paid_at || null,
           payment_method: txData.channel || null,
           fee_amount: txData.fees ? txData.fees / 100 : null,
-          metadata: txData,
+          metadata: { ...txData, amount_match: amountMatches },
         })
         .eq("paystack_reference", reference)
         .select("appointment_id");
 
-      // Confirm the appointment if payment succeeded
+      // Confirm the appointment only if payment succeeded AND amount matches
       if (newStatus === "success" && paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
         await serviceClient
           .from("appointments")
