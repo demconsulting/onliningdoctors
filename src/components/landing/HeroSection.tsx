@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.webp";
+import heroBgMobile from "@/assets/hero-bg-mobile.webp";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
@@ -71,6 +72,8 @@ const HeroSection = () => {
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
       <img
         src={heroBg}
+        srcSet={`${heroBgMobile} 768w, ${heroBg} 1920w`}
+        sizes="(max-width: 768px) 100vw, 1920px"
         alt=""
         width={1920}
         height={1080}
