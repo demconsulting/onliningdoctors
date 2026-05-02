@@ -164,35 +164,69 @@ const ChatWidget = () => {
 
   if (!isEnabled) return null;
 
+  // Safely render minimal markdown (bold + http(s) links) using React nodes only.
+  // No dangerouslySetInnerHTML — prevents XSS from prompt injection or user input.
+  const isSafeUrl = (url: string) => /^https?:\/\//i.test(url);
+
+  const renderInline = (text: string, keyPrefix: string): React.ReactNode[] => {
+    const nodes: React.ReactNode[] = [];
+    // Tokenize on **bold** and [label](url) (only http/https)
+    const regex = /(\*\*([^*]+)\*\*)|(\[([^\]]+)\]\(([^)\s]+)\))/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    let i = 0;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        nodes.push(text.slice(lastIndex, match.index));
+      }
+      if (match[2] !== undefined) {
+        nodes.push(<strong key={`${keyPrefix}-b-${i}`}>{match[2]}</strong>);
+      } else if (match[4] !== undefined && match[5] !== undefined) {
+        const label = match[4];
+        const url = match[5];
+        if (isSafeUrl(url)) {
+          nodes.push(
+            <a
+              key={`${keyPrefix}-a-${i}`}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-primary"
+            >
+              {label}
+            </a>
+          );
+        } else {
+          nodes.push(label);
+        }
+      }
+      lastIndex = match.index + match[0].length;
+      i++;
+    }
+    if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+    return nodes;
+  };
+
   const renderMessageContent = (content: string) => {
-    // Simple markdown-like rendering for bold, links, and lists
     const lines = content.split("\n");
     return lines.map((line, i) => {
-      // Bold
-      let processed = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // Links
-      processed = processed.replace(
-        /\[([^\]]+)\]\(([^)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline text-primary">$1</a>'
-      );
-      // Bullet points
-      if (processed.startsWith("- ") || processed.startsWith("• ")) {
+      if (line.trim() === "") return <br key={i} />;
+      if (line.startsWith("- ") || line.startsWith("• ")) {
         return (
           <div key={i} className="flex gap-1.5 ml-1">
             <span className="text-primary mt-0.5">•</span>
-            <span dangerouslySetInnerHTML={{ __html: processed.slice(2) }} />
+            <span>{renderInline(line.slice(2), `l${i}`)}</span>
           </div>
         );
       }
-      if (processed.match(/^\d+\.\s/)) {
+      if (line.match(/^\d+\.\s/)) {
         return (
           <div key={i} className="ml-1">
-            <span dangerouslySetInnerHTML={{ __html: processed }} />
+            {renderInline(line, `l${i}`)}
           </div>
         );
       }
-      if (line.trim() === "") return <br key={i} />;
-      return <p key={i} dangerouslySetInnerHTML={{ __html: processed }} />;
+      return <p key={i}>{renderInline(line, `l${i}`)}</p>;
     });
   };
 
