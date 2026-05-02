@@ -107,27 +107,30 @@ const CallPage = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <VideoCall
-              appointmentId={appointmentId!}
-              localUserId={userId}
-              remoteUserId={remoteUserId}
-              isInitiator={isInitiator}
-              onEnd={() => navigate(-1)}
-            />
+            <Suspense fallback={<VideoCallSkeleton />}>
+              <VideoCall
+                appointmentId={appointmentId!}
+                localUserId={userId}
+                remoteUserId={remoteUserId}
+                isInitiator={isInitiator}
+                onEnd={() => navigate(-1)}
+              />
+            </Suspense>
           </div>
           <div className="lg:col-span-1 space-y-4">
-            <ConsultationNotes
-              appointmentId={appointmentId!}
-              doctorId={doctorId}
-              isDoctor={isDoctor}
-            />
-            {isDoctor && (
-              <div className="flex gap-2">
-                <PrescriptionForm
-                  appointmentId={appointmentId!}
-                  doctorId={doctorId}
-                  patientId={patientId}
-                  patientName={patientName}
+            <Suspense fallback={<SidebarSkeleton />}>
+              <ConsultationNotes
+                appointmentId={appointmentId!}
+                doctorId={doctorId}
+                isDoctor={isDoctor}
+              />
+              {isDoctor && (
+                <div className="flex gap-2">
+                  <PrescriptionForm
+                    appointmentId={appointmentId!}
+                    doctorId={doctorId}
+                    patientId={patientId}
+                    patientName={patientName}
                 />
               </div>
             )}
