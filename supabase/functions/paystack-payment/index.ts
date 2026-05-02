@@ -86,13 +86,45 @@ serve(async (req) => {
 
       if (event.event === "charge.success") {
         const reference = event.data.reference;
+        const paidAmount = (event.data.amount ?? 0) / 100; // smallest unit -> major
         const serviceClient = createClient(
           Deno.env.get("SUPABASE_URL")!,
           Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
         );
 
-        // Update payment status
-        const { data: paymentRows } = await serviceClient
+        // Look up the expected amount we recorded server-side at init
+        const { data: existingPayment } = await serviceClient
+          .from("payments")
+          .select("appointment_id, amount, currency")
+          .eq("paystack_reference", reference)
+          .maybeSingle();
+
+        if (!existingPayment) {
+          console.error("Webhook: unknown payment reference", reference);
+          return new Response(JSON.stringify({ received: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // SECURITY: Reject underpayment / overpayment mismatches.
+        if (Math.abs(Number(existingPayment.amount) - paidAmount) > 0.01) {
+          console.error(
+            "Webhook amount mismatch",
+            { reference, expected: existingPayment.amount, paid: paidAmount }
+          );
+          await serviceClient
+            .from("payments")
+            .update({
+              status: "failed",
+              metadata: { ...event.data, mismatch: true, expected: existingPayment.amount },
+            })
+            .eq("paystack_reference", reference);
+          return new Response(JSON.stringify({ received: true, mismatch: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        await serviceClient
           .from("payments")
           .update({
             status: "success",
@@ -100,15 +132,13 @@ serve(async (req) => {
             payment_method: event.data.channel,
             metadata: event.data,
           })
-          .eq("paystack_reference", reference)
-          .select("appointment_id");
+          .eq("paystack_reference", reference);
 
-        // Confirm the appointment now that payment succeeded
-        if (paymentRows && paymentRows.length > 0 && paymentRows[0].appointment_id) {
+        if (existingPayment.appointment_id) {
           await serviceClient
             .from("appointments")
             .update({ status: "confirmed" })
-            .eq("id", paymentRows[0].appointment_id)
+            .eq("id", existingPayment.appointment_id)
             .eq("status", "awaiting_payment");
         }
 
