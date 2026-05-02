@@ -26,6 +26,10 @@
     <!-- Performance: Google Fonts (loaded via @import in index.css) needs early DNS + TLS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Discover the font stylesheet earlier than @import in CSS would.
+         Trimmed to only the weights actually used (600/700/800 display, 400/500/600/700 body). -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 
     <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
