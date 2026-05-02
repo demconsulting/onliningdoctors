@@ -91,29 +91,27 @@ const Dashboard = () => {
         <ReviewPromptBanner user={user} onSwitchToAppointments={() => setActiveTab("appointments")} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          {/* Mobile: horizontally scrollable tab strip. Desktop: grid. */}
-          <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <TabsList className="inline-flex w-max gap-1 sm:grid sm:w-full sm:grid-cols-3 sm:gap-0 lg:w-auto lg:grid-cols-6">
-              <TabsTrigger value="appointments" className="gap-1.5 whitespace-nowrap">
-                <Calendar className="h-4 w-4" /> Appointments
-              </TabsTrigger>
-              <TabsTrigger value="book" className="gap-1.5 whitespace-nowrap">
-                <Calendar className="h-4 w-4" /> Book
-              </TabsTrigger>
-              <TabsTrigger value="family" className="gap-1.5 whitespace-nowrap">
-                <Users className="h-4 w-4" /> Family
-              </TabsTrigger>
-              <TabsTrigger value="profile" className="gap-1.5 whitespace-nowrap">
-                <User className="h-4 w-4" /> Profile
-              </TabsTrigger>
-              <TabsTrigger value="medical" className="gap-1.5 whitespace-nowrap">
-                <HeartPulse className="h-4 w-4" /> Medical
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="gap-1.5 whitespace-nowrap">
-                <FileText className="h-4 w-4" /> Documents
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          {/* Mobile: 3-col wrapping grid (2 rows) — no horizontal scroll. Desktop: single row. */}
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:grid-cols-3 lg:grid-cols-6">
+            <TabsTrigger value="appointments" className="gap-1.5 whitespace-nowrap">
+              <Calendar className="h-4 w-4" /> <span className="truncate">Appointments</span>
+            </TabsTrigger>
+            <TabsTrigger value="book" className="gap-1.5 whitespace-nowrap">
+              <Calendar className="h-4 w-4" /> Book
+            </TabsTrigger>
+            <TabsTrigger value="family" className="gap-1.5 whitespace-nowrap">
+              <Users className="h-4 w-4" /> Family
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="gap-1.5 whitespace-nowrap">
+              <User className="h-4 w-4" /> Profile
+            </TabsTrigger>
+            <TabsTrigger value="medical" className="gap-1.5 whitespace-nowrap">
+              <HeartPulse className="h-4 w-4" /> Medical
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="gap-1.5 whitespace-nowrap">
+              <FileText className="h-4 w-4" /> <span className="truncate">Documents</span>
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="appointments">
             <AppointmentList user={user} />
