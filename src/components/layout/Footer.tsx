@@ -16,7 +16,7 @@ interface FooterContent {
 
 const fallback: FooterContent = {
   tagline: "Making healthcare accessible, one consultation at a time.",
-  email: "support2@doctorsonlining.com",
+  email: "assist@doctorsonlining.com",
   whatsapp: "27605445802",
   whatsapp_display: "+27 60 544 5802",
   address: "61 Albatross Drive, Fourways, 2191, South Africa",
