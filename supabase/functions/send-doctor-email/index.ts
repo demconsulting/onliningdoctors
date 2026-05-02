@@ -7,6 +7,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Escape user-supplied text before interpolating it into an HTML email body.
+ * Prevents HTML / link injection through values like profiles.full_name.
+ */
+function escapeHtml(input: string): string {
+  return String(input)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -86,6 +99,7 @@ serve(async (req) => {
 
     const doctorName = profile?.full_name || "Doctor";
     const doctorEmail = userData.user.email;
+    const safeName = escapeHtml(doctorName);
 
     const subject = verified
       ? "Your Account Has Been Verified ✅"
@@ -93,14 +107,14 @@ serve(async (req) => {
 
     const htmlBody = verified
       ? `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-          <h2 style="color: #16a34a;">Congratulations, ${doctorName}!</h2>
+          <h2 style="color: #16a34a;">Congratulations, ${safeName}!</h2>
           <p>Your doctor account has been <strong>verified</strong> by our admin team. You are now visible to patients and can start accepting appointments.</p>
           <p>Log in to your dashboard to set up your availability and pricing.</p>
           <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">— The Medical Team</p>
         </div>`
       : `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #dc2626;">Verification Update</h2>
-          <p>Dear ${doctorName},</p>
+          <p>Dear ${safeName},</p>
           <p>Your doctor account verification has been <strong>revoked</strong>. Your profile is no longer visible to patients.</p>
           <p>If you believe this is an error, please contact our support team.</p>
           <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">— The Medical Team</p>
