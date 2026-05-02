@@ -46,7 +46,8 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
+    <>
+    <nav className="fixed inset-x-0 top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
@@ -117,6 +118,9 @@ const Navbar = () => {
         </div>
       )}
     </nav>
+    {/* Spacer to offset the fixed navbar so page content isn't hidden underneath. */}
+    <div aria-hidden className="h-16" />
+    </>
   );
 };
 
