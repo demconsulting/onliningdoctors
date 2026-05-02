@@ -6,14 +6,16 @@ import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp, BookTemplate, FileText } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
-import DoctorProfile from "@/components/doctor/DoctorProfile";
-import AvailabilityManager from "@/components/doctor/AvailabilityManager";
-import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
-// Lazy-load Earnings — pulls in recharts (~100KB) and is only used on its own tab.
+// Lazy-load all non-default tabs. Earnings pulls recharts (~100KB), Templates &
+// Prescriptions pull form/PDF deps, Profile pulls location selectors. Only the
+// default "appointments" tab needs to be in the initial bundle.
+const DoctorProfile = lazy(() => import("@/components/doctor/DoctorProfile"));
+const AvailabilityManager = lazy(() => import("@/components/doctor/AvailabilityManager"));
+const PricingTiers = lazy(() => import("@/components/doctor/PricingTiers"));
 const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
-import PrescriptionTemplates from "@/components/doctor/PrescriptionTemplates";
-import DoctorPrescriptions from "@/components/doctor/DoctorPrescriptions";
+const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
+const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-12" role="status" aria-label="Loading">
@@ -130,7 +132,9 @@ const DoctorDashboard = () => {
             <DoctorAppointments user={user} />
           </TabsContent>
           <TabsContent value="prescriptions">
-            <DoctorPrescriptions user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <DoctorPrescriptions user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="earnings">
             <Suspense fallback={<TabFallback />}>
@@ -138,16 +142,24 @@ const DoctorDashboard = () => {
             </Suspense>
           </TabsContent>
           <TabsContent value="templates">
-            <PrescriptionTemplates user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <PrescriptionTemplates user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="availability">
-            <AvailabilityManager user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <AvailabilityManager user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="pricing">
-            <PricingTiers user={user} doctorCountry={doctorCountry} />
+            <Suspense fallback={<TabFallback />}>
+              <PricingTiers user={user} doctorCountry={doctorCountry} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="profile">
-            <DoctorProfile user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <DoctorProfile user={user} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>

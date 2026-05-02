@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
@@ -7,13 +7,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, User, Calendar, FileText, HeartPulse, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
-import ProfileEdit from "@/components/patient/ProfileEdit";
-import MedicalInfo from "@/components/patient/MedicalInfo";
 import AppointmentList from "@/components/patient/AppointmentList";
-import BookAppointment from "@/components/patient/BookAppointment";
-import DocumentUpload from "@/components/patient/DocumentUpload";
-import FamilyMembers from "@/components/patient/FamilyMembers";
 import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
+
+// Lazy-load secondary tabs. Only "appointments" is shown by default, so the
+// other panels (location selectors, file uploads, large forms) shouldn't ship
+// in the dashboard's initial bundle.
+const ProfileEdit = lazy(() => import("@/components/patient/ProfileEdit"));
+const MedicalInfo = lazy(() => import("@/components/patient/MedicalInfo"));
+const BookAppointment = lazy(() => import("@/components/patient/BookAppointment"));
+const DocumentUpload = lazy(() => import("@/components/patient/DocumentUpload"));
+const FamilyMembers = lazy(() => import("@/components/patient/FamilyMembers"));
+
+const TabFallback = () => (
+  <div className="flex items-center justify-center py-12" role="status" aria-label="Loading">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupaUser | null>(null);
@@ -117,19 +127,29 @@ const Dashboard = () => {
             <AppointmentList user={user} />
           </TabsContent>
           <TabsContent value="book">
-            <BookAppointment user={user} onBooked={() => setActiveTab("appointments")} />
+            <Suspense fallback={<TabFallback />}>
+              <BookAppointment user={user} onBooked={() => setActiveTab("appointments")} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="family">
-            <FamilyMembers user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <FamilyMembers user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="profile">
-            <ProfileEdit user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <ProfileEdit user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="medical">
-            <MedicalInfo user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <MedicalInfo user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="documents">
-            <DocumentUpload user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <DocumentUpload user={user} />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>

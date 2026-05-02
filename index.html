@@ -29,10 +29,9 @@
     <!-- LCP: hero image is preloaded with fetchpriority="high" inside the React HeroSection
          using the responsive <picture>/srcset markup. The Vite-hashed asset URLs prevent us
          from declaring a static preload here, so we rely on early in-DOM discovery instead. -->
-    <!-- Discover the font stylesheet earlier than @import in CSS would.
-         Trimmed to only the weights actually used (600/700/800 display, 400/500/600/700 body). -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+    <!-- Discover the font stylesheet early. Single request — no duplicate preload+stylesheet pair. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
 
     <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
