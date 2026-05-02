@@ -92,7 +92,7 @@ const Dashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           {/* Mobile: horizontally scrollable tab strip. Desktop: grid. */}
-          <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+          <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <TabsList className="inline-flex w-max gap-1 sm:grid sm:w-full sm:grid-cols-3 sm:gap-0 lg:w-auto lg:grid-cols-6">
               <TabsTrigger value="appointments" className="gap-1.5 whitespace-nowrap">
                 <Calendar className="h-4 w-4" /> Appointments
