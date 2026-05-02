@@ -30,8 +30,7 @@ const fallback: HeroContent = {
   ],
 };
 
-// Default video path; admins can override via the Hero admin panel.
-const DEFAULT_HERO_VIDEO_SRC = "/hero-bg.mp4";
+// Responsive video sources are declared inline in the <video> element below.
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -48,7 +47,6 @@ const HeroSection = () => {
   // Progressive enhancement: load the video only on desktop, after first paint,
   // skip on slow/data-saver connections, and respect the admin toggle.
   const videoEnabled = hero.desktop_video_enabled !== false;
-  const videoSrc = (hero.desktop_video_url && hero.desktop_video_url.trim()) || DEFAULT_HERO_VIDEO_SRC;
 
   useEffect(() => {
     if (!videoEnabled) { setShowVideo(false); return; }
@@ -87,10 +85,24 @@ const HeroSection = () => {
           muted
           playsInline
           preload="auto"
-          src={videoSrc}
+          poster="/hero-bg-poster.jpg"
           onCanPlay={() => setVideoReady(true)}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-100" : "opacity-0"}`}
-        />
+        >
+          {hero.desktop_video_url && hero.desktop_video_url.trim() ? (
+            // Admin override: use the single provided URL as-is.
+            <source src={hero.desktop_video_url.trim()} />
+          ) : (
+            <>
+              {/* Large desktops: 720p. WebM first (smaller), MP4 fallback. */}
+              <source src="/hero-bg-720.webm" type="video/webm" media="(min-width: 1440px)" />
+              <source src="/hero-bg-720.mp4" type="video/mp4" media="(min-width: 1440px)" />
+              {/* Standard desktops/laptops: 480p to keep payload tiny. */}
+              <source src="/hero-bg-480.webm" type="video/webm" />
+              <source src="/hero-bg-480.mp4" type="video/mp4" />
+            </>
+          )}
+        </video>
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-transparent" />
       <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
