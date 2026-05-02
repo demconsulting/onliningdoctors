@@ -131,9 +131,10 @@ const CallPage = () => {
                     doctorId={doctorId}
                     patientId={patientId}
                     patientName={patientName}
-                />
-              </div>
-            )}
+                  />
+                </div>
+              )}
+            </Suspense>
           </div>
         </div>
       </main>
