@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import heroBg from "@/assets/hero-bg.webp";
-import heroBgMobile from "@/assets/hero-bg-mobile.webp";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
