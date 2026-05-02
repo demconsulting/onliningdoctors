@@ -33,9 +33,11 @@ serve(async (req) => {
 
     if (ipRes.ok) {
       const data = await ipRes.json();
-      if (data.countryCode) {
-        countryCode = data.countryCode;
-        countryName = data.country || countryCode;
+      // ipapi.co returns { country_code, country_name, ... }; ip-api.com returned { countryCode, country }
+      const code = data.country_code || data.countryCode;
+      if (code) {
+        countryCode = code;
+        countryName = data.country_name || data.country || countryCode;
       }
     }
 
