@@ -80,35 +80,40 @@ const Dashboard = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
-      <main className="container mx-auto flex-1 px-4 py-8">
-        <div className="mb-6">
-          <h1 className="font-display text-3xl font-bold text-foreground">Patient Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.user_metadata?.full_name || user.email}</p>
+      <main className="container mx-auto flex-1 px-3 py-4 sm:px-4 sm:py-8">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Patient Dashboard</h1>
+          <p className="truncate text-sm text-muted-foreground sm:text-base">
+            Welcome back, {user.user_metadata?.full_name || user.email}
+          </p>
         </div>
 
         <ReviewPromptBanner user={user} onSwitchToAppointments={() => setActiveTab("appointments")} />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:w-auto lg:grid-cols-6">
-            <TabsTrigger value="appointments" className="gap-1.5">
-              <Calendar className="h-4 w-4" /> Appointments
-            </TabsTrigger>
-            <TabsTrigger value="book" className="gap-1.5">
-              <Calendar className="h-4 w-4" /> Book
-            </TabsTrigger>
-            <TabsTrigger value="family" className="gap-1.5">
-              <Users className="h-4 w-4" /> Family
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-1.5">
-              <User className="h-4 w-4" /> Profile
-            </TabsTrigger>
-            <TabsTrigger value="medical" className="gap-1.5">
-              <HeartPulse className="h-4 w-4" /> Medical
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-1.5">
-              <FileText className="h-4 w-4" /> Documents
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          {/* Mobile: horizontally scrollable tab strip. Desktop: grid. */}
+          <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+            <TabsList className="inline-flex w-max gap-1 sm:grid sm:w-full sm:grid-cols-3 sm:gap-0 lg:w-auto lg:grid-cols-6">
+              <TabsTrigger value="appointments" className="gap-1.5 whitespace-nowrap">
+                <Calendar className="h-4 w-4" /> Appointments
+              </TabsTrigger>
+              <TabsTrigger value="book" className="gap-1.5 whitespace-nowrap">
+                <Calendar className="h-4 w-4" /> Book
+              </TabsTrigger>
+              <TabsTrigger value="family" className="gap-1.5 whitespace-nowrap">
+                <Users className="h-4 w-4" /> Family
+              </TabsTrigger>
+              <TabsTrigger value="profile" className="gap-1.5 whitespace-nowrap">
+                <User className="h-4 w-4" /> Profile
+              </TabsTrigger>
+              <TabsTrigger value="medical" className="gap-1.5 whitespace-nowrap">
+                <HeartPulse className="h-4 w-4" /> Medical
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="gap-1.5 whitespace-nowrap">
+                <FileText className="h-4 w-4" /> Documents
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="appointments">
             <AppointmentList user={user} />
