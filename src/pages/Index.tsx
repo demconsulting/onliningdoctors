@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, lazy, Suspense, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import MedicalDisclaimerBanner from "@/components/layout/MedicalDisclaimerBanner";
@@ -6,11 +6,9 @@ import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/landing/HeroSection";
 import Seo from "@/components/seo/Seo";
 
-const StatsSection = lazy(() => import("@/components/landing/StatsSection"));
-const WhyChooseSection = lazy(() => import("@/components/landing/WhyChooseSection"));
-const FindDoctorSection = lazy(() => import("@/components/landing/FindDoctorSection"));
-const DoctorCTASection = lazy(() => import("@/components/landing/DoctorCTASection"));
-const FAQSection = lazy(() => import("@/components/landing/FAQSection"));
+// Single consolidated chunk for ALL below-the-fold sections. This avoids
+// over-fragmentation (5 tiny chunks → 1) and reduces homepage JS requests.
+const BelowTheFold = lazy(() => import("@/components/landing/BelowTheFold"));
 
 interface SectionConfig {
   key: string;
@@ -27,16 +25,66 @@ const defaultOrder: SectionConfig[] = [
   { key: "faq", label: "FAQ Section", visible: true },
 ];
 
-const sectionComponents: Record<string, React.ComponentType> = {
-  hero: HeroSection,
-  stats: StatsSection,
-  "why-choose": WhyChooseSection,
-  "find-doctor": FindDoctorSection,
-  "doctor-cta": DoctorCTASection,
-  faq: FAQSection,
-};
-
 const SectionPlaceholder = () => <div className="min-h-[400px]" aria-hidden="true" />;
+
+/**
+ * Loads its children (the consolidated below-the-fold chunk) only when the
+ * sentinel scrolls near the viewport, OR after the browser becomes idle.
+ * This keeps the initial JS execution focused on the hero + nav.
+ */
+const DeferredBelowTheFold = memo(({ keys }: { keys: string[] }) => {
+  const [load, setLoad] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (load) return;
+    let cancelled = false;
+    const trigger = () => { if (!cancelled) setLoad(true); };
+
+    // 1. IntersectionObserver — load when the user scrolls toward the fold.
+    let io: IntersectionObserver | null = null;
+    if (sentinelRef.current && "IntersectionObserver" in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            trigger();
+            io?.disconnect();
+          }
+        },
+        { rootMargin: "600px 0px" }
+      );
+      io.observe(sentinelRef.current);
+    } else {
+      trigger();
+    }
+
+    // 2. Idle fallback — load anyway after the page settles, so users who
+    // don't scroll still get the rest of the page eventually.
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+    const idleId = typeof win.requestIdleCallback === "function"
+      ? win.requestIdleCallback(trigger, { timeout: 6000 })
+      : window.setTimeout(trigger, 4000);
+
+    return () => {
+      cancelled = true;
+      io?.disconnect();
+      if (typeof idleId === "number") clearTimeout(idleId);
+    };
+  }, [load]);
+
+  if (!load) {
+    return <div ref={sentinelRef} className="min-h-[400px]" aria-hidden="true" />;
+  }
+
+  return (
+    <Suspense fallback={<SectionPlaceholder />}>
+      <BelowTheFold keys={keys} />
+    </Suspense>
+  );
+});
+DeferredBelowTheFold.displayName = "DeferredBelowTheFold";
 
 const Index = () => {
   const [sections, setSections] = useState<SectionConfig[]>(defaultOrder);
@@ -60,6 +108,10 @@ const Index = () => {
       });
   }, []);
 
+  const visibleKeys = sections.filter((s) => s.visible).map((s) => s.key);
+  const heroVisible = visibleKeys.includes("hero");
+  const belowKeys = visibleKeys.filter((k) => k !== "hero");
+
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
@@ -70,20 +122,8 @@ const Index = () => {
       <MedicalDisclaimerBanner />
       <Navbar />
       <main className="flex-1">
-        {sections
-          .filter((s) => s.visible)
-          .map((s) => {
-            const Component = sectionComponents[s.key];
-            if (!Component) return null;
-            if (s.key === "hero") {
-              return <Component key={s.key} />;
-            }
-            return (
-              <Suspense key={s.key} fallback={<SectionPlaceholder />}>
-                <Component />
-              </Suspense>
-            );
-          })}
+        {heroVisible && <HeroSection />}
+        {belowKeys.length > 0 && <DeferredBelowTheFold keys={belowKeys} />}
       </main>
       <Footer />
     </div>
