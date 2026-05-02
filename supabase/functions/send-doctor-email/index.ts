@@ -132,10 +132,9 @@ serve(async (req) => {
     });
   } catch (error: unknown) {
     console.error("Error sending doctor email:", error);
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "An internal error occurred. Please try again." }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
