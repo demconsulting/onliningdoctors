@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import heroBg from "@/assets/hero-bg.webp";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
@@ -70,7 +69,7 @@ const HeroSection = () => {
   return (
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
       <img
-        src={heroBg}
+        src="/hero-bg.webp"
         alt=""
         width={1920}
         height={1080}
