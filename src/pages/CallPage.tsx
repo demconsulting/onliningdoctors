@@ -1,28 +1,12 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
+import VideoCall from "@/components/call/VideoCall";
+import ConsultationNotes from "@/components/call/ConsultationNotes";
+import PrescriptionForm from "@/components/doctor/PrescriptionForm";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-
-// Lazy-load WebRTC + consultation widgets so the homepage (and any other
-// route) never pulls peer-connection / media-device code into its bundle.
-// These chunks only ship when a user actually opens /call/:appointmentId.
-const VideoCall = lazy(() => import("@/components/call/VideoCall"));
-const ConsultationNotes = lazy(() => import("@/components/call/ConsultationNotes"));
-const PrescriptionForm = lazy(() => import("@/components/doctor/PrescriptionForm"));
-
-const VideoCallSkeleton = () => (
-  <Skeleton className="aspect-video w-full rounded-lg" />
-);
-const SidebarSkeleton = () => (
-  <div className="space-y-3">
-    <Skeleton className="h-8 w-1/2" />
-    <Skeleton className="h-32 w-full" />
-    <Skeleton className="h-10 w-full" />
-  </div>
-);
 
 const CallPage = () => {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -107,34 +91,30 @@ const CallPage = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <Suspense fallback={<VideoCallSkeleton />}>
-              <VideoCall
-                appointmentId={appointmentId!}
-                localUserId={userId}
-                remoteUserId={remoteUserId}
-                isInitiator={isInitiator}
-                onEnd={() => navigate(-1)}
-              />
-            </Suspense>
+            <VideoCall
+              appointmentId={appointmentId!}
+              localUserId={userId}
+              remoteUserId={remoteUserId}
+              isInitiator={isInitiator}
+              onEnd={() => navigate(-1)}
+            />
           </div>
           <div className="lg:col-span-1 space-y-4">
-            <Suspense fallback={<SidebarSkeleton />}>
-              <ConsultationNotes
-                appointmentId={appointmentId!}
-                doctorId={doctorId}
-                isDoctor={isDoctor}
-              />
-              {isDoctor && (
-                <div className="flex gap-2">
-                  <PrescriptionForm
-                    appointmentId={appointmentId!}
-                    doctorId={doctorId}
-                    patientId={patientId}
-                    patientName={patientName}
-                  />
-                </div>
-              )}
-            </Suspense>
+            <ConsultationNotes
+              appointmentId={appointmentId!}
+              doctorId={doctorId}
+              isDoctor={isDoctor}
+            />
+            {isDoctor && (
+              <div className="flex gap-2">
+                <PrescriptionForm
+                  appointmentId={appointmentId!}
+                  doctorId={doctorId}
+                  patientId={patientId}
+                  patientName={patientName}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>

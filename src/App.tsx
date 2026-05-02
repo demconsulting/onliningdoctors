@@ -33,34 +33,14 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-import { Skeleton } from "@/components/ui/skeleton";
-
 const RouteFallback = () => (
   <div
-    className="min-h-screen flex flex-col"
+    className="flex min-h-[60vh] items-center justify-center"
     role="status"
     aria-live="polite"
     aria-label="Loading page"
   >
-    {/* Navbar skeleton — matches the real navbar height to avoid layout shift */}
-    <div className="h-16 border-b flex items-center px-4 gap-4">
-      <Skeleton className="h-8 w-32" />
-      <div className="ml-auto flex gap-3">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-8 w-24" />
-      </div>
-    </div>
-    {/* Page body skeleton */}
-    <div className="flex-1 container mx-auto px-4 py-8 space-y-4">
-      <Skeleton className="h-10 w-2/3 max-w-md" />
-      <Skeleton className="h-4 w-1/2 max-w-sm" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-48 w-full" />
-      </div>
-    </div>
-    <span className="sr-only">Loading…</span>
+    <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
   </div>
 );
 

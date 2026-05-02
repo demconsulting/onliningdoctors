@@ -26,9 +26,8 @@
     <!-- Performance: Google Fonts (loaded via @import in index.css) needs early DNS + TLS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- LCP: hero image is preloaded with fetchpriority="high" inside the React HeroSection
-         using the responsive <picture>/srcset markup. The Vite-hashed asset URLs prevent us
-         from declaring a static preload here, so we rely on early in-DOM discovery instead. -->
+    <!-- LCP: preload the hero background image so it starts downloading immediately. -->
+    <link rel="preload" as="image" href="/src/assets/hero-bg.webp" fetchpriority="high" type="image/webp">
     <!-- Discover the font stylesheet earlier than @import in CSS would.
          Trimmed to only the weights actually used (600/700/800 display, 400/500/600/700 body). -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">

@@ -26,14 +26,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          if (!id.includes("node_modules")) {
-            // App-source splits: keep WebRTC/call-only code out of the landing chunk.
-            // VideoCall is the only file that touches RTCPeerConnection / getUserMedia.
-            if (id.includes("/components/call/") || id.includes("\\components\\call\\")) {
-              return "call";
-            }
-            return;
-          }
+          if (!id.includes("node_modules")) return;
           if (id.includes("recharts") || id.includes("d3-")) return "charts";
           if (id.includes("framer-motion")) return "motion";
           if (id.includes("@radix-ui")) return "radix";

@@ -4,9 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import heroBgDesktop from "@/assets/hero-bg.webp";
-import heroBgTablet from "@/assets/hero-bg-tablet.webp";
-import heroBgMobile from "@/assets/hero-bg-mobile.webp";
+import heroBg from "@/assets/hero-bg.webp";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
@@ -71,22 +69,15 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
-      {/* Responsive hero. Mobile gets a ~9KB 600px-wide WebP; tablet ~16KB; desktop ~39KB.
-          The browser picks the smallest source that fits the viewport, dramatically
-          improving mobile LCP and saving data on cellular networks. */}
-      <picture>
-        <source media="(max-width: 640px)" srcSet={heroBgMobile} type="image/webp" />
-        <source media="(max-width: 1280px)" srcSet={heroBgTablet} type="image/webp" />
-        <img
-          src={heroBgDesktop}
-          alt=""
-          width={1920}
-          height={1080}
-          {...({ fetchpriority: "high" } as { fetchpriority: string })}
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      </picture>
+      <img
+        src={heroBg}
+        alt=""
+        width={1920}
+        height={1080}
+        {...({ fetchpriority: "high" } as { fetchpriority: string })}
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
       {showVideo && (
         <video
           autoPlay
