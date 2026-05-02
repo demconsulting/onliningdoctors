@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
 import { motion } from "framer-motion";
-import heroBgVideo from "@/assets/hero-bg.mp4";
+import heroBg from "@/assets/hero-bg.webp";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
@@ -40,15 +40,16 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
+      <img
+        src={heroBg}
+        alt=""
+        width={1920}
+        height={1080}
+        fetchPriority="high"
+        decoding="async"
         className="absolute inset-0 h-full w-full object-cover"
-        src={heroBgVideo}
       />
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-transparent" />
       <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
         <div className="max-w-2xl text-left">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
