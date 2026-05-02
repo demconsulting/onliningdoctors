@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp, BookTemplate, FileText } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
+import { DashboardShellSkeleton } from "@/components/shared/RouteSkeletons";
 // Lazy-load all non-default tabs. Earnings pulls recharts (~100KB), Templates &
 // Prescriptions pull form/PDF deps, Profile pulls location selectors. Only the
 // default "appointments" tab needs to be in the initial bundle.
@@ -87,11 +88,7 @@ const DoctorDashboard = () => {
   }, [navigate]);
 
   if (loading || !user || !isDoctor) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DashboardShellSkeleton />;
   }
 
   return (

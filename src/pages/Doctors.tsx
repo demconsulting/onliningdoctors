@@ -11,8 +11,9 @@ import AvailableNowSection from "@/components/doctors/AvailableNowSection";
 import DoctorCardNew from "@/components/doctors/DoctorCardNew";
 import WhatsAppButton from "@/components/doctors/WhatsAppButton";
 import type { Doctor } from "@/components/doctors/DoctorCardNew";
-import { Loader2, Stethoscope } from "lucide-react";
+import { Stethoscope } from "lucide-react";
 import Seo from "@/components/seo/Seo";
+import { DoctorsGridSkeleton } from "@/components/shared/RouteSkeletons";
 
 interface Specialty {
   id: string;
@@ -125,9 +126,7 @@ const Doctors = () => {
 
         <div className="mt-8">
           {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <DoctorsGridSkeleton count={6} />
           ) : filtered.length === 0 ? (
             <div className="py-20 text-center">
               <Stethoscope className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
