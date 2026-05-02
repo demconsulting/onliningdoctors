@@ -561,8 +561,17 @@ serve(async (req) => {
       ? `\n\nCURRENT USER: The user is logged in (userId: ${userId}). You can access their personal appointment and payment data using the appropriate tools.`
       : `\n\nCURRENT USER: The user is NOT logged in. Do not attempt to look up personal data. Guide them to log in if they need account-specific information.`;
 
-    // Limit history to last 20 messages
-    const recentMessages = messages.slice(-20);
+    // SECURITY: Sanitize client-supplied message history to prevent prompt
+    // injection. Only allow `user` / `assistant` roles, coerce content to a
+    // string, and cap per-message length. This blocks attempts to inject
+    // fake `system` or `tool` messages that could override the system prompt.
+    const recentMessages = (Array.isArray(messages) ? messages : [])
+      .slice(-20)
+      .filter((m: any) => m && (m.role === "user" || m.role === "assistant"))
+      .map((m: any) => ({
+        role: m.role as "user" | "assistant",
+        content: String(m.content ?? "").slice(0, 4000),
+      }));
 
     // Build messages for AI
     const aiMessages: any[] = [

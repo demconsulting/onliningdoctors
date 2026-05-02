@@ -40,10 +40,6 @@ Deno.serve(async (req) => {
       .from("doctors")
       .select("profile_id, profile:profiles!doctors_profile_id_fkey(full_name, country)")
       .eq("is_verified", true);
-    const { data: doctors, error } = await supabase
-      .from("doctors")
-      .select("profile_id, profile:profiles!doctors_profile_id_fkey(full_name, country)")
-      .eq("is_verified", true);
 
     if (error) throw error;
 
@@ -92,7 +88,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("License renewal reminder error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: "An internal error occurred while sending reminders." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
