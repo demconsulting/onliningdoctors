@@ -2,28 +2,38 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Doctors Onlining</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Doctors Onlining — Video Consultations with Qualified Doctors</title>
     <meta name="description" content="Doctors Onlining is a video consultation platform connecting patients with qualified doctors for non-emergency care.">
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="manifest" href="/site.webmanifest">
     <meta name="author" content="Doctors Onlining" />
+    <meta name="theme-color" content="#00AEEF" />
+    <meta name="color-scheme" content="light" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    
-    
+    <!-- PWA / installability -->
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Doctors">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Performance: connect early to backend so first auth/data round-trip is faster -->
+    <link rel="preconnect" href="https://ufgbavxidpmikiwicifv.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://ufgbavxidpmikiwicifv.supabase.co">
+
+    <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
+    <meta property="og:title" content="Doctors Onlining — Video Consultations with Qualified Doctors">
+    <meta property="og:description" content="Doctors Onlining is a video consultation platform connecting patients with qualified doctors for non-emergency care.">
     <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cc0c1d02-8799-460c-b6d9-f7a1c059cfe4/id-preview-17a6bbd2--727c4868-8e40-4bbb-94cb-b9a28a54c514.lovable.app-1772383313363.png">
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@OnliningDoctors" />
-    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cc0c1d02-8799-460c-b6d9-f7a1c059cfe4/id-preview-17a6bbd2--727c4868-8e40-4bbb-94cb-b9a28a54c514.lovable.app-1772383313363.png">
-    <meta property="og:title" content="Doctors Onlining — Video Consultations with Qualified Doctors">
     <meta name="twitter:title" content="Doctors Onlining — Video Consultations with Qualified Doctors">
-    <meta property="og:description" content="Doctors Onlining is a video consultation platform connecting patients with qualified doctors for non-emergency care.">
     <meta name="twitter:description" content="Doctors Onlining is a video consultation platform connecting patients with qualified doctors for non-emergency care.">
-</head>
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cc0c1d02-8799-460c-b6d9-f7a1c059cfe4/id-preview-17a6bbd2--727c4868-8e40-4bbb-94cb-b9a28a54c514.lovable.app-1772383313363.png">
+  </head>
 
   <body>
     <div id="root"></div>

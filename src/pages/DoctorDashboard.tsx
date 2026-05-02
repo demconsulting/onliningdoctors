@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
@@ -10,9 +10,16 @@ import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
 import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
-import DoctorEarnings from "@/components/doctor/DoctorEarnings";
+// Lazy-load Earnings — pulls in recharts (~100KB) and is only used on its own tab.
+const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
 import PrescriptionTemplates from "@/components/doctor/PrescriptionTemplates";
 import DoctorPrescriptions from "@/components/doctor/DoctorPrescriptions";
+
+const TabFallback = () => (
+  <div className="flex items-center justify-center py-12" role="status" aria-label="Loading">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 const DoctorDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -126,7 +133,9 @@ const DoctorDashboard = () => {
             <DoctorPrescriptions user={user} />
           </TabsContent>
           <TabsContent value="earnings">
-            <DoctorEarnings user={user} doctorCountry={doctorCountry} />
+            <Suspense fallback={<TabFallback />}>
+              <DoctorEarnings user={user} doctorCountry={doctorCountry} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="templates">
             <PrescriptionTemplates user={user} />
