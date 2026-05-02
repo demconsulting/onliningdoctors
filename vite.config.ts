@@ -21,6 +21,30 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Strip <link rel="modulepreload"> for heavy chunks that are only needed
+    // on non-landing routes (dashboards, charts, PDFs, calendar, etc). Vite
+    // otherwise walks the dynamic-import graph and preloads them on the
+    // homepage, which inflates JS download/parse cost and hurts LCP.
+    modulePreload: {
+      resolveDependencies: (_url, deps) =>
+        deps.filter((dep) => {
+          const heavyOnlyForLazyRoutes = [
+            "charts-",
+            "pdf-",
+            "calendar-",
+            "date-",
+            "legalContent-",
+            "AdminDashboard-",
+            "Dashboard-",
+            "DoctorDashboard-",
+            "DoctorEarnings-",
+            "PrescriptionView-",
+            "PrescriptionForm-",
+            "CallPage-",
+          ];
+          return !heavyOnlyForLazyRoutes.some((name) => dep.includes(name));
+        }),
+    },
     // Split heavy third-party libraries into separate chunks so the landing
     // page bundle stays small and LCP-sensitive code ships first.
     rollupOptions: {
