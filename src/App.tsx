@@ -3,9 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
-// Lazy-load the floating chat widget so its framer-motion + supabase realtime
-// payload doesn't block first paint. It self-mounts a small button initially.
+import { lazy, Suspense, useEffect, useState } from "react";
+// Lazy-load the floating chat widget AND defer mounting it until the browser
+// is idle (or the user interacts), so its framer-motion + supabase realtime
+// payload never blocks first paint or LCP on the landing page.
 const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
 import Index from "./pages/Index";
 
@@ -43,6 +44,31 @@ const RouteFallback = () => (
   </div>
 );
 
+const DeferredChatWidget = () => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const trigger = () => { if (!cancelled) setShow(true); };
+    const win = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "scroll", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, trigger, { once: true, passive: true }));
+    const id = typeof win.requestIdleCallback === "function"
+      ? win.requestIdleCallback(trigger, { timeout: 4000 })
+      : window.setTimeout(trigger, 3500);
+    return () => {
+      cancelled = true;
+      events.forEach((e) => window.removeEventListener(e, trigger));
+      if (typeof id === "number") clearTimeout(id);
+    };
+  }, []);
+  if (!show) return null;
+  return (
+    <Suspense fallback={null}>
+      <ChatWidget />
+    </Suspense>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -72,9 +98,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-        <Suspense fallback={null}>
-          <ChatWidget />
-        </Suspense>
+        <DeferredChatWidget />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
