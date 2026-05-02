@@ -60,20 +60,6 @@ const Index = () => {
       });
   }, []);
 
-  useEffect(() => {
-    const prefetch = () => {
-      import("./Doctors");
-      import("./Login");
-      import("./Dashboard");
-    };
-    const win = window as Window & { requestIdleCallback?: (cb: () => void) => number };
-    if (typeof win.requestIdleCallback === "function") {
-      win.requestIdleCallback(prefetch);
-    } else {
-      setTimeout(prefetch, 2000);
-    }
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
