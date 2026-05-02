@@ -30,8 +30,7 @@ const fallback: HeroContent = {
   ],
 };
 
-// Default video path; admins can override via the Hero admin panel.
-const DEFAULT_HERO_VIDEO_SRC = "/hero-bg.mp4";
+// Responsive video sources are declared inline in the <video> element below.
 
 const HeroSection = () => {
   const navigate = useNavigate();
