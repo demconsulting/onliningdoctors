@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("License renewal reminder error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: "An internal error occurred while sending reminders." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
