@@ -48,7 +48,6 @@ const HeroSection = () => {
   // Progressive enhancement: load the video only on desktop, after first paint,
   // skip on slow/data-saver connections, and respect the admin toggle.
   const videoEnabled = hero.desktop_video_enabled !== false;
-  const videoSrc = (hero.desktop_video_url && hero.desktop_video_url.trim()) || DEFAULT_HERO_VIDEO_SRC;
 
   useEffect(() => {
     if (!videoEnabled) { setShowVideo(false); return; }
