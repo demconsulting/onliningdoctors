@@ -40,10 +40,6 @@ Deno.serve(async (req) => {
       .from("doctors")
       .select("profile_id, profile:profiles!doctors_profile_id_fkey(full_name, country)")
       .eq("is_verified", true);
-    const { data: doctors, error } = await supabase
-      .from("doctors")
-      .select("profile_id, profile:profiles!doctors_profile_id_fkey(full_name, country)")
-      .eq("is_verified", true);
 
     if (error) throw error;
 
