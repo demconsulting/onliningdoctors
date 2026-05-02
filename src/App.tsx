@@ -31,19 +31,7 @@ const DoctorDetail = lazy(() => import("./pages/DoctorDetail"));
 const DependentInvite = lazy(() => import("./pages/DependentInvite"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Sensible defaults: avoid duplicate background refetches that thrash the
-// network on slow mobile connections. Components can override per-query.
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60_000,         // 1 min — most lists don't change that fast
-      gcTime: 5 * 60_000,        // keep cache 5 min for back-nav snap
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 import { Skeleton } from "@/components/ui/skeleton";
 

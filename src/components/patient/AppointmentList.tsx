@@ -13,7 +13,6 @@ import { useToast } from "@/hooks/use-toast";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import DocumentSharingToggle from "@/components/patient/DocumentSharingToggle";
 import PrescriptionView from "@/components/doctor/PrescriptionView";
-import { AppointmentListSkeleton } from "@/components/shared/RouteSkeletons";
 
 interface AppointmentListProps {
   user: SupaUser;
@@ -102,7 +101,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
 
   const [showArchived, setShowArchived] = useState(false);
 
-  if (loading) return <AppointmentListSkeleton count={3} />;
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <>

@@ -5,7 +5,6 @@ import MedicalDisclaimerBanner from "@/components/layout/MedicalDisclaimerBanner
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/landing/HeroSection";
 import Seo from "@/components/seo/Seo";
-import { SectionSkeleton } from "@/components/shared/RouteSkeletons";
 
 const StatsSection = lazy(() => import("@/components/landing/StatsSection"));
 const WhyChooseSection = lazy(() => import("@/components/landing/WhyChooseSection"));
@@ -37,7 +36,7 @@ const sectionComponents: Record<string, React.ComponentType> = {
   faq: FAQSection,
 };
 
-const SectionPlaceholder = () => <SectionSkeleton className="min-h-[400px]" />;
+const SectionPlaceholder = () => <div className="min-h-[400px]" aria-hidden="true" />;
 
 const Index = () => {
   const [sections, setSections] = useState<SectionConfig[]>(defaultOrder);

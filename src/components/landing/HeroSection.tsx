@@ -70,7 +70,7 @@ const HeroSection = () => {
   }, [videoEnabled]);
 
   return (
-    <section className="relative overflow-hidden min-h-[480px] sm:min-h-[560px] lg:min-h-[700px]">
+    <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
       {/* Responsive hero. Mobile gets a ~9KB 600px-wide WebP; tablet ~16KB; desktop ~39KB.
           The browser picks the smallest source that fits the viewport, dramatically
           improving mobile LCP and saving data on cellular networks. */}
@@ -114,7 +114,7 @@ const HeroSection = () => {
         </video>
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-transparent" />
-      <div className="container relative z-10 mx-auto flex min-h-[480px] items-center px-6 py-16 sm:min-h-[560px] sm:py-20 lg:min-h-[700px] lg:py-28">
+      <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
         <div className="max-w-2xl text-left">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h1 className="mb-6 font-display text-4xl font-extrabold tracking-tight text-white md:text-6xl lg:text-7xl">
