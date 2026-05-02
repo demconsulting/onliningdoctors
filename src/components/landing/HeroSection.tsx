@@ -12,6 +12,8 @@ interface HeroFeature { icon: string; label: string; sub: string; }
 interface HeroContent {
   badge: string; title: string; highlight: string; subtitle: string;
   cta_primary: string; cta_secondary: string; features: HeroFeature[];
+  desktop_video_enabled?: boolean;
+  desktop_video_url?: string;
 }
 
 const fallback: HeroContent = {
@@ -28,9 +30,8 @@ const fallback: HeroContent = {
   ],
 };
 
-// Public-path video so it streams from /public/hero-bg.mp4 instead of being
-// inlined into the JS bundle. Drop the .mp4 into /public/ to enable it.
-const HERO_VIDEO_SRC = "/hero-bg.mp4";
+// Default video path; admins can override via the Hero admin panel.
+const DEFAULT_HERO_VIDEO_SRC = "/hero-bg.mp4";
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -45,8 +46,12 @@ const HeroSection = () => {
   }, []);
 
   // Progressive enhancement: load the video only on desktop, after first paint,
-  // and skip it entirely on slow / data-saver connections so we never hurt LCP.
+  // skip on slow/data-saver connections, and respect the admin toggle.
+  const videoEnabled = hero.desktop_video_enabled !== false;
+  const videoSrc = (hero.desktop_video_url && hero.desktop_video_url.trim()) || DEFAULT_HERO_VIDEO_SRC;
+
   useEffect(() => {
+    if (!videoEnabled) { setShowVideo(false); return; }
     if (typeof window === "undefined") return;
     const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -62,7 +67,7 @@ const HeroSection = () => {
       ? win.requestIdleCallback(trigger, { timeout: 2500 })
       : window.setTimeout(trigger, 1500);
     return () => { if (typeof id === "number") clearTimeout(id); };
-  }, []);
+  }, [videoEnabled]);
 
   return (
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
@@ -82,7 +87,7 @@ const HeroSection = () => {
           muted
           playsInline
           preload="auto"
-          src={HERO_VIDEO_SRC}
+          src={videoSrc}
           onCanPlay={() => setVideoReady(true)}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${videoReady ? "opacity-100" : "opacity-0"}`}
         />

@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Layout, Save, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Layout, Save, Plus, Trash2, Film } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PreviewWrapper from "./previews/PreviewWrapper";
 import HeroPreview from "./previews/HeroPreview";
@@ -23,6 +24,10 @@ interface HeroContent {
   cta_primary: string;
   cta_secondary: string;
   features: HeroFeature[];
+  /** When true, desktop visitors progressively load the hero video over the still image. */
+  desktop_video_enabled?: boolean;
+  /** Optional custom video URL. Falls back to /hero-bg.mp4 from /public if blank. */
+  desktop_video_url?: string;
 }
 
 const defaultHero: HeroContent = {
@@ -33,6 +38,8 @@ const defaultHero: HeroContent = {
   cta_primary: "Find a Doctor",
   cta_secondary: "Get Started Free",
   features: [],
+  desktop_video_enabled: true,
+  desktop_video_url: "",
 };
 
 const AdminHero = () => {
@@ -113,6 +120,36 @@ const AdminHero = () => {
             <label className="text-sm font-medium text-foreground">Secondary CTA</label>
             <Input value={hero.cta_secondary} onChange={(e) => setHero({ ...hero, cta_secondary: e.target.value })} />
           </div>
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-border bg-muted/40 p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Film className="h-4 w-4 text-primary" /> Desktop Hero Video
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Plays over the hero image on desktop only, after first paint. Disable to keep the still image everywhere.
+              </p>
+            </div>
+            <Switch
+              checked={hero.desktop_video_enabled !== false}
+              onCheckedChange={(v) => setHero({ ...hero, desktop_video_enabled: v })}
+            />
+          </div>
+          {hero.desktop_video_enabled !== false && (
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-foreground">Video URL (optional)</label>
+              <Input
+                value={hero.desktop_video_url ?? ""}
+                onChange={(e) => setHero({ ...hero, desktop_video_url: e.target.value })}
+                placeholder="/hero-bg.mp4 (default) or https://…"
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave blank to use the default <code>/hero-bg.mp4</code> file in the public folder.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">
