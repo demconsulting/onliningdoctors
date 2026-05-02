@@ -26,14 +26,11 @@
     <!-- Performance: Google Fonts (loaded via @import in index.css) needs early DNS + TLS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- LCP: preload the hero background image so it starts downloading immediately.
-         Use imagesrcset/imagesizes so mobile fetches the small variant and desktop the full one. -->
+    <!-- LCP: preload the single hero image so it starts downloading immediately. -->
     <link
       rel="preload"
       as="image"
       href="/src/assets/hero-bg.webp"
-      imagesrcset="/src/assets/hero-bg-mobile.webp 768w, /src/assets/hero-bg.webp 1920w"
-      imagesizes="(max-width: 768px) 100vw, 1920px"
       fetchpriority="high"
       type="image/webp"
     >
