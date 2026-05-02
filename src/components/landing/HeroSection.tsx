@@ -12,6 +12,8 @@ interface HeroFeature { icon: string; label: string; sub: string; }
 interface HeroContent {
   badge: string; title: string; highlight: string; subtitle: string;
   cta_primary: string; cta_secondary: string; features: HeroFeature[];
+  desktop_video_enabled?: boolean;
+  desktop_video_url?: string;
 }
 
 const fallback: HeroContent = {
@@ -28,9 +30,8 @@ const fallback: HeroContent = {
   ],
 };
 
-// Public-path video so it streams from /public/hero-bg.mp4 instead of being
-// inlined into the JS bundle. Drop the .mp4 into /public/ to enable it.
-const HERO_VIDEO_SRC = "/hero-bg.mp4";
+// Default video path; admins can override via the Hero admin panel.
+const DEFAULT_HERO_VIDEO_SRC = "/hero-bg.mp4";
 
 const HeroSection = () => {
   const navigate = useNavigate();
