@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import ChatWidget from "./components/chat/ChatWidget";
+// Lazy-load the floating chat widget so its framer-motion + supabase realtime
+// payload doesn't block first paint. It self-mounts a small button initially.
+const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
 import Index from "./pages/Index";
 
 // Code-split: load route bundles only when navigated to.
@@ -70,7 +72,9 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-        <ChatWidget />
+        <Suspense fallback={null}>
+          <ChatWidget />
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
