@@ -539,6 +539,33 @@ serve(async (req) => {
         .single();
       convId = conv?.id;
     } else {
+      // SECURITY: Verify the caller owns this conversation before writing to it.
+      // Without this check, any caller could inject messages into any conversation
+      // because we use the service-role client (which bypasses RLS) below.
+      const { data: convRow, error: convErr } = await supabase
+        .from("ai_conversations")
+        .select("id, user_id")
+        .eq("id", convId)
+        .maybeSingle();
+
+      if (convErr || !convRow) {
+        return new Response(
+          JSON.stringify({ error: "Conversation not found." }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const ownerId = (convRow as { user_id: string | null }).user_id;
+      // Authenticated callers must own the conversation. Anonymous callers may
+      // only continue conversations that have no owner (visitor sessions).
+      const isOwner = userId ? ownerId === userId : ownerId === null;
+      if (!isOwner) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       // Update last activity
       await supabase
         .from("ai_conversations")
