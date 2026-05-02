@@ -1,15 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import MedicalDisclaimerBanner from "@/components/layout/MedicalDisclaimerBanner";
 import Footer from "@/components/layout/Footer";
 import HeroSection from "@/components/landing/HeroSection";
-import StatsSection from "@/components/landing/StatsSection";
-import WhyChooseSection from "@/components/landing/WhyChooseSection";
-import FindDoctorSection from "@/components/landing/FindDoctorSection";
-import DoctorCTASection from "@/components/landing/DoctorCTASection";
-import FAQSection from "@/components/landing/FAQSection";
 import Seo from "@/components/seo/Seo";
+
+const StatsSection = lazy(() => import("@/components/landing/StatsSection"));
+const WhyChooseSection = lazy(() => import("@/components/landing/WhyChooseSection"));
+const FindDoctorSection = lazy(() => import("@/components/landing/FindDoctorSection"));
+const DoctorCTASection = lazy(() => import("@/components/landing/DoctorCTASection"));
+const FAQSection = lazy(() => import("@/components/landing/FAQSection"));
 
 interface SectionConfig {
   key: string;
@@ -26,7 +27,7 @@ const defaultOrder: SectionConfig[] = [
   { key: "faq", label: "FAQ Section", visible: true },
 ];
 
-const sectionComponents: Record<string, React.FC> = {
+const sectionComponents: Record<string, React.ComponentType> = {
   hero: HeroSection,
   stats: StatsSection,
   "why-choose": WhyChooseSection,
@@ -34,6 +35,8 @@ const sectionComponents: Record<string, React.FC> = {
   "doctor-cta": DoctorCTASection,
   faq: FAQSection,
 };
+
+const SectionPlaceholder = () => <div className="min-h-[400px]" aria-hidden="true" />;
 
 const Index = () => {
   const [sections, setSections] = useState<SectionConfig[]>(defaultOrder);
@@ -57,6 +60,20 @@ const Index = () => {
       });
   }, []);
 
+  useEffect(() => {
+    const prefetch = () => {
+      import("./Doctors");
+      import("./Login");
+      import("./Dashboard");
+    };
+    const win = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (typeof win.requestIdleCallback === "function") {
+      win.requestIdleCallback(prefetch);
+    } else {
+      setTimeout(prefetch, 2000);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
@@ -71,7 +88,15 @@ const Index = () => {
           .filter((s) => s.visible)
           .map((s) => {
             const Component = sectionComponents[s.key];
-            return Component ? <Component key={s.key} /> : null;
+            if (!Component) return null;
+            if (s.key === "hero") {
+              return <Component key={s.key} />;
+            }
+            return (
+              <Suspense key={s.key} fallback={<SectionPlaceholder />}>
+                <Component />
+              </Suspense>
+            );
           })}
       </main>
       <Footer />
