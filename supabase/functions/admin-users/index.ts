@@ -76,8 +76,19 @@ serve(async (req) => {
         });
       }
 
+      // SECURITY: Use a hardcoded, application-owned redirect URL to prevent
+      // open-redirect attacks via a tampered Origin header.
+      const ALLOWED_REDIRECT_ORIGINS = new Set<string>([
+        "https://doctorsonlining.com",
+        "https://onliningdoctors.lovable.app",
+      ]);
+      const requestOrigin = req.headers.get("origin") || "";
+      const safeOrigin = ALLOWED_REDIRECT_ORIGINS.has(requestOrigin)
+        ? requestOrigin
+        : "https://doctorsonlining.com";
+
       const { error: resetError } = await serviceClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${req.headers.get("origin") || Deno.env.get("SUPABASE_URL")}/reset-password`,
+        redirectTo: `${safeOrigin}/reset-password`,
       });
 
       if (resetError) throw resetError;
