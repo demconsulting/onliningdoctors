@@ -117,6 +117,9 @@ const Navbar = () => {
         </div>
       )}
     </nav>
+    {/* Spacer to offset the fixed navbar so page content isn't hidden underneath. */}
+    <div aria-hidden className="h-16" />
+    </>
   );
 };
 
