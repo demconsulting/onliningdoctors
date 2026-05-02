@@ -4,9 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
-// Lazy-load the floating chat widget AND defer mounting it until the browser
-// is idle (or the user interacts), so its framer-motion + supabase realtime
-// payload never blocks first paint or LCP on the landing page.
+// Lazy-load the floating chat widget AND defer mounting it until the user
+// interacts or the page has settled, so its framer-motion + realtime payload
+// never competes with homepage LCP.
 const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
 import Index from "./pages/Index";
 
@@ -53,8 +53,8 @@ const DeferredChatWidget = () => {
     const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "scroll", "touchstart"];
     events.forEach((e) => window.addEventListener(e, trigger, { once: true, passive: true }));
     const id = typeof win.requestIdleCallback === "function"
-      ? win.requestIdleCallback(trigger, { timeout: 4000 })
-      : window.setTimeout(trigger, 3500);
+      ? win.requestIdleCallback(trigger, { timeout: 5000 })
+      : window.setTimeout(trigger, 5000);
     return () => {
       cancelled = true;
       events.forEach((e) => window.removeEventListener(e, trigger));

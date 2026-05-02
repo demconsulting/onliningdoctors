@@ -12,8 +12,8 @@ import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
 // Lazy-load Earnings — pulls in recharts (~100KB) and is only used on its own tab.
 const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
-import PrescriptionTemplates from "@/components/doctor/PrescriptionTemplates";
-import DoctorPrescriptions from "@/components/doctor/DoctorPrescriptions";
+const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
+const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-12" role="status" aria-label="Loading">
@@ -130,7 +130,9 @@ const DoctorDashboard = () => {
             <DoctorAppointments user={user} />
           </TabsContent>
           <TabsContent value="prescriptions">
-            <DoctorPrescriptions user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <DoctorPrescriptions user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="earnings">
             <Suspense fallback={<TabFallback />}>
@@ -138,7 +140,9 @@ const DoctorDashboard = () => {
             </Suspense>
           </TabsContent>
           <TabsContent value="templates">
-            <PrescriptionTemplates user={user} />
+            <Suspense fallback={<TabFallback />}>
+              <PrescriptionTemplates user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="availability">
             <AvailabilityManager user={user} />

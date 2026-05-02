@@ -1,33 +1,40 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminUsers from "@/components/admin/AdminUsers";
-import AdminAppointments from "@/components/admin/AdminAppointments";
-import AdminReviews from "@/components/admin/AdminReviews";
-import AdminConsultationOutcomes from "@/components/admin/AdminConsultationOutcomes";
-import AdminSpecialties from "@/components/admin/AdminSpecialties";
-import AdminContacts from "@/components/admin/AdminContacts";
-import AdminFaqs from "@/components/admin/AdminFaqs";
-import AdminHero from "@/components/admin/AdminHero";
-import AdminStats from "@/components/admin/AdminStats";
-import AdminAuditLogs from "@/components/admin/AdminAuditLogs";
-import AdminDoctorVerification from "@/components/admin/AdminDoctorVerification";
-import AdminSiteSettings from "@/components/admin/AdminSiteSettings";
-import AdminWhyChoose from "@/components/admin/AdminWhyChoose";
-import AdminFindDoctor from "@/components/admin/AdminFindDoctor";
-import AdminDoctorCTA from "@/components/admin/AdminDoctorCTA";
-import AdminFooter from "@/components/admin/AdminFooter";
-import AdminSectionOrder from "@/components/admin/AdminSectionOrder";
-import AdminPaymentConfig from "@/components/admin/AdminPaymentConfig";
-import AdminPayments from "@/components/admin/AdminPayments";
-import AdminPayouts from "@/components/admin/AdminPayouts";
-import AdminAIAssistant from "@/components/admin/AdminAIAssistant";
-import AdminCountries from "@/components/admin/AdminCountries";
-import AdminLegalDocuments from "@/components/admin/AdminLegalDocuments";
-import AdminConsultationCategories from "@/components/admin/AdminConsultationCategories";
 import { Loader2 } from "lucide-react";
+
+const AdminUsers = lazy(() => import("@/components/admin/AdminUsers"));
+const AdminAppointments = lazy(() => import("@/components/admin/AdminAppointments"));
+const AdminReviews = lazy(() => import("@/components/admin/AdminReviews"));
+const AdminConsultationOutcomes = lazy(() => import("@/components/admin/AdminConsultationOutcomes"));
+const AdminSpecialties = lazy(() => import("@/components/admin/AdminSpecialties"));
+const AdminContacts = lazy(() => import("@/components/admin/AdminContacts"));
+const AdminFaqs = lazy(() => import("@/components/admin/AdminFaqs"));
+const AdminHero = lazy(() => import("@/components/admin/AdminHero"));
+const AdminStats = lazy(() => import("@/components/admin/AdminStats"));
+const AdminAuditLogs = lazy(() => import("@/components/admin/AdminAuditLogs"));
+const AdminDoctorVerification = lazy(() => import("@/components/admin/AdminDoctorVerification"));
+const AdminSiteSettings = lazy(() => import("@/components/admin/AdminSiteSettings"));
+const AdminWhyChoose = lazy(() => import("@/components/admin/AdminWhyChoose"));
+const AdminFindDoctor = lazy(() => import("@/components/admin/AdminFindDoctor"));
+const AdminDoctorCTA = lazy(() => import("@/components/admin/AdminDoctorCTA"));
+const AdminFooter = lazy(() => import("@/components/admin/AdminFooter"));
+const AdminSectionOrder = lazy(() => import("@/components/admin/AdminSectionOrder"));
+const AdminPaymentConfig = lazy(() => import("@/components/admin/AdminPaymentConfig"));
+const AdminPayments = lazy(() => import("@/components/admin/AdminPayments"));
+const AdminPayouts = lazy(() => import("@/components/admin/AdminPayouts"));
+const AdminAIAssistant = lazy(() => import("@/components/admin/AdminAIAssistant"));
+const AdminCountries = lazy(() => import("@/components/admin/AdminCountries"));
+const AdminLegalDocuments = lazy(() => import("@/components/admin/AdminLegalDocuments"));
+const AdminConsultationCategories = lazy(() => import("@/components/admin/AdminConsultationCategories"));
+
+const SectionFallback = () => (
+  <div className="flex justify-center py-10" role="status" aria-label="Loading admin section">
+    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+  </div>
+);
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -104,7 +111,9 @@ const AdminDashboard = () => {
             <SidebarTrigger className="mr-3" />
             <h1 className="font-display text-lg font-bold text-foreground capitalize">{activeSection}</h1>
           </header>
-          <main className="flex-1 p-6">{renderSection()}</main>
+          <main className="flex-1 p-6">
+            <Suspense fallback={<SectionFallback />}>{renderSection()}</Suspense>
+          </main>
         </div>
       </div>
     </SidebarProvider>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import PatientDocuments from "@/components/doctor/PatientDocuments";
 import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
 import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
-import PrescriptionForm from "@/components/doctor/PrescriptionForm";
-import PrescriptionView from "@/components/doctor/PrescriptionView";
+
+const PrescriptionForm = lazy(() => import("@/components/doctor/PrescriptionForm"));
+const PrescriptionView = lazy(() => import("@/components/doctor/PrescriptionView"));
 
 interface DoctorAppointmentsProps {
   user: SupaUser;
@@ -245,13 +246,15 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                 {/* Prescription (for confirmed/completed appointments) */}
                 {(apt.status === "confirmed" || apt.status === "completed") && (
                   <div className="pt-2 border-t border-border flex items-center gap-2">
-                    <PrescriptionForm
-                      appointmentId={apt.id}
-                      doctorId={user.id}
-                      patientId={apt.patient_id}
-                      patientName={apt.patient?.full_name || "Patient"}
-                    />
-                    <PrescriptionView appointmentId={apt.id} viewAs="doctor" />
+                    <Suspense fallback={null}>
+                      <PrescriptionForm
+                        appointmentId={apt.id}
+                        doctorId={user.id}
+                        patientId={apt.patient_id}
+                        patientName={apt.patient?.full_name || "Patient"}
+                      />
+                      <PrescriptionView appointmentId={apt.id} viewAs="doctor" />
+                    </Suspense>
                   </div>
                 )}
 

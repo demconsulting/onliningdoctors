@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import VideoCall from "@/components/call/VideoCall";
 import ConsultationNotes from "@/components/call/ConsultationNotes";
-import PrescriptionForm from "@/components/doctor/PrescriptionForm";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const PrescriptionForm = lazy(() => import("@/components/doctor/PrescriptionForm"));
 
 const CallPage = () => {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -107,12 +108,14 @@ const CallPage = () => {
             />
             {isDoctor && (
               <div className="flex gap-2">
-                <PrescriptionForm
-                  appointmentId={appointmentId!}
-                  doctorId={doctorId}
-                  patientId={patientId}
-                  patientName={patientName}
-                />
+                <Suspense fallback={null}>
+                  <PrescriptionForm
+                    appointmentId={appointmentId!}
+                    doctorId={doctorId}
+                    patientId={patientId}
+                    patientName={patientName}
+                  />
+                </Suspense>
               </div>
             )}
           </div>
