@@ -61,16 +61,25 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
+    // Prefetch likely-next routes only on capable networks. Skip on mobile/2G/3G/Save-Data
+    // so we don't burn the user's cellular budget before they've interacted.
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (conn?.saveData) return;
+    if (conn?.effectiveType && /(^|-)(2g|3g)$/.test(conn.effectiveType)) return;
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches;
+
     const prefetch = () => {
+      // Doctors is the most likely next destination from the hero CTA.
       import("./Doctors");
-      import("./Login");
-      import("./Dashboard");
+      // Only pull Login on larger screens; on mobile we wait until the user taps it.
+      if (!isMobile) import("./Login");
+      // Dashboard is heavy and auth-gated — never prefetch from the public landing page.
     };
     const win = window as Window & { requestIdleCallback?: (cb: () => void) => number };
     if (typeof win.requestIdleCallback === "function") {
       win.requestIdleCallback(prefetch);
     } else {
-      setTimeout(prefetch, 2000);
+      setTimeout(prefetch, 2500);
     }
   }, []);
 
