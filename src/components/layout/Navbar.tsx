@@ -46,6 +46,7 @@ const Navbar = () => {
   };
 
   return (
+    <>
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
