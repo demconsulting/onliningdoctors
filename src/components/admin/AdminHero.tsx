@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Layout, Save, Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Layout, Save, Plus, Trash2, Film } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PreviewWrapper from "./previews/PreviewWrapper";
 import HeroPreview from "./previews/HeroPreview";
@@ -23,6 +24,10 @@ interface HeroContent {
   cta_primary: string;
   cta_secondary: string;
   features: HeroFeature[];
+  /** When true, desktop visitors progressively load the hero video over the still image. */
+  desktop_video_enabled?: boolean;
+  /** Optional custom video URL. Falls back to /hero-bg.mp4 from /public if blank. */
+  desktop_video_url?: string;
 }
 
 const defaultHero: HeroContent = {
@@ -33,6 +38,8 @@ const defaultHero: HeroContent = {
   cta_primary: "Find a Doctor",
   cta_secondary: "Get Started Free",
   features: [],
+  desktop_video_enabled: true,
+  desktop_video_url: "",
 };
 
 const AdminHero = () => {
