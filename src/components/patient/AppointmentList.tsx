@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,8 @@ import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import ReviewForm from "@/components/reviews/ReviewForm";
 import DocumentSharingToggle from "@/components/patient/DocumentSharingToggle";
-import PrescriptionView from "@/components/doctor/PrescriptionView";
+
+const PrescriptionView = lazy(() => import("@/components/doctor/PrescriptionView"));
 
 interface AppointmentListProps {
   user: SupaUser;
@@ -247,7 +248,9 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                 {/* Prescription view for completed appointments */}
                 {apt.status === "completed" && (
                   <div className="mt-2">
-                    <PrescriptionView appointmentId={apt.id} viewAs="patient" />
+                    <Suspense fallback={null}>
+                      <PrescriptionView appointmentId={apt.id} viewAs="patient" />
+                    </Suspense>
                   </div>
                 )}
                 {/* Document sharing toggle for active appointments */}
