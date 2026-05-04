@@ -68,16 +68,20 @@ const HeroSection = () => {
 
   return (
     <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
-      <img
-        src="/hero-bg.webp"
-        alt=""
-        width={1920}
-        height={1080}
-        loading="eager"
-        {...({ fetchpriority: "high" } as { fetchpriority: string })}
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      <picture>
+        <source media="(max-width: 767px)" srcSet="/hero-bg-mobile.webp" type="image/webp" />
+        <source media="(min-width: 768px)" srcSet="/hero-bg.webp" type="image/webp" />
+        <img
+          src="/hero-bg.webp"
+          alt=""
+          width={1920}
+          height={1080}
+          loading="eager"
+          {...({ fetchpriority: "high" } as { fetchpriority: string })}
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      </picture>
       {showVideo && (
         <video
           autoPlay
