@@ -717,6 +717,7 @@ export type Database = {
           license_document_path: string | null
           license_number: string | null
           practice_email: string | null
+          practice_id: string | null
           practice_logo_url: string | null
           practice_name: string | null
           practice_phone: string | null
@@ -744,6 +745,7 @@ export type Database = {
           license_document_path?: string | null
           license_number?: string | null
           practice_email?: string | null
+          practice_id?: string | null
           practice_logo_url?: string | null
           practice_name?: string | null
           practice_phone?: string | null
@@ -771,6 +773,7 @@ export type Database = {
           license_document_path?: string | null
           license_number?: string | null
           practice_email?: string | null
+          practice_id?: string | null
           practice_logo_url?: string | null
           practice_name?: string | null
           practice_phone?: string | null
@@ -788,6 +791,13 @@ export type Database = {
             columns: ["consultation_category_id"]
             isOneToOne: false
             referencedRelation: "consultation_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_practice_id_fkey"
+            columns: ["practice_id"]
+            isOneToOne: false
+            referencedRelation: "practices"
             referencedColumns: ["id"]
           },
           {
@@ -1292,6 +1302,104 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_members: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          hpcsa_number: string | null
+          id: string
+          phone: string | null
+          practice_id: string
+          role: Database["public"]["Enums"]["practice_role"]
+          status: Database["public"]["Enums"]["practice_member_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          hpcsa_number?: string | null
+          id?: string
+          phone?: string | null
+          practice_id: string
+          role: Database["public"]["Enums"]["practice_role"]
+          status?: Database["public"]["Enums"]["practice_member_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          hpcsa_number?: string | null
+          id?: string
+          phone?: string | null
+          practice_id?: string
+          role?: Database["public"]["Enums"]["practice_role"]
+          status?: Database["public"]["Enums"]["practice_member_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_members_practice_id_fkey"
+            columns: ["practice_id"]
+            isOneToOne: false
+            referencedRelation: "practices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practices: {
+        Row: {
+          address: string
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          nurses_can_support_consultations: boolean
+          owner_doctor_name: string
+          owner_hpcsa_number: string
+          owner_id: string
+          phone: string
+          practice_name: string
+          practice_number: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          nurses_can_support_consultations?: boolean
+          owner_doctor_name: string
+          owner_hpcsa_number: string
+          owner_id: string
+          phone: string
+          practice_name: string
+          practice_number: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          nurses_can_support_consultations?: boolean
+          owner_doctor_name?: string
+          owner_hpcsa_number?: string
+          owner_id?: string
+          phone?: string
+          practice_name?: string
+          practice_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prescription_templates: {
         Row: {
           condition: string | null
@@ -1674,9 +1782,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_practice_manager: {
+        Args: { _practice_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_practice_member: {
+        Args: { _practice_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "patient" | "doctor"
+      practice_member_status: "invited" | "active" | "suspended"
+      practice_role:
+        | "owner"
+        | "doctor"
+        | "nurse"
+        | "receptionist"
+        | "practice_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1805,6 +1928,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "patient", "doctor"],
+      practice_member_status: ["invited", "active", "suspended"],
+      practice_role: [
+        "owner",
+        "doctor",
+        "nurse",
+        "receptionist",
+        "practice_admin",
+      ],
     },
   },
 } as const
