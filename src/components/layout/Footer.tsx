@@ -28,6 +28,7 @@ const fallback: FooterContent = {
 
 const Footer = () => {
   const [content, setContent] = useState<FooterContent>(fallback);
+  const { branding, logoSrc } = useBranding();
 
   useEffect(() => {
     supabase.from("site_content").select("value").eq("key", "footer").maybeSingle().then(({ data }) => {
@@ -58,7 +59,7 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-5">
           <div>
             <Link to="/" className="mb-4 inline-flex items-center" aria-label="Doctors Onlining home">
-              <img src={logoSrc} alt="Doctors Onlining" className="h-12 w-auto select-none" loading="lazy" decoding="async" />
+              <img src={logoSrc} alt="Doctors Onlining" style={{ height: branding.footer_height }} className="w-auto select-none" loading="lazy" decoding="async" />
             </Link>
             <p className="mb-4 text-sm text-muted-foreground">{content.tagline}</p>
             <div className="space-y-2">
