@@ -41,8 +41,6 @@ const HeroSection = () => {
   const [isMobile, setIsMobile] = useState<boolean>(() =>
     typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
   );
-  const [showMobileImage, setShowMobileImage] = useState(false);
-  const [mobileImageLoaded, setMobileImageLoaded] = useState(false);
   const [showMobileBadges, setShowMobileBadges] = useState(false);
 
   useEffect(() => {
@@ -53,13 +51,11 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
-    if (!isMobile) { setShowMobileImage(true); setShowMobileBadges(true); return; }
-    // Wait for first paint, then load image + badges.
+    if (!isMobile) { setShowMobileBadges(true); return; }
+    // Mobile: no hero image at all. Defer feature badges below the fold.
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setShowMobileImage(true);
-        // Badges are below the primary CTA — push further out.
-        const t = window.setTimeout(() => setShowMobileBadges(true), 600);
+        const t = window.setTimeout(() => setShowMobileBadges(true), 800);
         return () => clearTimeout(t);
       });
     });
@@ -97,7 +93,7 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]"
+      className="relative overflow-hidden min-h-[440px] md:min-h-[600px] lg:min-h-[700px]"
       style={{
         // Lightweight gradient backdrop — paints instantly on mobile while the
         // hero image is deferred. Desktop covers this with the <img> below.
@@ -105,9 +101,9 @@ const HeroSection = () => {
           "linear-gradient(135deg, hsl(199 89% 22%) 0%, hsl(210 60% 14%) 55%, hsl(220 30% 8%) 100%)",
       }}
     >
-      {/* Desktop: image is preloaded and rendered immediately. Mobile: rendered
-          after first paint and faded in, so it never wins LCP. */}
-      {!isMobile ? (
+      {/* Desktop: image rendered immediately. Mobile: no image at all — the
+          gradient backdrop above serves as the mobile hero. */}
+      {!isMobile && (
         <img
           src="/hero-bg.webp"
           alt=""
@@ -118,19 +114,7 @@ const HeroSection = () => {
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
-      ) : showMobileImage ? (
-        <img
-          src="/hero-bg-mobile.webp"
-          alt=""
-          width={800}
-          height={600}
-          loading="lazy"
-          {...({ fetchpriority: "low" } as { fetchpriority: string })}
-          decoding="async"
-          onLoad={() => setMobileImageLoaded(true)}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${mobileImageLoaded ? "opacity-100" : "opacity-0"}`}
-        />
-      ) : null}
+      )}
       {showVideo && (
         <video
           autoPlay
@@ -158,7 +142,7 @@ const HeroSection = () => {
         </video>
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-transparent" />
-      <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
+      <div className="container relative z-10 mx-auto flex min-h-[440px] items-center px-6 py-12 md:min-h-[600px] md:py-20 lg:min-h-[700px] lg:py-28">
         <div className="max-w-2xl text-left">
           <motion.div initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h1 className="mb-6 font-display text-4xl font-extrabold tracking-tight text-white md:text-6xl lg:text-7xl">
