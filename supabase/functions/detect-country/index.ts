@@ -46,7 +46,8 @@ serve(async (req) => {
     
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      // Use anon key — countries table has a public SELECT policy; service role is unnecessary here.
+      const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
       const sb = createClient(supabaseUrl, supabaseKey);
       
       const { data: countryRow } = await sb
