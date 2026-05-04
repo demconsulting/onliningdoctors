@@ -73,10 +73,7 @@ const PracticeSetup = () => {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("practices").insert({
-      ...parsed.data,
-      owner_id: user.id,
-    });
+    const { error } = await supabase.from("practices").insert([{ ...parsed.data, owner_id: user.id }]);
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
