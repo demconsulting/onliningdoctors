@@ -173,6 +173,10 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               <Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
             </div>
             <div className="space-y-2">
+              <Label>Email (registered)</Label>
+              <Input value={user.email || ""} readOnly disabled className="bg-muted" />
+            </div>
+            <div className="space-y-2">
               <Label>Title</Label>
               <Select value={doctor.title} onValueChange={(v) => setDoctor({ ...doctor, title: v })}>
                 <SelectTrigger><SelectValue placeholder="Select title" /></SelectTrigger>
