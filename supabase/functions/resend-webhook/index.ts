@@ -25,6 +25,15 @@ async function verifyWebhookSignature(
 ): Promise<boolean> {
   if (!svixId || !svixTimestamp || !svixSignature) return false;
 
+  // Reject stale/replayed webhooks: require timestamp within ±5 minutes
+  const FIVE_MIN_MS = 5 * 60 * 1000;
+  const tsSeconds = parseInt(svixTimestamp, 10);
+  if (!Number.isFinite(tsSeconds)) return false;
+  if (Math.abs(Date.now() - tsSeconds * 1000) > FIVE_MIN_MS) {
+    console.error("Webhook timestamp outside freshness window");
+    return false;
+  }
+
   // Resend uses Svix for webhooks
   // Secret comes as "whsec_<base64>" — strip prefix
   const secretBytes = Uint8Array.from(
