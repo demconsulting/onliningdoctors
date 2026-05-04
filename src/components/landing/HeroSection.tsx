@@ -176,7 +176,7 @@ const HeroSection = () => {
             </div>
           </motion.div>
 
-          {hero.features.length > 0 && (
+          {hero.features.length > 0 && (!isMobile || showMobileBadges) && (
             <motion.div
               className="mt-14 flex flex-wrap gap-8"
               initial={{ opacity: 0.01, y: 30 }}
