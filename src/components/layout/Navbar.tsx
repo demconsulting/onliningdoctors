@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import logoSrc from "@/assets/logo.png";
+import { useBranding } from "@/hooks/useBranding";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Stethoscope } from "lucide-react";
@@ -13,6 +13,7 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isDoctor, setIsDoctor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const { branding, logoSrc } = useBranding();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,7 +56,8 @@ const Navbar = () => {
           <img
             src={logoSrc}
             alt="Doctors Onlining"
-            className="h-10 w-auto select-none md:h-12"
+            style={{ height: branding.navbar_height }}
+            className="w-auto select-none"
             loading="eager"
             decoding="async"
           />
