@@ -71,7 +71,7 @@ serve(async (req) => {
     // Load appointment
     const { data: appt, error: aptErr } = await service
       .from("appointments")
-      .select("id, patient_id, doctor_id, scheduled_at, duration_minutes, reason, status, consultation_type")
+      .select("id, patient_id, doctor_id, scheduled_at, duration_minutes, reason, status")
       .eq("id", appointment_id)
       .maybeSingle();
 
@@ -116,7 +116,7 @@ serve(async (req) => {
     const patientName = patientProfile?.full_name || "Patient";
     const doctorName = doctorProfile?.full_name || "Doctor";
     const { date, time } = fmtDate(appt.scheduled_at);
-    const consultationType = appt.consultation_type || "Video Consultation";
+    const consultationType = "Video Consultation";
     const isVideo = /video/i.test(consultationType);
     const joinLink = `${SITE_URL}/call/${appt.id}`;
 
