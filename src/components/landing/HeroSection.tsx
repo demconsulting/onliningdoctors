@@ -36,6 +36,35 @@ const HeroSection = () => {
   const [hero, setHero] = useState<HeroContent>(fallback);
   const [showVideo, setShowVideo] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  // Mobile-only: defer the hero image until after first paint so it doesn't
+  // become the LCP element. Text + CTA paint over the gradient first.
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+  );
+  const [showMobileImage, setShowMobileImage] = useState(false);
+  const [mobileImageLoaded, setMobileImageLoaded] = useState(false);
+  const [showMobileBadges, setShowMobileBadges] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) { setShowMobileImage(true); setShowMobileBadges(true); return; }
+    // Wait for first paint, then load image + badges.
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setShowMobileImage(true);
+        // Badges are below the primary CTA — push further out.
+        const t = window.setTimeout(() => setShowMobileBadges(true), 600);
+        return () => clearTimeout(t);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isMobile]);
 
   useEffect(() => {
     supabase.from("site_content").select("value").eq("key", "hero").single().then(({ data }) => {
