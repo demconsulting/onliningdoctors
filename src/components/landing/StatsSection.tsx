@@ -69,7 +69,7 @@ const StatsSection = () => {
   if (!stats.length) return null;
 
   return (
-    <section className="border-y border-border bg-card py-14">
+    <section className="hidden md:block border-y border-border bg-card py-14">
       <div className="container mx-auto px-4">
         <div className="flex flex-wrap justify-center gap-8 md:gap-16">
           {stats.map((stat, i) => {
