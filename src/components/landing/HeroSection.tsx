@@ -93,7 +93,7 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]"
+      className="relative overflow-hidden min-h-[440px] md:min-h-[600px] lg:min-h-[700px]"
       style={{
         // Lightweight gradient backdrop — paints instantly on mobile while the
         // hero image is deferred. Desktop covers this with the <img> below.
@@ -142,7 +142,7 @@ const HeroSection = () => {
         </video>
       )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/45 to-transparent" />
-      <div className="container relative z-10 mx-auto flex min-h-[600px] items-center px-6 py-20 lg:min-h-[700px] lg:py-28">
+      <div className="container relative z-10 mx-auto flex min-h-[440px] items-center px-6 py-12 md:min-h-[600px] md:py-20 lg:min-h-[700px] lg:py-28">
         <div className="max-w-2xl text-left">
           <motion.div initial={{ opacity: 0.01, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h1 className="mb-6 font-display text-4xl font-extrabold tracking-tight text-white md:text-6xl lg:text-7xl">
