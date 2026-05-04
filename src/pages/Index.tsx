@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import MedicalDisclaimerBanner from "@/components/layout/MedicalDisclaimerBanner";
-import Footer from "@/components/layout/Footer";
+const Footer = lazy(() => import("@/components/layout/Footer"));
 import HeroSection from "@/components/landing/HeroSection";
 import Seo from "@/components/seo/Seo";
 
@@ -125,7 +125,7 @@ const Index = () => {
         {heroVisible && <HeroSection />}
         {belowKeys.length > 0 && <DeferredBelowTheFold keys={belowKeys} />}
       </main>
-      <Footer />
+      <Suspense fallback={null}><Footer /></Suspense>
     </div>
   );
 };
