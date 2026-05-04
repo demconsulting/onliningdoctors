@@ -21,6 +21,7 @@ const AdminWhyChoose = lazy(() => import("@/components/admin/AdminWhyChoose"));
 const AdminFindDoctor = lazy(() => import("@/components/admin/AdminFindDoctor"));
 const AdminDoctorCTA = lazy(() => import("@/components/admin/AdminDoctorCTA"));
 const AdminFooter = lazy(() => import("@/components/admin/AdminFooter"));
+const AdminBranding = lazy(() => import("@/components/admin/AdminBranding"));
 const AdminSectionOrder = lazy(() => import("@/components/admin/AdminSectionOrder"));
 const AdminPaymentConfig = lazy(() => import("@/components/admin/AdminPaymentConfig"));
 const AdminPayments = lazy(() => import("@/components/admin/AdminPayments"));
@@ -75,6 +76,7 @@ const AdminDashboard = () => {
   const renderSection = () => {
     switch (activeSection) {
       case "section-order": return <AdminSectionOrder />;
+      case "branding": return <AdminBranding />;
       case "hero": return <AdminHero />;
       case "stats": return <AdminStats />;
       case "why-choose": return <AdminWhyChoose />;
