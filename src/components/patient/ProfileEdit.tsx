@@ -96,6 +96,10 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
             <Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} />
           </div>
           <div className="space-y-2">
+            <Label>Email (registered)</Label>
+            <Input value={user.email || ""} readOnly disabled className="bg-muted" />
+          </div>
+          <div className="space-y-2">
             <Label>Phone</Label>
             <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
           </div>
