@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { friendlyAuthError } from "@/lib/authErrors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,15 +28,15 @@ const Signup = () => {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     });
     setLoading(false);
     if (error) {
-      toast({ variant: "destructive", title: "Sign up failed", description: error.message });
+      toast({ variant: "destructive", title: "Sign up failed", description: friendlyAuthError(error.message) });
     } else {
       toast({ title: "Check your email", description: "We sent you a confirmation link." });
-      navigate("/login");
+      navigate("/signin");
     }
   };
 

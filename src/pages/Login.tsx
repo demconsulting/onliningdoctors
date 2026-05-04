@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { friendlyAuthError } from "@/lib/authErrors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,7 @@ const Login = () => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
-      toast({ variant: "destructive", title: "Login failed", description: error.message });
+      toast({ variant: "destructive", title: "Sign in failed", description: friendlyAuthError(error.message) });
       return;
     }
     // Check if user is a doctor and redirect accordingly
@@ -35,20 +36,7 @@ const Login = () => {
     navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      toast({ variant: "destructive", title: "Enter your email first" });
-      return;
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    } else {
-      toast({ title: "Check your email", description: "Password reset link sent." });
-    }
-  };
+  const handleForgotPassword = () => navigate("/forgot-password");
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
