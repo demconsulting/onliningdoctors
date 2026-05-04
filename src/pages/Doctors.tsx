@@ -36,7 +36,7 @@ const Doctors = () => {
       const [docRes, specRes] = await Promise.all([
         supabase
           .from("doctors")
-          .select("*, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
+          .select("id, profile_id, specialty_id, title, bio, experience_years, consultation_fee, rating, total_reviews, is_available, languages, education, hospital_affiliation, is_verified, is_suspended, practice_name, practice_logo_url, consultation_category_id, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
           .eq("is_verified", true)
           .eq("is_suspended", false)
           .order("rating", { ascending: false }),
