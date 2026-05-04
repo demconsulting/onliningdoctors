@@ -32,9 +32,26 @@ const DependentInvite = () => {
       if (!token) { setLoading(false); return; }
       const { data } = await supabase
         .from("dependents")
-        .select("id, full_name, email, invitation_status, guardian_id")
+        .select("id, full_name, email, invitation_status, guardian_id, invitation_sent_at")
         .eq("invitation_token", token)
         .maybeSingle();
+
+      // Reject expired invitations (>72h)
+      if (data?.invitation_sent_at) {
+        const sentAt = new Date(data.invitation_sent_at).getTime();
+        const expiresAt = sentAt + 72 * 60 * 60 * 1000;
+        if (Date.now() > expiresAt) {
+          setDependent(null);
+          toast({
+            variant: "destructive",
+            title: "Invitation expired",
+            description: "This invitation link has expired. Please ask your family member to resend it.",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       setDependent(data);
       setLoading(false);
     })();
