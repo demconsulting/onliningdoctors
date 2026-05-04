@@ -36,6 +36,35 @@ const HeroSection = () => {
   const [hero, setHero] = useState<HeroContent>(fallback);
   const [showVideo, setShowVideo] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  // Mobile-only: defer the hero image until after first paint so it doesn't
+  // become the LCP element. Text + CTA paint over the gradient first.
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+  );
+  const [showMobileImage, setShowMobileImage] = useState(false);
+  const [mobileImageLoaded, setMobileImageLoaded] = useState(false);
+  const [showMobileBadges, setShowMobileBadges] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) { setShowMobileImage(true); setShowMobileBadges(true); return; }
+    // Wait for first paint, then load image + badges.
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setShowMobileImage(true);
+        // Badges are below the primary CTA — push further out.
+        const t = window.setTimeout(() => setShowMobileBadges(true), 600);
+        return () => clearTimeout(t);
+      });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isMobile]);
 
   useEffect(() => {
     supabase.from("site_content").select("value").eq("key", "hero").single().then(({ data }) => {
@@ -67,10 +96,18 @@ const HeroSection = () => {
   }, [videoEnabled]);
 
   return (
-    <section className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]">
-      <picture>
-        <source media="(max-width: 767px)" srcSet="/hero-bg-mobile.webp" type="image/webp" />
-        <source media="(min-width: 768px)" srcSet="/hero-bg.webp" type="image/webp" />
+    <section
+      className="relative overflow-hidden min-h-[600px] lg:min-h-[700px]"
+      style={{
+        // Lightweight gradient backdrop — paints instantly on mobile while the
+        // hero image is deferred. Desktop covers this with the <img> below.
+        background:
+          "linear-gradient(135deg, hsl(199 89% 22%) 0%, hsl(210 60% 14%) 55%, hsl(220 30% 8%) 100%)",
+      }}
+    >
+      {/* Desktop: image is preloaded and rendered immediately. Mobile: rendered
+          after first paint and faded in, so it never wins LCP. */}
+      {!isMobile ? (
         <img
           src="/hero-bg.webp"
           alt=""
@@ -81,7 +118,19 @@ const HeroSection = () => {
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
-      </picture>
+      ) : showMobileImage ? (
+        <img
+          src="/hero-bg-mobile.webp"
+          alt=""
+          width={800}
+          height={600}
+          loading="lazy"
+          {...({ fetchpriority: "low" } as { fetchpriority: string })}
+          decoding="async"
+          onLoad={() => setMobileImageLoaded(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${mobileImageLoaded ? "opacity-100" : "opacity-0"}`}
+        />
+      ) : null}
       {showVideo && (
         <video
           autoPlay
@@ -127,7 +176,7 @@ const HeroSection = () => {
             </div>
           </motion.div>
 
-          {hero.features.length > 0 && (
+          {hero.features.length > 0 && (!isMobile || showMobileBadges) && (
             <motion.div
               className="mt-14 flex flex-wrap gap-8"
               initial={{ opacity: 0.01, y: 30 }}
