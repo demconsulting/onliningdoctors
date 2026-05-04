@@ -101,7 +101,7 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
         {/* Price */}
         {doctor.consultation_fee != null && (
           <div className="rounded-lg bg-accent/50 px-3 py-2 text-center">
-            <span className="text-xs text-muted-foreground">Consultation from </span>
+            <span className="text-xs text-muted-foreground">Consultation fee </span>
             <span className="text-lg font-bold text-foreground">{currencySymbol}{Number(doctor.consultation_fee).toFixed(0)}</span>
           </div>
         )}
