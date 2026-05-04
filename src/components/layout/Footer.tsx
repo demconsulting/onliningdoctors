@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import logoSrc from "@/assets/logo.png";
 import { Link } from "react-router-dom";
 import { Stethoscope, Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

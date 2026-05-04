@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
+import logoSrc from "@/assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Stethoscope } from "lucide-react";
