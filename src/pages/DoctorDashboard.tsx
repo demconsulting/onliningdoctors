@@ -14,6 +14,7 @@ import DoctorAppointments from "@/components/doctor/DoctorAppointments";
 const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
 const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
 const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
+import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-12" role="status" aria-label="Loading">
@@ -100,6 +101,8 @@ const DoctorDashboard = () => {
           <h1 className="font-display text-3xl font-bold text-foreground">Doctor Dashboard</h1>
           <p className="text-muted-foreground">Manage your practice, {user.user_metadata?.full_name || user.email}</p>
         </div>
+
+        <PracticeDashboardCard userId={user.id} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 lg:w-auto">

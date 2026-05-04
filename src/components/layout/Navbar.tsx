@@ -79,6 +79,9 @@ const Navbar = () => {
               {isAdmin && (
                 <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>Admin</Button>
               )}
+              {isDoctor && (
+                <Button variant="ghost" size="sm" onClick={() => navigate("/practice/team")}>Practice</Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
                 {dashboardLabel}
               </Button>
