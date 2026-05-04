@@ -53,8 +53,8 @@ const DeferredChatWidget = () => {
     const events: Array<keyof WindowEventMap> = ["pointerdown", "keydown", "scroll", "touchstart"];
     events.forEach((e) => window.addEventListener(e, trigger, { once: true, passive: true }));
     const id = typeof win.requestIdleCallback === "function"
-      ? win.requestIdleCallback(trigger, { timeout: 5000 })
-      : window.setTimeout(trigger, 5000);
+      ? win.requestIdleCallback(trigger, { timeout: 8000 })
+      : window.setTimeout(trigger, 8000);
     return () => {
       cancelled = true;
       events.forEach((e) => window.removeEventListener(e, trigger));
