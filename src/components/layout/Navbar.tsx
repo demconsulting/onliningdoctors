@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
+import logoSrc from "@/assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Stethoscope } from "lucide-react";
@@ -50,13 +51,14 @@ const Navbar = () => {
     <>
     <nav className="fixed inset-x-0 top-0 z-50 border-b border-border bg-card/80 backdrop-blur-lg">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary">
-            <Stethoscope className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Doctors Onlining
-          </span>
+        <Link to="/" className="flex items-center" aria-label="Doctors Onlining home">
+          <img
+            src={logoSrc}
+            alt="Doctors Onlining"
+            className="h-10 w-auto select-none md:h-12"
+            loading="eager"
+            decoding="async"
+          />
         </Link>
 
         {/* Desktop nav */}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoSrc from "@/assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyAuthError } from "@/lib/authErrors";
@@ -44,9 +45,7 @@ const Login = () => {
       <main className="flex flex-1 items-center justify-center px-4 py-16">
         <Card className="w-full max-w-md border-border">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl gradient-primary">
-              <Stethoscope className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={logoSrc} alt="Doctors Onlining" className="mx-auto mb-3 h-14 w-auto select-none" />
             <CardTitle className="font-display text-2xl">Welcome back</CardTitle>
             <CardDescription>Log in to your Doctors Onlining account</CardDescription>
           </CardHeader>
