@@ -119,12 +119,12 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
         {/* Action Buttons */}
         <div className="flex gap-2 pt-1">
           <Button asChild className="flex-1 gradient-primary border-0 text-primary-foreground shadow-md shadow-primary/10" size="default">
-            <Link to={`/doctors/${doctor.profile_id}`}>
-              {isAvailable ? "Start Consultation" : "Book Appointment"}
+            <Link to={`/login?redirect=/doctors/${doctor.profile_id}`}>
+              Booking
             </Link>
           </Button>
           <Button asChild variant="outline" size="default">
-            <Link to={`/doctors/${doctor.profile_id}`}>View Profile</Link>
+            <Link to={`/doctors/${doctor.profile_id}`}>Bio</Link>
           </Button>
         </div>
       </CardContent>
