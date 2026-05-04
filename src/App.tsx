@@ -16,6 +16,9 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const DoctorSignup = lazy(() => import("./pages/DoctorSignup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const EmailConfirmed = lazy(() => import("./pages/EmailConfirmed"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const DoctorDashboard = lazy(() => import("./pages/DoctorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -79,9 +82,13 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signin" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/signup/doctor" element={<DoctorSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/email-confirmed" element={<EmailConfirmed />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
