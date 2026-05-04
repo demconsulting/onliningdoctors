@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useBranding } from "@/hooks/useBranding";
 import { Link } from "react-router-dom";
-import { Stethoscope, Shield, AlertCircle } from "lucide-react";
+import { Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface FooterContent {
