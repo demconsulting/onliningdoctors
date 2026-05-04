@@ -41,8 +41,6 @@ const HeroSection = () => {
   const [isMobile, setIsMobile] = useState<boolean>(() =>
     typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
   );
-  const [showMobileImage, setShowMobileImage] = useState(false);
-  const [mobileImageLoaded, setMobileImageLoaded] = useState(false);
   const [showMobileBadges, setShowMobileBadges] = useState(false);
 
   useEffect(() => {
@@ -53,13 +51,11 @@ const HeroSection = () => {
   }, []);
 
   useEffect(() => {
-    if (!isMobile) { setShowMobileImage(true); setShowMobileBadges(true); return; }
-    // Wait for first paint, then load image + badges.
+    if (!isMobile) { setShowMobileBadges(true); return; }
+    // Mobile: no hero image at all. Defer feature badges below the fold.
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        setShowMobileImage(true);
-        // Badges are below the primary CTA — push further out.
-        const t = window.setTimeout(() => setShowMobileBadges(true), 600);
+        const t = window.setTimeout(() => setShowMobileBadges(true), 800);
         return () => clearTimeout(t);
       });
     });
