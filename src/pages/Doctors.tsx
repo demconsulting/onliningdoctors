@@ -131,8 +131,28 @@ const Doctors = () => {
           ) : filtered.length === 0 ? (
             <div className="py-20 text-center">
               <Stethoscope className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
-              <p className="text-lg font-medium text-foreground">No doctors found</p>
-              <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
+              <p className="text-lg font-medium text-foreground">
+                {doctors.length === 0 ? "No doctors available yet" : "No doctors match your filters"}
+              </p>
+              <p className="mb-4 text-sm text-muted-foreground">
+                {doctors.length === 0
+                  ? "Please check back soon — new doctors are joining regularly."
+                  : `${doctors.length} doctor${doctors.length !== 1 ? "s are" : " is"} available. Clear your filters to see ${doctors.length !== 1 ? "them" : "them"}.`}
+              </p>
+              {doctors.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setSelectedSpecialty("all");
+                    setSelectedCountry("all");
+                    setAvailableOnly(false);
+                  }}
+                  className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           ) : (
             <>
