@@ -125,7 +125,7 @@ const Index = () => {
         {heroVisible && <HeroSection />}
         {belowKeys.length > 0 && <DeferredBelowTheFold keys={belowKeys} />}
       </main>
-      <Footer />
+      <Suspense fallback={null}><Footer /></Suspense>
     </div>
   );
 };
