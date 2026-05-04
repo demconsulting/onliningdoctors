@@ -73,7 +73,17 @@ const PracticeSetup = () => {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("practices").insert([{ ...parsed.data, owner_id: user.id }]);
+    const d = parsed.data;
+    const { error } = await supabase.from("practices").insert([{
+      practice_name: d.practice_name,
+      practice_number: d.practice_number,
+      owner_doctor_name: d.owner_doctor_name,
+      owner_hpcsa_number: d.owner_hpcsa_number,
+      email: d.email,
+      phone: d.phone,
+      address: d.address,
+      owner_id: user.id,
+    }]);
     setSubmitting(false);
     if (error) {
       toast.error(error.message);
