@@ -384,9 +384,24 @@ serve(async (req) => {
       // amount before confirming.
       const { data: existingPayment } = await serviceClient
         .from("payments")
-        .select("appointment_id, amount")
+        .select("appointment_id, amount, patient_id")
         .eq("paystack_reference", reference)
         .maybeSingle();
+
+      if (!existingPayment) {
+        return new Response(
+          JSON.stringify({ error: "Payment not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // SECURITY: Only the patient who owns the payment can verify it.
+      if (existingPayment.patient_id !== user.id) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       const paidAmount = (txData.amount ?? 0) / 100;
       const amountMatches =
