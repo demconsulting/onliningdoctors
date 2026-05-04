@@ -258,6 +258,47 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_email_log: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          email_type: string
+          error: string | null
+          id: string
+          recipient: string
+          resend_id: string | null
+          status: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          email_type: string
+          error?: string | null
+          id?: string
+          recipient: string
+          resend_id?: string | null
+          status?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          email_type?: string
+          error?: string | null
+          id?: string
+          recipient?: string
+          resend_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_email_log_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultation_categories: {
         Row: {
           created_at: string

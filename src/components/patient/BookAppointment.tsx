@@ -347,6 +347,11 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       }
     }
 
+    // Send confirmation emails (free / no-payment bookings)
+    supabase.functions.invoke("send-booking-email", {
+      body: { appointment_id: apptData.id, kind: "booking_confirmation" },
+    }).catch((err) => console.error("Email send failed:", err));
+
     setLoading(false);
     toast({ title: "Appointment booked!", description: `With ${selectedDoc?.profile?.full_name || "doctor"} on ${dateStr}` });
     setSelectedDoctor("");

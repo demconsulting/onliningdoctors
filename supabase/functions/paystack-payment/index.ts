@@ -140,6 +140,10 @@ serve(async (req) => {
             .update({ status: "confirmed" })
             .eq("id", existingPayment.appointment_id)
             .eq("status", "awaiting_payment");
+
+          serviceClient.functions.invoke("send-booking-email", {
+            body: { appointment_id: existingPayment.appointment_id, kind: "booking_confirmation" },
+          }).catch((e) => console.error("booking email invoke failed", e));
         }
 
         console.log("Payment updated for reference:", reference);
@@ -430,6 +434,10 @@ serve(async (req) => {
           .update({ status: "confirmed" })
           .eq("id", paymentRows[0].appointment_id)
           .eq("status", "awaiting_payment");
+
+        serviceClient.functions.invoke("send-booking-email", {
+          body: { appointment_id: paymentRows[0].appointment_id, kind: "booking_confirmation" },
+        }).catch((e) => console.error("booking email invoke failed", e));
       }
 
       return new Response(
