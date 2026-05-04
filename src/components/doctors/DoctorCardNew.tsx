@@ -17,7 +17,7 @@ interface Doctor {
   title: string | null;
   languages: string[] | null;
   hospital_affiliation: string | null;
-  license_number: string | null;
+  license_number?: string | null;
   profile: { full_name: string | null; avatar_url: string | null; city: string | null; country: string | null } | null;
   specialty: { name: string; icon: string | null } | null;
 }
