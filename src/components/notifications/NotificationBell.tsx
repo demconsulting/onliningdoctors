@@ -37,7 +37,7 @@ const NotificationBell = () => {
       if (!session) return;
 
       const channel = supabase
-        .channel("notifications-realtime")
+        .channel(`notifications-${session.user.id}`)
         .on(
           "postgres_changes",
           {
