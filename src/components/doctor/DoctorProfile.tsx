@@ -132,11 +132,12 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       ...profile,
       date_of_birth: profile.date_of_birth || null,
     };
+    // Exclude consultation_fee — it's managed in the Pricing tab and would
+    // otherwise be overwritten with the stale value loaded at mount.
+    const { consultation_fee: _ignoredFee, ...doctorPayload } = doctor;
     const [profileRes, doctorRes] = await Promise.all([
       supabase.from("profiles").update(profilePayload).eq("id", user.id),
-      supabase.from("doctors").update({
-        ...doctor,
-      } as any).eq("profile_id", user.id),
+      supabase.from("doctors").update(doctorPayload as any).eq("profile_id", user.id),
     ]);
 
     setSaving(false);
