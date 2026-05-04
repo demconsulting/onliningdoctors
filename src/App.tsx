@@ -32,6 +32,9 @@ const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
 const Doctors = lazy(() => import("./pages/Doctors"));
 const DoctorDetail = lazy(() => import("./pages/DoctorDetail"));
 const DependentInvite = lazy(() => import("./pages/DependentInvite"));
+const PracticeSetup = lazy(() => import("./pages/PracticeSetup"));
+const PracticeTeam = lazy(() => import("./pages/PracticeTeam"));
+const PracticeSettings = lazy(() => import("./pages/PracticeSettings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -102,6 +105,9 @@ const App = () => (
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             <Route path="/dependent-invite" element={<DependentInvite />} />
+            <Route path="/practice/setup" element={<PracticeSetup />} />
+            <Route path="/practice/team" element={<PracticeTeam />} />
+            <Route path="/practice/settings" element={<PracticeSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
