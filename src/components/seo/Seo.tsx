@@ -10,7 +10,8 @@ interface SeoProps {
 
 const SITE_NAME = "Doctors Onlining";
 const SITE_URL = "https://doctorsonlining.com";
-const DEFAULT_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cc0c1d02-8799-460c-b6d9-f7a1c059cfe4/id-preview-17a6bbd2--727c4868-8e40-4bbb-94cb-b9a28a54c514.lovable.app-1772383313363.png";
+const DEFAULT_IMAGE =
+  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/cc0c1d02-8799-460c-b6d9-f7a1c059cfe4/id-preview-17a6bbd2--727c4868-8e40-4bbb-94cb-b9a28a54c514.lovable.app-1772383313363.png";
 
 const upsertMeta = (selector: string, attributes: Record<string, string>) => {
   let element = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -42,6 +43,17 @@ const Seo = ({ title, description, path, image = DEFAULT_IMAGE, noIndex = false 
     const canonicalUrl = `${SITE_URL}${path}`;
     document.title = title;
     upsertLink("canonical", canonicalUrl);
+    upsertLink("icon", "/favicon.ico", { sizes: "any" });
+
+    upsertLink("icon", "/favicon-48x48.png", {
+      type: "image/png",
+      sizes: "48x48",
+    });
+
+    upsertLink("icon", "/favicon-32x32.png", {
+      type: "image/png",
+      sizes: "32x32",
+    });
 
     upsertMeta('meta[name="description"]', { name: "description", content: description });
     upsertMeta('meta[name="robots"]', { name: "robots", content: noIndex ? "noindex, nofollow" : "index, follow" });
