@@ -26,8 +26,12 @@ const upsertMeta = (selector: string, attributes: Record<string, string>) => {
   });
 };
 
-const upsertLink = (rel: string, href: string) => {
-  let element = document.head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+const upsertLink = (rel: string, href: string, attrs: Record<string, string> = {}) => {
+  const sizes = attrs.sizes;
+  const selector = sizes
+    ? `link[rel="${rel}"][sizes="${sizes}"]`
+    : `link[rel="${rel}"]:not([sizes])`;
+  let element = document.head.querySelector(selector) as HTMLLinkElement | null;
 
   if (!element) {
     element = document.createElement("link");
@@ -36,6 +40,7 @@ const upsertLink = (rel: string, href: string) => {
   }
 
   element.href = href;
+  Object.entries(attrs).forEach(([k, v]) => element?.setAttribute(k, v));
 };
 
 const Seo = ({ title, description, path, image = DEFAULT_IMAGE, noIndex = false }: SeoProps) => {
