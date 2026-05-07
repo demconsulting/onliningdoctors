@@ -66,6 +66,7 @@ const Navbar = () => {
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">
           <Link to="/doctors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Find Doctors</Link>
+          <Link to="/wellness-plus" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Wellness+</Link>
           <a href="/#how-it-works" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">How It Works</a>
           <a href="/#for-doctors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">For Doctors</a>
         </div>
@@ -113,6 +114,7 @@ const Navbar = () => {
         <div id="mobile-menu" className="border-t border-border bg-card p-4 md:hidden">
           <div className="flex flex-col gap-3">
             <Link to="/doctors" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Find Doctors</Link>
+            <Link to="/wellness-plus" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Wellness+</Link>
             <a href="/#how-it-works" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>How It Works</a>
             <a href="/#for-doctors" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>For Doctors</a>
             <div className="flex gap-2 pt-2">

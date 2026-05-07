@@ -35,6 +35,7 @@ const DependentInvite = lazy(() => import("./pages/DependentInvite"));
 const PracticeSetup = lazy(() => import("./pages/PracticeSetup"));
 const PracticeTeam = lazy(() => import("./pages/PracticeTeam"));
 const PracticeSettings = lazy(() => import("./pages/PracticeSettings"));
+const WellnessPlus = lazy(() => import("./pages/WellnessPlus"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/practice/setup" element={<PracticeSetup />} />
             <Route path="/practice/team" element={<PracticeTeam />} />
             <Route path="/practice/settings" element={<PracticeSettings />} />
+            <Route path="/wellness-plus" element={<WellnessPlus />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
