@@ -75,8 +75,8 @@ const DoctorDetail = () => {
     const fetch = async () => {
       const [docRes, availRes, tierRes] = await Promise.all([
         supabase
-          .from("doctors")
-          .select("id, profile_id, specialty_id, title, bio, experience_years, consultation_fee, rating, total_reviews, is_available, languages, education, hospital_affiliation, is_verified, is_suspended, practice_name, practice_logo_url, consultation_category_id, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
+          .from("public_doctors" as any)
+          .select("*, specialty:specialty_id(name, icon)")
           .eq("profile_id", id)
           .maybeSingle(),
         supabase
@@ -93,10 +93,7 @@ const DoctorDetail = () => {
       ]);
       if (docRes.data) {
         const doc = docRes.data as any;
-        if (doc.is_suspended || !doc.is_verified) {
-          setLoading(false);
-          return;
-        }
+        doc.profile = { full_name: doc.full_name, avatar_url: doc.avatar_url, city: doc.city, country: doc.country };
         setDoctor(doc as unknown as DoctorData);
 
         // Fetch consultation category if set

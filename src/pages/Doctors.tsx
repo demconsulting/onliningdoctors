@@ -35,14 +35,18 @@ const Doctors = () => {
     const fetchData = async () => {
       const [docRes, specRes] = await Promise.all([
         supabase
-          .from("doctors")
-          .select("id, profile_id, specialty_id, title, bio, experience_years, consultation_fee, rating, total_reviews, is_available, languages, education, hospital_affiliation, is_verified, is_suspended, practice_name, practice_logo_url, consultation_category_id, profile:profile_id(full_name, avatar_url, city, country), specialty:specialty_id(name, icon)")
-          .eq("is_verified", true)
-          .eq("is_suspended", false)
+          .from("public_doctors" as any)
+          .select("*, specialty:specialty_id(name, icon)")
           .order("rating", { ascending: false }),
         supabase.from("specialties").select("*").order("name"),
       ]);
-      if (docRes.data) setDoctors(docRes.data as Doctor[]);
+      if (docRes.data) {
+        const mapped = (docRes.data as any[]).map((d) => ({
+          ...d,
+          profile: { full_name: d.full_name, avatar_url: d.avatar_url, city: d.city, country: d.country },
+        }));
+        setDoctors(mapped as Doctor[]);
+      }
       if (specRes.data) setSpecialties(specRes.data);
       setLoading(false);
     };
