@@ -121,6 +121,9 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground space-y-2">
           <p>Physical Address: {content.address}</p>
           <p>© {new Date().getFullYear()} {content.copyright}</p>
+          <p className="pt-1 text-xs tracking-wide text-muted-foreground/70">
+            Powered by <span className="font-medium text-foreground/70">OnliningHealth</span>
+          </p>
         </div>
       </div>
     </footer>

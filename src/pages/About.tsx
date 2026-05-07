@@ -34,6 +34,9 @@ const About = () => {
                 <p className="text-muted-foreground leading-relaxed">
                   Doctors Onlining is a video consultation platform that connects patients with qualified doctors for non-emergency medical care. We make it simple to book appointments, share medical documents, and conduct secure video consultations — all from the comfort of your home.
                 </p>
+                <p className="mt-3 text-sm text-muted-foreground/80 leading-relaxed">
+                  Doctors Onlining is part of the <span className="font-medium text-foreground/80">OnliningHealth</span> digital healthcare ecosystem — focused on accessible healthcare, wellness, and digital health innovation.
+                </p>
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
