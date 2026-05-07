@@ -1812,7 +1812,55 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_doctors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          city: string | null
+          consultation_category_id: string | null
+          consultation_fee: number | null
+          country: string | null
+          education: string | null
+          experience_years: number | null
+          full_name: string | null
+          hospital_affiliation: string | null
+          id: string | null
+          is_available: boolean | null
+          is_suspended: boolean | null
+          is_verified: boolean | null
+          languages: string[] | null
+          practice_logo_url: string | null
+          practice_name: string | null
+          profile_id: string | null
+          rating: number | null
+          specialty_id: string | null
+          title: string | null
+          total_reviews: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_consultation_category_id_fkey"
+            columns: ["consultation_category_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_specialty_id_fkey"
+            columns: ["specialty_id"]
+            isOneToOne: false
+            referencedRelation: "specialties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       expire_stale_payments: { Args: never; Returns: undefined }
