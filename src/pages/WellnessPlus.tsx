@@ -55,6 +55,9 @@ const WellnessPlus = () => {
               <p className="mt-4 text-lg text-muted-foreground md:text-xl">
                 Healthy living guidance, nutrition tips, exercises, and wellness tools — coming soon.
               </p>
+              <p className="mt-3 text-xs uppercase tracking-widest text-muted-foreground/70">
+                Part of the OnliningHealth wellness ecosystem
+              </p>
             </div>
           </div>
         </section>
