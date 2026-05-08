@@ -11,12 +11,26 @@ import { Stethoscope, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 
+// Warm dashboard bundles in the background as soon as the login page mounts,
+// so post-login navigation doesn't wait on a network round-trip for the chunk.
+const prefetchDashboards = () => {
+  import("./Dashboard");
+  import("./DoctorDashboard");
+  import("./AdminDashboard");
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const win = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (typeof win.requestIdleCallback === "function") win.requestIdleCallback(prefetchDashboards);
+    else setTimeout(prefetchDashboards, 300);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,17 +41,19 @@ const Login = () => {
       toast({ variant: "destructive", title: "Sign in failed", description: friendlyAuthError(error.message) });
       return;
     }
-    // Check if user is a doctor and redirect accordingly
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.user.id);
+    // Resolve role + admin status in parallel and route accordingly.
+    const [{ data: roles }, { data: adminRoles }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", data.user.id),
+      supabase.from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "admin"),
+    ]);
     setLoading(false);
+    if (adminRoles && adminRoles.length > 0) { navigate("/admin"); return; }
     const isDoctor = roles?.some(r => r.role === "doctor");
     navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
   };
 
   const handleForgotPassword = () => navigate("/forgot-password");
+
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
