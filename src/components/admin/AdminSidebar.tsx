@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { prefetchAdminSection } from "@/pages/AdminDashboard";
 import {
@@ -32,6 +32,7 @@ const items = [
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Consultation Categories", key: "consultation-categories", icon: Tag },
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
+  { title: "Financial Settings", key: "financial-settings", icon: DollarSign },
   { title: "Payments", key: "payments", icon: Receipt },
   { title: "Payouts", key: "payouts", icon: Wallet },
   { title: "Countries", key: "countries", icon: Globe },

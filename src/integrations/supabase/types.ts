@@ -765,6 +765,7 @@ export type Database = {
           created_at: string
           education: string | null
           experience_years: number | null
+          fee_settings_id: string | null
           hospital_affiliation: string | null
           id: string
           is_available: boolean | null
@@ -794,6 +795,7 @@ export type Database = {
           created_at?: string
           education?: string | null
           experience_years?: number | null
+          fee_settings_id?: string | null
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
@@ -823,6 +825,7 @@ export type Database = {
           created_at?: string
           education?: string | null
           experience_years?: number | null
+          fee_settings_id?: string | null
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
@@ -850,6 +853,13 @@ export type Database = {
             columns: ["consultation_category_id"]
             isOneToOne: false
             referencedRelation: "consultation_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_fee_settings_id_fkey"
+            columns: ["fee_settings_id"]
+            isOneToOne: false
+            referencedRelation: "platform_fee_settings"
             referencedColumns: ["id"]
           },
           {
@@ -1361,6 +1371,63 @@ export type Database = {
           processed_by?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_fee_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          fee_bearer: string
+          fixed_transaction_fee: number
+          id: string
+          is_active: boolean
+          is_default: boolean
+          minimum_payout: number
+          name: string
+          payout_schedule: string
+          platform_fee_percent: number
+          processing_fee_fixed: number
+          processing_fee_percent: number
+          updated_at: string
+          vat_enabled: boolean
+          vat_percent: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fee_bearer?: string
+          fixed_transaction_fee?: number
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          minimum_payout?: number
+          name: string
+          payout_schedule?: string
+          platform_fee_percent?: number
+          processing_fee_fixed?: number
+          processing_fee_percent?: number
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_percent?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fee_bearer?: string
+          fixed_transaction_fee?: number
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          minimum_payout?: number
+          name?: string
+          payout_schedule?: string
+          platform_fee_percent?: number
+          processing_fee_fixed?: number
+          processing_fee_percent?: number
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_percent?: number
         }
         Relationships: []
       }

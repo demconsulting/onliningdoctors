@@ -19,6 +19,7 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { format, getDay, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { resolveFeeSettings, calculateFees, type FeeSettings } from "@/lib/feeCalculator";
 
 interface BookAppointmentProps {
   user: User;
@@ -219,6 +220,12 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     supabase.from("doctor_pricing_tiers").select("*").eq("doctor_id", selectedDoctor).eq("is_active", true)
       .then(({ data }) => setDoctorTiers(data || []));
     setPaymentMethodType("card");
+  }, [selectedDoctor]);
+
+  const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
+  useEffect(() => {
+    if (!selectedDoctor) { setFeeSettings(null); return; }
+    resolveFeeSettings(selectedDoctor).then(setFeeSettings);
   }, [selectedDoctor]);
 
   const activeTier = useMemo(() => {
@@ -674,9 +681,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                 const docCountry = selectedDoc?.profile?.country || "";
                 const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
                 const fee = activeTier ? Number(activeTier.price) : (selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0);
-                const platform = +(fee * 0.10).toFixed(2);
-                const processing = 5.50;
-                const doctorNet = +(fee - platform - processing).toFixed(2);
+                const fb = feeSettings ? calculateFees(fee, feeSettings) : null;
                 return (
                   <div className="space-y-3">
                     <Label>Payment Method *</Label>
@@ -693,21 +698,41 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                       </button>
                     </div>
 
-                    {fee > 0 && (
+                    {fee > 0 && fb && (
                       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Consultation Fee ({paymentMethodType === "medical_aid" ? "Medical Aid" : "Private"})</span>
-                          <span className="font-semibold">{feeSymbol}{fee.toFixed(2)}</span>
+                          <span className="font-semibold">{feeSymbol}{fb.gross.toFixed(2)}</span>
                         </div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Platform fee (10%)</span><span>−{feeSymbol}{platform.toFixed(2)}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Processing fee</span><span>−{feeSymbol}{processing.toFixed(2)}</span>
-                        </div>
+                        {fb.platformFee > 0 && (
+                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Platform fee ({fb.settings.platform_fee_percent}%)</span><span>−{feeSymbol}{fb.platformFee.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {fb.processingFee > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Processing fee{fb.settings.processing_fee_percent ? ` (${fb.settings.processing_fee_percent}% + ${feeSymbol}${fb.settings.processing_fee_fixed})` : ""}</span><span>−{feeSymbol}{fb.processingFee.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {fb.fixedFee > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Transaction fee</span><span>−{feeSymbol}{fb.fixedFee.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {fb.vat > 0 && (
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>VAT ({fb.settings.vat_percent}%)</span><span>−{feeSymbol}{fb.vat.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {fb.settings.fee_bearer === "patient" && fb.totalFees > 0 && (
+                          <div className="mt-2 flex items-center justify-between border-t pt-2">
+                            <span className="text-xs text-muted-foreground">You pay</span>
+                            <span className="font-semibold">{feeSymbol}{fb.patientPays.toFixed(2)}</span>
+                          </div>
+                        )}
                         <div className="mt-2 flex items-center justify-between border-t pt-2">
                           <span className="text-xs text-muted-foreground">Doctor receives</span>
-                          <span className="font-semibold text-primary">{feeSymbol}{doctorNet.toFixed(2)}</span>
+                          <span className="font-semibold text-primary">{feeSymbol}{fb.doctorNet.toFixed(2)}</span>
                         </div>
                       </div>
                     )}

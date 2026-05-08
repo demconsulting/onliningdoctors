@@ -33,6 +33,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "countries": () => import("@/components/admin/AdminCountries"),
   "legal-documents": () => import("@/components/admin/AdminLegalDocuments"),
   "consultation-categories": () => import("@/components/admin/AdminConsultationCategories"),
+  "financial-settings": () => import("@/components/admin/AdminFinancialSettings"),
 };
 
 export const prefetchAdminSection = (key: string) => { loaders[key]?.(); };
@@ -62,6 +63,7 @@ const AdminAIAssistant = lazy(loaders["ai-assistant"]);
 const AdminCountries = lazy(loaders["countries"]);
 const AdminLegalDocuments = lazy(loaders["legal-documents"]);
 const AdminConsultationCategories = lazy(loaders["consultation-categories"]);
+const AdminFinancialSettings = lazy(loaders["financial-settings"]);
 
 const SectionFallback = () => (
   <div className="flex justify-center py-10" role="status" aria-label="Loading admin section">
@@ -124,6 +126,7 @@ const AdminDashboard = () => {
       case "faqs": return <AdminFaqs />;
       case "consultation-categories": return <AdminConsultationCategories />;
       case "payment-config": return <AdminPaymentConfig />;
+      case "financial-settings": return <AdminFinancialSettings />;
       case "payments": return <AdminPayments />;
       case "payouts": return <AdminPayouts />;
       case "countries": return <AdminCountries />;

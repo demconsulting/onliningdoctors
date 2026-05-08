@@ -22,14 +22,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
+import { resolveFeeSettings, calculateFees, type FeeSettings } from "@/lib/feeCalculator";
 
 interface Props {
   user: User;
   doctorCountry?: string | null;
 }
-
-const PLATFORM_FEE_PCT = 10; // 10% platform commission for wallet display
-const PROCESSING_FEE_FLAT = 5.5; // flat processing fee approximation
 
 type TxStatus = "pending" | "processing" | "paid" | "failed" | "refunded";
 
@@ -99,17 +97,22 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
       setAutoWeekly(!!(doctorRes.data as any)?.auto_weekly_payout);
       setHasBilling(!!billRes.data);
       setPayouts(payoutRes.data || []);
+      const fs = await resolveFeeSettings(user.id);
+      setFeeSettings(fs);
       setLoading(false);
     })();
   }, [user.id]);
+
+  const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
 
   // Build transaction rows w/ fee breakdown
   const transactions = useMemo(() => {
     return payments.map(p => {
       const status = mapStatus(p);
       const gross = Number(p.amount) || 0;
-      const platformFee = +(gross * (PLATFORM_FEE_PCT / 100)).toFixed(2);
-      const processingFee = status === "paid" ? (Number(p.fee_amount) || PROCESSING_FEE_FLAT) : 0;
+      const fb = feeSettings ? calculateFees(gross, feeSettings) : { platformFee: 0, processingFee: 0, doctorNet: gross };
+      const platformFee = fb.platformFee;
+      const processingFee = status === "paid" ? (Number(p.fee_amount) || fb.processingFee) : 0;
       const net = +(gross - platformFee - processingFee).toFixed(2);
       return {
         id: p.id,
@@ -122,7 +125,7 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
         appointment_id: p.appointment_id,
       };
     });
-  }, [payments]);
+  }, [payments, feeSettings]);
 
   const filtered = transactions.filter(t =>
     (filterStatus === "all" || t.status === filterStatus) &&
@@ -278,27 +281,36 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard icon={<Clock className="h-5 w-5" />} label="Pending Balance" value={fmt(summary.pending)} hint="Awaiting completion" />
         <SummaryCard icon={<TrendingUp className="h-5 w-5" />} label="Total Earnings" value={fmt(summary.total)} hint="Lifetime net" />
-        <SummaryCard icon={<Percent className="h-5 w-5" />} label="Total Platform Fees" value={fmt(summary.platform)} hint={`${PLATFORM_FEE_PCT}% per consultation`} />
+        <SummaryCard icon={<Percent className="h-5 w-5" />} label="Total Platform Fees" value={fmt(summary.platform)} hint={`${feeSettings?.platform_fee_percent ?? 0}% per consultation`} />
         <SummaryCard icon={<Landmark className="h-5 w-5" />} label="Total Withdrawn" value={fmt(summary.withdrawn)} hint={`${payouts.filter(p => p.status === "paid").length} payouts`} />
       </div>
 
       {/* Fee transparency */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4 text-primary" /> How your earnings are calculated</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-4 text-sm">
-            <FeeRow label="Consultation Fee" value="100%" tone="default" />
-            <FeeRow label="Platform Fee" value={`− ${PLATFORM_FEE_PCT}%`} tone="warn" />
-            <FeeRow label="Processing Fee" value={`− ~${symbol}${PROCESSING_FEE_FLAT.toFixed(2)}`} tone="warn" />
-            <FeeRow label="You Receive" value={`= ~${(100 - PLATFORM_FEE_PCT)}%`} tone="good" />
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground flex items-start gap-1.5">
-            <Info className="h-3 w-3 mt-0.5 shrink-0" /> Example: a {symbol}297 consultation → platform {fmt(29.70)}, processing {fmt(5.50)}, you receive {fmt(297 - 29.70 - 5.50)}.
-          </p>
-        </CardContent>
-      </Card>
+      {feeSettings && (() => {
+        const ex = calculateFees(297, feeSettings);
+        const pf = feeSettings.platform_fee_percent;
+        const procLabel = feeSettings.processing_fee_percent
+          ? `− ${feeSettings.processing_fee_percent}% + ${symbol}${feeSettings.processing_fee_fixed.toFixed(2)}`
+          : `− ${symbol}${feeSettings.processing_fee_fixed.toFixed(2)}`;
+        return (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4 text-primary" /> How your earnings are calculated</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-4 text-sm">
+                <FeeRow label="Consultation Fee" value="100%" tone="default" />
+                <FeeRow label="Platform Fee" value={`− ${pf}%`} tone="warn" />
+                <FeeRow label="Processing Fee" value={procLabel} tone="warn" />
+                <FeeRow label="You Receive" value={fmt(ex.doctorNet) + " of " + fmt(297)} tone="good" />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground flex items-start gap-1.5">
+                <Info className="h-3 w-3 mt-0.5 shrink-0" /> Example: a {symbol}297 consultation → platform {fmt(ex.platformFee)}, processing {fmt(ex.processingFee)}{ex.vat ? `, VAT ${fmt(ex.vat)}` : ""}, you receive {fmt(ex.doctorNet)}.
+              </p>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Chart */}
       <Card>
