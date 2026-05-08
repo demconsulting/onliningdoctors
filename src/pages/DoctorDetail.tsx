@@ -377,7 +377,7 @@ const DoctorDetail = () => {
             </Card>
 
             {/* Book CTA */}
-            <Link to="/dashboard" className="block">
+            <Link to={`/dashboard?tab=book&doctor=${doctor.profile_id}`} className="block">
               <Button className="w-full gap-2 gradient-primary border-0 text-primary-foreground shadow-lg" size="lg">
                 <CalendarPlus className="h-5 w-5" /> Book Appointment
               </Button>
