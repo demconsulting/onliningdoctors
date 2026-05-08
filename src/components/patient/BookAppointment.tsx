@@ -688,8 +688,9 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                 const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
                 const docCountry = selectedDoc?.profile?.country || "";
                 const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
-                const cardFee = (doctorTiers.find((t: any) => t.tier_type === "private") || doctorTiers[0])?.price
-                  ?? selectedDoc?.consultation_fee ?? 0;
+                const cardFee = selectedDoc?.consultation_fee
+                  ?? (doctorTiers.find((t: any) => t.tier_type === "private") || doctorTiers[0])?.price
+                  ?? 0;
                 const maidFee = activeMedicalAid?.approved_rate ?? null;
                 const maidCopay = activeMedicalAid?.copayment_amount ?? null;
                 return (
