@@ -39,24 +39,24 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
       .select("fee_settings_id")
       .eq("profile_id", doctorProfileId)
       .maybeSingle();
-    const overrideId = (doc as any)?.fee_settings_id;
+    const overrideId = doc?.fee_settings_id;
     if (overrideId) {
       const { data } = await supabase
-        .from("platform_fee_settings" as any)
+        .from("platform_fee_settings")
         .select("*")
         .eq("id", overrideId)
         .eq("is_active", true)
         .maybeSingle();
-      if (data) return data as unknown as FeeSettings;
+      if (data) return data as FeeSettings;
     }
   }
   const { data } = await supabase
-    .from("platform_fee_settings" as any)
+    .from("platform_fee_settings")
     .select("*")
     .eq("is_default", true)
     .eq("is_active", true)
     .maybeSingle();
-  return (data as unknown as FeeSettings) || null;
+  return (data as FeeSettings) || null;
 }
 
 /** Pure calculator — given a plan and gross amount, derive breakdown. */
