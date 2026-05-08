@@ -32,6 +32,7 @@ const items = [
   { title: "Contact Messages", key: "contacts", icon: Mail },
   { title: "Consultation Categories", key: "consultation-categories", icon: Tag },
   { title: "Payment Config", key: "payment-config", icon: CreditCard },
+  { title: "Financial Settings", key: "financial-settings", icon: DollarSign },
   { title: "Payments", key: "payments", icon: Receipt },
   { title: "Payouts", key: "payouts", icon: Wallet },
   { title: "Countries", key: "countries", icon: Globe },
