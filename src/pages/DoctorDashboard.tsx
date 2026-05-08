@@ -4,16 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp, BookTemplate, FileText } from "lucide-react";
+import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
 import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
-// Lazy-load Earnings — pulls in recharts (~100KB) and is only used on its own tab.
-const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
-const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
-const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
+import DoctorOverview from "@/components/doctor/DoctorOverview";
+// Lazy-load heavy / less-frequented tabs
+const DoctorBilling = lazy(() => import("@/components/doctor/DoctorBilling"));
+const DoctorWellnessPlus = lazy(() => import("@/components/doctor/DoctorWellnessPlus"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
