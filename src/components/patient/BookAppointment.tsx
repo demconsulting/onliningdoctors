@@ -146,6 +146,30 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     });
   }, []);
 
+  // Preselect doctor from query param: load their specialty, which will load doctors list
+  useEffect(() => {
+    if (!preselectDoctorId) return;
+    let cancelled = false;
+    supabase
+      .from("doctors")
+      .select("specialty_id")
+      .eq("profile_id", preselectDoctorId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data?.specialty_id) return;
+        setSelectedSpecialty(data.specialty_id);
+      });
+    return () => { cancelled = true; };
+  }, [preselectDoctorId]);
+
+  // Once doctors load and preselect is requested, select that doctor
+  useEffect(() => {
+    if (!preselectDoctorId || doctors.length === 0) return;
+    if (doctors.some(d => d.profile_id === preselectDoctorId)) {
+      setSelectedDoctor(preselectDoctorId);
+    }
+  }, [preselectDoctorId, doctors]);
+
   useEffect(() => {
     if (!selectedSpecialty) {
       setDoctors([]);
