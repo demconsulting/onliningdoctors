@@ -733,7 +733,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
               })()}
 
 
-              {loadingAvailability ? (
+              {paymentMethodType === "medical_aid" && !activeMedicalAid ? null : loadingAvailability ? (
                 <div className="flex items-center justify-center gap-2 py-6">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">Loading availability...</span>
