@@ -222,11 +222,9 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     setPaymentMethodType("card");
   }, [selectedDoctor]);
 
-  const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
-  useEffect(() => {
-    if (!selectedDoctor) { setFeeSettings(null); return; }
-    resolveFeeSettings(selectedDoctor).then(setFeeSettings);
-  }, [selectedDoctor]);
+  const [activeMedicalAid, setActiveMedicalAid] = useState<ActiveMedicalAidRequest | null>(null);
+  // Reset medical-aid state when doctor or method changes
+  useEffect(() => { setActiveMedicalAid(null); }, [selectedDoctor, paymentMethodType]);
 
   const activeTier = useMemo(() => {
     if (paymentMethodType === "medical_aid") {
