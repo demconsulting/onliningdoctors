@@ -160,6 +160,16 @@ const DoctorDashboard = () => {
               <DoctorWellnessPlus />
             </Suspense>
           </TabsContent>
+          {/* Advanced tools — accessible from the Dashboard overview */}
+          <TabsContent value="earnings">
+            <Suspense fallback={<TabFallback />}><DoctorEarnings user={user} doctorCountry={doctorCountry} /></Suspense>
+          </TabsContent>
+          <TabsContent value="prescriptions">
+            <Suspense fallback={<TabFallback />}><DoctorPrescriptions user={user} /></Suspense>
+          </TabsContent>
+          <TabsContent value="templates">
+            <Suspense fallback={<TabFallback />}><PrescriptionTemplates user={user} /></Suspense>
+          </TabsContent>
         </Tabs>
       </main>
       <Footer />
