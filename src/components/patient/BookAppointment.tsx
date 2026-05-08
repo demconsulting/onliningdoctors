@@ -668,31 +668,53 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
           {/* Step 3: Date & Time — availability-aware */}
           {selectedDoctor && (
             <>
-              {/* Category & Fee Summary */}
+              {/* Payment Method + Fee Breakdown */}
               {(() => {
                 const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
-                const cat = (selectedDoc as any)?.consultation_category;
-                const fee = selectedDoc?.consultation_fee;
                 const docCountry = selectedDoc?.profile?.country || "";
                 const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
-                if (cat && fee) {
-                  return (
-                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{cat.name}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{cat.description}</p>
+                const fee = activeTier ? Number(activeTier.price) : (selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0);
+                const platform = +(fee * 0.10).toFixed(2);
+                const processing = 5.50;
+                const doctorNet = +(fee - platform - processing).toFixed(2);
+                return (
+                  <div className="space-y-3">
+                    <Label>Payment Method *</Label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <button type="button" onClick={() => setPaymentMethodType("card")}
+                        className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "card" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
+                        <p className="font-semibold text-sm">Card Payment</p>
+                        <p className="text-xs text-muted-foreground">Pay now with card. Instant confirmation.</p>
+                      </button>
+                      <button type="button" onClick={() => setPaymentMethodType("medical_aid")}
+                        className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "medical_aid" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
+                        <p className="font-semibold text-sm">Medical Aid</p>
+                        <p className="text-xs text-muted-foreground">{hasMedicalAidTier ? "Use your medical aid; doctor handles the claim." : "Doctor hasn't enabled medical aid pricing — private rate applies."}</p>
+                      </button>
+                    </div>
+
+                    {fee > 0 && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Consultation Fee ({paymentMethodType === "medical_aid" ? "Medical Aid" : "Private"})</span>
+                          <span className="font-semibold">{feeSymbol}{fee.toFixed(2)}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-primary">{feeSymbol}{Number(fee).toFixed(0)}</p>
-                          <p className="text-[10px] text-muted-foreground">Consultation fee</p>
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Platform fee (10%)</span><span>−{feeSymbol}{platform.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Processing fee</span><span>−{feeSymbol}{processing.toFixed(2)}</span>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between border-t pt-2">
+                          <span className="text-xs text-muted-foreground">Doctor receives</span>
+                          <span className="font-semibold text-primary">{feeSymbol}{doctorNet.toFixed(2)}</span>
                         </div>
                       </div>
-                    </div>
-                  );
-                }
-                return null;
+                    )}
+                  </div>
+                );
               })()}
+
 
               {loadingAvailability ? (
                 <div className="flex items-center justify-center gap-2 py-6">
