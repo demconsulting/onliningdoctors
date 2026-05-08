@@ -1,91 +1,110 @@
-# Doctor Dashboard Redesign — Phase 1
+# Doctor Pricing, Wallet & Earnings System
 
-Goal: cut onboarding fatigue. Surface only what a doctor needs to start taking bookings; tuck the rest behind "Advanced Settings" and a profile-completion nudge.
+A Phase-1 fintech-grade pricing + wallet experience for doctors, with mobile-first UI, transparent fee breakdowns, and a future-ready schema.
 
-## 1. New navigation (DoctorDashboard.tsx)
+## 1. Pricing System (Multi-tier)
 
-Replace the current 7-tab strip with a cleaner tab set, mobile-first (horizontal scroll on small screens, sidebar feel on desktop via wider tabs):
+Replace single `consultation_fee` workflow with up to 4 configurable consultation types per doctor:
 
-1. **Dashboard** (new — overview)
-2. **Appointments** (existing)
-3. **Availability** (existing)
-4. **Pricing** (existing)
-5. **Profile** (simplified)
-6. **Payments** (renamed from Billing, payout-focused)
-7. **Wellness+** (Coming Soon teaser)
+- **Private / Card** (required)
+- **Medical Aid** (optional)
+- **Follow-up** (optional)
+- **Specialist** (optional)
 
-Move under a collapsible **Advanced Settings** panel inside Profile/Payments:
-- Practice registration / team management
-- Company billing entity
-- SWIFT/international payout fields
-- Prescription templates
-- Document uploads, branding, hospital affiliation, languages, qualifications, bio
+UI: redesign `PricingTiers.tsx` into a card-grid form. Each tier:
+- toggle (active/inactive)
+- price input (validated against the existing `consultation_categories` band)
+- short description
+- duration (default 30 min)
 
-(Templates + Prescriptions stay accessible via Appointments row actions / a small link in Advanced — they remain functional, just not top-level tabs in Phase 1.)
+Storage: reuse existing `doctor_pricing_tiers` table (already has `name`, `price`, `duration_minutes`, `is_active`). Add a typed `tier_type` enum column (`private | medical_aid | follow_up | specialist`) so booking can resolve fees deterministically. Keep `doctors.consultation_fee` synced to the lowest active tier (existing behavior preserved for directory listing).
 
-## 2. New Dashboard (Overview) tab
+## 2. Patient Booking — Payment Method Selection
 
-New component `src/components/doctor/DoctorOverview.tsx`:
+In `BookAppointment.tsx`, after doctor + slot:
+- Step "Payment method": `Card Payment` or `Medical Aid Verification`
+- Resolve fee from the matching `doctor_pricing_tiers` row (`private` vs `medical_aid`); fallback to `private` if medical aid not set, with a notice
+- Show transparent breakdown (fee, platform 10%, processing ~R5.50, doctor net) before paying
+- Persist the chosen `payment_method_type` and `tier_type` on `appointments` (new nullable columns) and on `payments.metadata`
 
-**Top stat cards (4):**
-- Today's Appointments (count + next time)
-- Upcoming Consultations (next 7 days)
-- This Month's Earnings (localized currency)
-- Profile Completion % (progress bar)
+Phase 1 medical-aid: just records the patient's intent + scheme info (already collected). Doctor later marks outcome as `covered | co_payment | private` from appointment detail. No claim processing.
 
-**Profile completion card:**
-- Computes % from filled fields: photo, specialty, HPCSA #, phone, fee set, availability set, bio, qualifications, languages, hospital, documents
-- Lists 2–3 next suggested actions with deep links
-- Dismissible per-field hints
+## 3. Wallet System (new Doctor tab)
 
-**Quick actions row:**
-- Go Online / Offline (toggles `doctors.is_available`)
-- Set Availability → Availability tab
-- View Appointments → Appointments tab
-- Update Pricing → Pricing tab
+New tab `Wallet` in `DoctorDashboard.tsx` (replaces/absorbs the lazy `earnings` route). Component: `DoctorWallet.tsx`.
 
-**Wellness+ teaser card** at the bottom with "Join Early Access" CTA (writes to a simple `wellness_plus_interest` flag in profile metadata, or just a toast for Phase 1).
+**Summary cards** (localized currency from doctor's country):
+- Available Balance — paid payments not yet in a paid payout
+- Pending Balance — payments in `pending|processing` or appts awaiting completion
+- Total Earnings (lifetime net)
+- Total Platform Fees
+- Total Withdrawals (sum of paid payouts)
 
-## 3. Profile simplification (DoctorProfile.tsx)
+**Earnings chart**: 30-day net earnings AreaChart (reuse style from `DoctorEarnings.tsx`).
 
-**Essentials card (always visible):**
-- Full Name, HPCSA Registration Number (renamed from License), Specialty, Phone, Email (read-only), Profile Photo
+**Transaction table**:
+columns — Date · Patient · Type · Gross · Platform Fee · Processing Fee · Net · Status. Filters: date range, type, status. Mobile: card list.
 
-Helper text under HPCSA field: *"This number is verified with the Health Professions Council of South Africa (HPCSA)."*
+Statuses derived from `payments.status` + payout linkage:
+`pending | processing | paid | failed | refunded`.
 
-**Advanced Settings (collapsible, closed by default):**
-- Bio, Qualifications, Languages, Hospital Affiliation, Additional Certifications, Documents, Practice section (the unified "Your Practice" card already added — now framed as **"Register a Practice (Optional) — For clinics and multi-doctor practices only."**)
+**Fee transparency block** — explicit formula card (Gross → −Platform 10% → −Processing → Net) so every doctor sees how the math works.
 
-## 4. Payments tab (rename of Billing)
+## 4. Payout Workflow
 
-Rename tab label "Billing" → **Payments**. Inside DoctorBilling.tsx:
+Reuse existing `payout_requests` table.
 
-**Payout Settings (essentials):**
-- Bank Name, Account Holder, Account Number, Branch Code, Account Type
+- "Request Withdrawal" button — opens modal with available balance, minimum payout (R200), confirms bank details from `doctor_billing`
+- Inserts a `payout_requests` row with all currently-available `payment_ids`, status `pending`
+- Section "Payouts" lists requests with statuses `pending | processing | paid` (admin-controlled in `AdminPayouts.tsx`)
+- Optional toggle "Enable weekly auto-payout" — stored on doctor (Phase-1 visual only; backend cron can be added later)
 
-**Advanced (collapsible):**
-- SWIFT code (gated behind an "Enable international payouts" toggle)
-- Company/Practice billing entity (existing logic preserved — only shown if no Practice and the doctor toggles "Bill as company")
+## 5. Transaction Types
 
-## 5. Wellness+ tab
+Add `transaction_type` to `payments` (nullable):
+`card_consultation | medical_aid_consultation | co_payment | refund | adjustment`.
 
-Static premium card, no backend wiring beyond a toast on "Join Early Access". Copy as in the brief (AI wellness guidance, educational only, encourages consultations).
+Adjustments/refunds insertable only by admin via existing AdminPayments path (no UI changes here).
 
-## 6. Terminology sweep
+## 6. Schema changes (migration)
 
-Search the project for user-visible "License Number" strings on doctor-facing pages and replace with "HPCSA Registration Number" + helper. Scope: DoctorProfile, DoctorSignup, any verification banners. Keep DB column `license_number` unchanged.
+```
+-- Pricing tier typing
+create type pricing_tier_type as enum ('private','medical_aid','follow_up','specialist');
+alter table doctor_pricing_tiers add column tier_type pricing_tier_type;
 
-## Files touched
+-- Booking metadata
+alter table appointments
+  add column payment_method_type text,   -- 'card' | 'medical_aid'
+  add column pricing_tier_type pricing_tier_type;
 
-- `src/pages/DoctorDashboard.tsx` — new tab set, lazy-load Overview, Wellness+
-- `src/components/doctor/DoctorOverview.tsx` — NEW
-- `src/components/doctor/DoctorWellnessPlus.tsx` — NEW
-- `src/components/doctor/DoctorProfile.tsx` — split essentials vs advanced collapsible, rename license label
-- `src/components/doctor/DoctorBilling.tsx` — payout-first layout, advanced collapsible, international toggle
-- `src/pages/DoctorSignup.tsx` — relabel license field (light touch)
+-- Payment categorisation
+alter table payments add column transaction_type text;
 
-## Out of scope (Phase 1)
+-- Doctor preferences
+alter table doctors add column auto_weekly_payout boolean not null default false;
+```
 
-- No DB schema changes
-- No removal of existing Practice / Templates / Prescriptions features — only re-homed
-- No changes to patient-facing flows
+No RLS changes required — new columns inherit existing policies.
+
+## 7. Files
+
+Created
+- `src/components/doctor/DoctorWallet.tsx`
+- `src/components/doctor/WalletTransactionsTable.tsx`
+- `src/components/doctor/WalletPayoutPanel.tsx`
+- `src/components/patient/PaymentMethodStep.tsx`
+
+Edited
+- `src/components/doctor/PricingTiers.tsx` — multi-tier editor
+- `src/pages/DoctorDashboard.tsx` — add Wallet tab; remove standalone Earnings tab
+- `src/components/doctor/DoctorOverview.tsx` — link "Earnings" quick action to Wallet
+- `src/components/patient/BookAppointment.tsx` — payment-method step + fee breakdown + persist tier
+- `supabase/functions/paystack-payment/index.ts` — accept `tier_type` + `transaction_type`, store on payment
+
+## 8. Out of scope (Phase 1)
+
+- Real medical-aid claim submission / EDI
+- Practice-level revenue splitting (schema is forward-compatible via existing `practices` link)
+- Automated cron payouts (toggle is UI-only)
+- Subscription billing
