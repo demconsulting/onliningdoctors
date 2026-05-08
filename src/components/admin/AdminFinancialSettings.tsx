@@ -143,6 +143,33 @@ const AdminFinancialSettings = () => {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Doctor-specific overrides</CardTitle>
+          <CardDescription>Assign a non-default plan (e.g. VIP) to specific doctors. Leave blank to use the default plan.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {doctors.length === 0 && <p className="text-sm text-muted-foreground">No verified doctors yet.</p>}
+          {doctors.map((d) => (
+            <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3">
+              <span className="text-sm font-medium truncate">{d.profiles?.full_name || "Unnamed doctor"}</span>
+              <Select
+                value={d.fee_settings_id || "__default__"}
+                onValueChange={(v) => setDoctorPlan(d.id, v === "__default__" ? null : v)}
+              >
+                <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__default__">Use default plan</SelectItem>
+                  {plans.filter(p => p.is_active).map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}{p.is_default ? " (default)" : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
