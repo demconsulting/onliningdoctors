@@ -28,7 +28,7 @@ const DoctorSignup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!licenseNumber.trim()) {
-      toast({ variant: "destructive", title: "License number is required" });
+      toast({ variant: "destructive", title: "HPCSA Registration Number is required" });
       return;
     }
     if (!country) {
