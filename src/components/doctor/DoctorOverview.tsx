@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Calendar, Clock, DollarSign, TrendingUp, ArrowRight, Sparkles,
   CalendarPlus, Wallet, ListChecks, CheckCircle2, CircleAlert,
+  FileText, BookTemplate,
 } from "lucide-react";
 import { format, isToday, addDays, startOfMonth } from "date-fns";
 import type { User } from "@supabase/supabase-js";
