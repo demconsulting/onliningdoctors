@@ -199,7 +199,7 @@ const DoctorDetail = () => {
                 </div>
               </div>
 
-              <Link to="/dashboard">
+              <Link to={`/dashboard?tab=book&doctor=${doctor.profile_id}`}>
                 <Button size="lg" className="gap-2 gradient-primary border-0 text-primary-foreground shadow-lg">
                   <CalendarPlus className="h-5 w-5" /> Book Appointment
                 </Button>
