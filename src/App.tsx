@@ -3,16 +3,42 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
+
+// Recover from stale chunk hashes after a redeploy: if a dynamic import
+// fails (old index.html cached, new chunks have different hashes), force a
+// one-time reload so the browser fetches the fresh manifest.
+const lazyWithRetry = <T extends ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>,
+) =>
+  lazy(async () => {
+    const KEY = "lovable:chunk-reload";
+    try {
+      return await factory();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isChunkErr =
+        /Importing a module script failed|Failed to fetch dynamically imported module|ChunkLoadError|error loading dynamically imported module/i.test(
+          msg,
+        );
+      if (isChunkErr && typeof window !== "undefined" && !sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+        return new Promise<{ default: T }>(() => {});
+      }
+      throw err;
+    }
+  });
+
 // Lazy-load the floating chat widget AND defer mounting it until the user
 // interacts or the page has settled, so its framer-motion + realtime payload
 // never competes with homepage LCP.
-const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
+const ChatWidget = lazyWithRetry(() => import("./components/chat/ChatWidget"));
 import Index from "./pages/Index";
 
 // Code-split: load route bundles only when navigated to.
 // Keeps the landing page (Index) bundle small and improves LCP.
-const Login = lazy(() => import("./pages/Login"));
+const Login = lazyWithRetry(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const DoctorSignup = lazy(() => import("./pages/DoctorSignup"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
