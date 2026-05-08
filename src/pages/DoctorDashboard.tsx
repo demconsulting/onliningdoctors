@@ -156,6 +156,13 @@ const DoctorDashboard = () => {
           <TabsContent value="pricing">
             <PricingTiers user={user} doctorCountry={doctorCountry} />
           </TabsContent>
+          <TabsContent value="medical-aid">
+            <Suspense fallback={<TabFallback />}>
+              <DoctorMedicalAidRequests user={user} />
+              <div className="h-4" />
+              <DoctorMedicalAids user={user} />
+            </Suspense>
+          </TabsContent>
           <TabsContent value="wallet">
             <Suspense fallback={<TabFallback />}>
               <DoctorWallet user={user} doctorCountry={doctorCountry} />
