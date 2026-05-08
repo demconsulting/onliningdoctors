@@ -125,7 +125,7 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
         appointment_id: p.appointment_id,
       };
     });
-  }, [payments]);
+  }, [payments, feeSettings]);
 
   const filtered = transactions.filter(t =>
     (filterStatus === "all" || t.status === filterStatus) &&
