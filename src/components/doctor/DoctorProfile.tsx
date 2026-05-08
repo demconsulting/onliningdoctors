@@ -157,20 +157,17 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Essentials — minimum to receive bookings */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display">
-            <Stethoscope className="h-5 w-5 text-primary" /> Personal Information
+            <Stethoscope className="h-5 w-5 text-primary" /> Essentials
           </CardTitle>
+          <p className="text-sm text-muted-foreground">The basics patients see when they find you. Everything else is optional.</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-center pb-2">
-            <AvatarUpload
-              userId={user.id}
-              currentUrl={avatarUrl}
-              fullName={profile.full_name}
-              onUploaded={setAvatarUrl}
-            />
+            <AvatarUpload userId={user.id} currentUrl={avatarUrl} fullName={profile.full_name} onUploaded={setAvatarUrl} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -199,39 +196,153 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               <Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="e.g. +27 81 234 5678" />
             </div>
             <div className="space-y-2">
-              <Label>Gender</Label>
-              <Select value={profile.gender} onValueChange={(v) => setProfile({ ...profile, gender: v })}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <Label>Specialty</Label>
+              <Select value={doctor.specialty_id} onValueChange={(v) => setDoctor({ ...doctor, specialty_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Choose specialty" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {specialties.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>HPCSA Registration Number</Label>
+              <Input
+                value={doctor.license_number}
+                onChange={(e) => setDoctor({ ...doctor, license_number: e.target.value })}
+                placeholder="e.g. MP-0612345"
+              />
+              <p className="text-xs text-muted-foreground">
+                This number is verified with the Health Professions Council of South Africa (HPCSA).
+              </p>
+            </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <LocationSelect
-              country={profile.country}
-              state={profile.state}
-              city={profile.city}
-              onCountryChange={(v) => setProfile((prev) => ({ ...prev, country: v, state: "", city: "" }))}
-              onStateChange={(v) => setProfile((prev) => ({ ...prev, state: v, city: "" }))}
-              onCityChange={(v) => setProfile((prev) => ({ ...prev, city: v }))}
-            />
-          </div>
+
+          <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save Profile
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Practice — single source of truth */}
+      {/* Advanced details — optional, collapsed by default */}
+      <Collapsible>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <button className="flex w-full items-center justify-between p-6 text-left">
+              <div>
+                <h3 className="font-display text-lg font-semibold">Advanced details (optional)</h3>
+                <p className="text-sm text-muted-foreground">Bio, qualifications, languages, hospital, location, license document.</p>
+              </div>
+              <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="space-y-4 pt-0">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Gender</Label>
+                  <Select value={profile.gender} onValueChange={(v) => setProfile({ ...profile, gender: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Years of Experience</Label>
+                  <Input type="number" min={0} value={doctor.experience_years} onChange={(e) => setDoctor({ ...doctor, experience_years: Number(e.target.value) })} />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <LocationSelect
+                  country={profile.country}
+                  state={profile.state}
+                  city={profile.city}
+                  onCountryChange={(v) => setProfile((prev) => ({ ...prev, country: v, state: "", city: "" }))}
+                  onStateChange={(v) => setProfile((prev) => ({ ...prev, state: v, city: "" }))}
+                  onCityChange={(v) => setProfile((prev) => ({ ...prev, city: v }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Education / Qualifications</Label>
+                <TagInput
+                  values={doctor.education ? doctor.education.split(",").map(s => s.trim()).filter(Boolean) : []}
+                  onChange={(vals) => setDoctor({ ...doctor, education: vals.join(", ") })}
+                  placeholder="Type or select qualifications..."
+                  suggestions={EDUCATION_SUGGESTIONS}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Hospital Affiliation</Label>
+                <Input value={doctor.hospital_affiliation} onChange={(e) => setDoctor({ ...doctor, hospital_affiliation: e.target.value })} placeholder="e.g. Groote Schuur Hospital" />
+              </div>
+              <div className="space-y-2">
+                <Label>Languages Spoken</Label>
+                <TagInput
+                  values={doctor.languages}
+                  onChange={(vals) => setDoctor({ ...doctor, languages: vals })}
+                  placeholder="Type or select languages..."
+                  suggestions={COMMON_LANGUAGES}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Bio</Label>
+                <Textarea value={doctor.bio} onChange={(e) => setDoctor({ ...doctor, bio: e.target.value })} rows={3} placeholder="Brief professional bio highlighting your experience and areas of focus..." />
+              </div>
+              <div className="space-y-2">
+                <Label>HPCSA Document (PDF/Image)</Label>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={licenseInputRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                        return;
+                      }
+                      setUploadingLicense(true);
+                      const ext = file.name.split(".").pop();
+                      const path = `${user.id}/license.${ext}`;
+                      const { error } = await supabase.storage.from("doctor-licenses").upload(path, file, { upsert: true });
+                      if (error) {
+                        toast({ variant: "destructive", title: "Upload failed", description: error.message });
+                      } else {
+                        await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
+                        setLicenseDocPath(path);
+                        toast({ title: "Document uploaded" });
+                      }
+                      setUploadingLicense(false);
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => licenseInputRef.current?.click()} disabled={uploadingLicense}>
+                    {uploadingLicense ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {licenseDocPath ? "Replace" : "Upload"}
+                  </Button>
+                  {licenseDocPath && <span className="flex items-center gap-1 text-sm text-green-600"><FileCheck className="h-4 w-4" /> Uploaded</span>}
+                </div>
+              </div>
+              <Button onClick={handleSave} disabled={saving} variant="outline" className="gap-2">
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save Advanced Details
+              </Button>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* Practice — optional, for clinics or multi-doctor practices */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display">
-            <Building2 className="h-5 w-5 text-primary" /> Your Practice
+            <Building2 className="h-5 w-5 text-primary" /> Register a Practice (Optional)
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            One place for your practice/company details — used on prescriptions, billing, and team management.
-          </p>
+          <p className="text-sm text-muted-foreground">For clinics and multi-doctor practices only. Solo doctors can skip this.</p>
         </CardHeader>
         <CardContent className="space-y-4">
           {practice ? (
@@ -243,9 +354,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                   <div className="text-xs text-muted-foreground">
                     Practice #{practice.practice_number} · {practice.email} · {practice.phone}
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    These details automatically appear on your prescriptions and are used as your billing company below.
-                  </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -260,130 +368,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           ) : !practiceLoading && (
             <div className="rounded-lg border border-dashed p-5 text-center space-y-3">
               <Building2 className="mx-auto h-8 w-8 text-primary" />
-              <div>
-                <div className="font-semibold">Set up your Practice</div>
-                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                  Register your practice/company once to power your prescription letterhead, billing entity, and team — even if you're a solo doctor.
-                </p>
-              </div>
-              <Button type="button" onClick={() => navigate("/practice/setup")} className="gap-2">
-                Set up practice <ArrowRight className="h-4 w-4" />
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                Manage a clinic? Register a practice to power your prescription letterhead, billing entity, and team.
+              </p>
+              <Button type="button" variant="outline" onClick={() => navigate("/practice/setup")} className="gap-2">
+                Register a Practice <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
-
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display">Professional Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Specialty</Label>
-              <Select value={doctor.specialty_id} onValueChange={(v) => setDoctor({ ...doctor, specialty_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Choose specialty" /></SelectTrigger>
-                <SelectContent>
-                  {specialties.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>License Number</Label>
-              <Input value={doctor.license_number} onChange={(e) => setDoctor({ ...doctor, license_number: e.target.value })} placeholder="e.g. MP-0612345" />
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <Label>License Document (PDF/Image)</Label>
-              <div className="flex items-center gap-3">
-                <input
-                  ref={licenseInputRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
-                      return;
-                    }
-                    setUploadingLicense(true);
-                    const ext = file.name.split(".").pop();
-                    const path = `${user.id}/license.${ext}`;
-                    const { error } = await supabase.storage.from("doctor-licenses").upload(path, file, { upsert: true });
-                    if (error) {
-                      toast({ variant: "destructive", title: "Upload failed", description: error.message });
-                    } else {
-                      await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
-                      setLicenseDocPath(path);
-                      toast({ title: "License document uploaded" });
-                    }
-                    setUploadingLicense(false);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => licenseInputRef.current?.click()}
-                  disabled={uploadingLicense}
-                >
-                  {uploadingLicense ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                  {licenseDocPath ? "Replace" : "Upload"}
-                </Button>
-                {licenseDocPath && (
-                  <span className="flex items-center gap-1 text-sm text-green-600">
-                    <FileCheck className="h-4 w-4" /> Uploaded
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Years of Experience</Label>
-              <Input type="number" min={0} value={doctor.experience_years} onChange={(e) => setDoctor({ ...doctor, experience_years: Number(e.target.value) })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Consultation Fee</Label>
-              <Input type="number" min={0} value={doctor.consultation_fee} readOnly disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground">Auto-synced from your lowest active pricing tier. Update it in the Pricing tab.</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Education / Qualifications</Label>
-            <TagInput
-              values={doctor.education ? doctor.education.split(",").map(s => s.trim()).filter(Boolean) : []}
-              onChange={(vals) => setDoctor({ ...doctor, education: vals.join(", ") })}
-              placeholder="Type or select qualifications..."
-              suggestions={EDUCATION_SUGGESTIONS}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Hospital Affiliation</Label>
-            <Input value={doctor.hospital_affiliation} onChange={(e) => setDoctor({ ...doctor, hospital_affiliation: e.target.value })} placeholder="e.g. Groote Schuur Hospital" />
-          </div>
-          <div className="space-y-2">
-            <Label>Languages Spoken</Label>
-            <TagInput
-              values={doctor.languages}
-              onChange={(vals) => setDoctor({ ...doctor, languages: vals })}
-              placeholder="Type or select languages..."
-              suggestions={COMMON_LANGUAGES}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Bio</Label>
-            <Textarea value={doctor.bio} onChange={(e) => setDoctor({ ...doctor, bio: e.target.value })} rows={3} placeholder="Brief professional bio highlighting your experience and areas of focus..." />
-          </div>
-          <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save Profile
-          </Button>
-        </CardContent>
-      </Card>
-      <DoctorBilling user={user} />
     </div>
   );
 };
