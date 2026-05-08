@@ -56,7 +56,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
     .eq("is_default", true)
     .eq("is_active", true)
     .maybeSingle();
-  return (data as FeeSettings) || null;
+  return (data as unknown as FeeSettings) || null;
 }
 
 /** Pure calculator — given a plan and gross amount, derive breakdown. */
