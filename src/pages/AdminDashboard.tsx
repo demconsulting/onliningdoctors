@@ -63,6 +63,7 @@ const AdminAIAssistant = lazy(loaders["ai-assistant"]);
 const AdminCountries = lazy(loaders["countries"]);
 const AdminLegalDocuments = lazy(loaders["legal-documents"]);
 const AdminConsultationCategories = lazy(loaders["consultation-categories"]);
+const AdminFinancialSettings = lazy(loaders["financial-settings"]);
 
 const SectionFallback = () => (
   <div className="flex justify-center py-10" role="status" aria-label="Loading admin section">
