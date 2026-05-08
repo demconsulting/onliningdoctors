@@ -182,8 +182,17 @@ serve(async (req) => {
 
     // --- Initialize payment ---
     if (action === "initialize") {
-      const { appointment_id, currency, email, doctor_id, callback_url, pricing_tier_id: bodyTierId, transaction_type } =
-        bodyJson as any;
+      const {
+        appointment_id,
+        currency,
+        email,
+        doctor_id,
+        callback_url,
+        consultation_type,
+        payment_method,
+        medical_aid_request_id,
+        transaction_type,
+      } = bodyJson as any;
 
       if (!appointment_id || !email || !doctor_id) {
         return new Response(
@@ -192,9 +201,9 @@ serve(async (req) => {
         );
       }
 
-      // SECURITY: Always derive the amount server-side from the appointment's
-      // pricing tier or the doctor's consultation fee. NEVER trust a
-      // client-supplied amount, which would allow underpayment bypass.
+      // SECURITY: Always derive the amount server-side from the doctor's
+      // active pricing for the requested consultation_type / payment_method.
+      // The client NEVER supplies the amount.
       const serverFeeClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -202,7 +211,7 @@ serve(async (req) => {
 
       const { data: apptRow, error: apptErr } = await serverFeeClient
         .from("appointments")
-        .select("id, patient_id, doctor_id, pricing_tier_id")
+        .select("id, patient_id, doctor_id, pricing_tier_id, pricing_tier_type, payment_method_type, medical_aid_request_id")
         .eq("id", appointment_id)
         .single();
 
@@ -228,32 +237,74 @@ serve(async (req) => {
         );
       }
 
-      // Resolve fee from pricing tier first, then fall back to consultation_fee
+      const effectivePaymentMethod = payment_method || apptRow.payment_method_type || "card";
+      const effectiveConsultationType = consultation_type || apptRow.pricing_tier_type || "private";
+
       let serverAmount: number | null = null;
-      if (apptRow.pricing_tier_id) {
+
+      if (effectivePaymentMethod === "medical_aid") {
+        // Medical aid: only charge the approved co-payment (if any).
+        const reqId = medical_aid_request_id || apptRow.medical_aid_request_id;
+        if (!reqId) {
+          return new Response(
+            JSON.stringify({ error: "Medical aid request required for medical aid payment" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const { data: maReq } = await serverFeeClient
+          .from("medical_aid_requests")
+          .select("copayment_amount, status, patient_id, doctor_id")
+          .eq("id", reqId)
+          .single();
+        if (!maReq || maReq.patient_id !== user.id || maReq.doctor_id !== doctor_id) {
+          return new Response(
+            JSON.stringify({ error: "Invalid medical aid request" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (!["approved", "copay_requested"].includes(maReq.status)) {
+          return new Response(
+            JSON.stringify({ error: "Medical aid request is not approved for payment" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        serverAmount = Number(maReq.copayment_amount ?? 0);
+      } else {
+        // Card / private payment: look up the doctor's active pricing tier
+        // matching the consultation_type, then fall back to consultation_fee
+        // only when the requested type is "private".
         const { data: tier } = await serverFeeClient
           .from("doctor_pricing_tiers")
-          .select("price, doctor_id, is_active")
-          .eq("id", apptRow.pricing_tier_id)
-          .single();
-        if (tier && tier.doctor_id === doctor_id && tier.is_active) {
+          .select("price, is_active, tier_type")
+          .eq("doctor_id", doctor_id)
+          .eq("tier_type", effectiveConsultationType)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (tier && Number(tier.price) > 0) {
           serverAmount = Number(tier.price);
+        } else if (effectiveConsultationType === "private") {
+          const { data: doctorRow } = await serverFeeClient
+            .from("doctors")
+            .select("consultation_fee")
+            .eq("profile_id", doctor_id)
+            .single();
+          if (doctorRow?.consultation_fee != null && Number(doctorRow.consultation_fee) > 0) {
+            serverAmount = Number(doctorRow.consultation_fee);
+          }
         }
-      }
-      if (serverAmount === null || !Number.isFinite(serverAmount)) {
-        const { data: doctorRow } = await serverFeeClient
-          .from("doctors")
-          .select("consultation_fee")
-          .eq("profile_id", doctor_id)
-          .single();
-        if (doctorRow?.consultation_fee != null) {
-          serverAmount = Number(doctorRow.consultation_fee);
+
+        if (serverAmount === null || !Number.isFinite(serverAmount) || serverAmount <= 0) {
+          return new Response(
+            JSON.stringify({ error: "This doctor has not enabled pricing for this consultation type yet." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
       }
 
-      if (!serverAmount || serverAmount <= 0) {
+      if (serverAmount === null || serverAmount <= 0) {
         return new Response(
-          JSON.stringify({ error: "Doctor's consultation fee is not configured" }),
+          JSON.stringify({ error: "No payment required for this booking" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }

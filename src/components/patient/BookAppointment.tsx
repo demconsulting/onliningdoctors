@@ -389,12 +389,13 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
               body: {
                 action: "initialize",
                 appointment_id: apptData.id,
-                amount: fee,
                 currency,
                 email: user.email,
                 doctor_id: selectedDoctor,
                 callback_url: callbackUrl,
-                pricing_tier_id: activeTier?.id || null,
+                consultation_type: tierType,
+                payment_method: paymentMethodType,
+                medical_aid_request_id: isMedicalAid ? activeMedicalAid?.id || null : null,
                 transaction_type: paymentMethodType === "medical_aid" ? "medical_aid_consultation" : "card_consultation",
               },
             }
