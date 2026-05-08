@@ -379,6 +379,8 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                 email: user.email,
                 doctor_id: selectedDoctor,
                 callback_url: callbackUrl,
+                pricing_tier_id: activeTier?.id || null,
+                transaction_type: paymentMethodType === "medical_aid" ? "medical_aid_consultation" : "card_consultation",
               },
             }
           );
