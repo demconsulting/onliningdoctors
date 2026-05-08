@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 interface BookAppointmentProps {
   user: User;
   onBooked?: () => void;
+  preselectDoctorId?: string | null;
 }
 
 interface AvailabilitySlot {
