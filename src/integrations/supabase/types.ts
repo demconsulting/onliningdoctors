@@ -165,7 +165,11 @@ export type Database = {
           id: string
           notes: string | null
           patient_id: string
+          payment_method_type: string | null
           pricing_tier_id: string | null
+          pricing_tier_type:
+            | Database["public"]["Enums"]["pricing_tier_type"]
+            | null
           reason: string | null
           scheduled_at: string
           status: string
@@ -180,7 +184,11 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id: string
+          payment_method_type?: string | null
           pricing_tier_id?: string | null
+          pricing_tier_type?:
+            | Database["public"]["Enums"]["pricing_tier_type"]
+            | null
           reason?: string | null
           scheduled_at: string
           status?: string
@@ -195,7 +203,11 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id?: string
+          payment_method_type?: string | null
           pricing_tier_id?: string | null
+          pricing_tier_type?:
+            | Database["public"]["Enums"]["pricing_tier_type"]
+            | null
           reason?: string | null
           scheduled_at?: string
           status?: string
@@ -710,6 +722,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           price: number
+          tier_type: Database["public"]["Enums"]["pricing_tier_type"] | null
         }
         Insert: {
           created_at?: string
@@ -720,6 +733,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           price: number
+          tier_type?: Database["public"]["Enums"]["pricing_tier_type"] | null
         }
         Update: {
           created_at?: string
@@ -730,6 +744,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           price?: number
+          tier_type?: Database["public"]["Enums"]["pricing_tier_type"] | null
         }
         Relationships: [
           {
@@ -743,6 +758,7 @@ export type Database = {
       }
       doctors: {
         Row: {
+          auto_weekly_payout: boolean
           bio: string | null
           consultation_category_id: string | null
           consultation_fee: number | null
@@ -771,6 +787,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_weekly_payout?: boolean
           bio?: string | null
           consultation_category_id?: string | null
           consultation_fee?: number | null
@@ -799,6 +816,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_weekly_payout?: boolean
           bio?: string | null
           consultation_category_id?: string | null
           consultation_fee?: number | null
@@ -1253,6 +1271,7 @@ export type Database = {
           paystack_access_code: string | null
           paystack_reference: string | null
           status: string
+          transaction_type: string | null
           updated_at: string
         }
         Insert: {
@@ -1271,6 +1290,7 @@ export type Database = {
           paystack_access_code?: string | null
           paystack_reference?: string | null
           status?: string
+          transaction_type?: string | null
           updated_at?: string
         }
         Update: {
@@ -1289,6 +1309,7 @@ export type Database = {
           paystack_access_code?: string | null
           paystack_reference?: string | null
           status?: string
+          transaction_type?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1889,6 +1910,7 @@ export type Database = {
         | "nurse"
         | "receptionist"
         | "practice_admin"
+      pricing_tier_type: "private" | "medical_aid" | "follow_up" | "specialist"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2025,6 +2047,7 @@ export const Constants = {
         "receptionist",
         "practice_admin",
       ],
+      pricing_tier_type: ["private", "medical_aid", "follow_up", "specialist"],
     },
   },
 } as const
