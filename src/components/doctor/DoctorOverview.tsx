@@ -36,7 +36,7 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
   useEffect(() => {
     const load = async () => {
       const monthStart = startOfMonth(new Date()).toISOString();
-      const [profRes, docRes, apptRes, payRes, availRes, priceRes] = await Promise.all([
+      const [profRes, docRes, apptRes, payRes, availRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
         supabase.from("doctors").select("*").eq("profile_id", user.id).single(),
         supabase.from("appointments")
@@ -46,13 +46,12 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
           .in("status", ["pending", "confirmed"])
           .order("scheduled_at", { ascending: true })
           .limit(20),
-        supabase.from("payments")
+        supabase.from("payments" as any)
           .select("amount, doctor_amount, created_at, status")
           .eq("doctor_id", user.id)
           .eq("status", "success")
           .gte("created_at", monthStart),
         supabase.from("doctor_availability").select("id").eq("doctor_id", user.id).limit(1),
-        supabase.from("pricing_tiers" as any).select("id").eq("doctor_id", user.id).limit(1),
       ]);
 
       if (profRes.data) setProfile(profRes.data);
