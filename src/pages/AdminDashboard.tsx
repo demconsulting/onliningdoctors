@@ -33,6 +33,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "countries": () => import("@/components/admin/AdminCountries"),
   "legal-documents": () => import("@/components/admin/AdminLegalDocuments"),
   "consultation-categories": () => import("@/components/admin/AdminConsultationCategories"),
+  "financial-settings": () => import("@/components/admin/AdminFinancialSettings"),
 };
 
 export const prefetchAdminSection = (key: string) => { loaders[key]?.(); };
