@@ -3,40 +3,66 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
+
+// Recover from stale chunk hashes after a redeploy: if a dynamic import
+// fails (old index.html cached, new chunks have different hashes), force a
+// one-time reload so the browser fetches the fresh manifest.
+const lazyWithRetry = <T extends ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>,
+) =>
+  lazy(async () => {
+    const KEY = "lovable:chunk-reload";
+    try {
+      return await factory();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const isChunkErr =
+        /Importing a module script failed|Failed to fetch dynamically imported module|ChunkLoadError|error loading dynamically imported module/i.test(
+          msg,
+        );
+      if (isChunkErr && typeof window !== "undefined" && !sessionStorage.getItem(KEY)) {
+        sessionStorage.setItem(KEY, "1");
+        window.location.reload();
+        return new Promise<{ default: T }>(() => {});
+      }
+      throw err;
+    }
+  });
+
 // Lazy-load the floating chat widget AND defer mounting it until the user
 // interacts or the page has settled, so its framer-motion + realtime payload
 // never competes with homepage LCP.
-const ChatWidget = lazy(() => import("./components/chat/ChatWidget"));
+const ChatWidget = lazyWithRetry(() => import("./components/chat/ChatWidget"));
 import Index from "./pages/Index";
 
 // Code-split: load route bundles only when navigated to.
 // Keeps the landing page (Index) bundle small and improves LCP.
-const Login = lazy(() => import("./pages/Login"));
-const Signup = lazy(() => import("./pages/Signup"));
-const DoctorSignup = lazy(() => import("./pages/DoctorSignup"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const EmailConfirmed = lazy(() => import("./pages/EmailConfirmed"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const DoctorDashboard = lazy(() => import("./pages/DoctorDashboard"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const CallPage = lazy(() => import("./pages/CallPage"));
-const About = lazy(() => import("./pages/About"));
-const Contact = lazy(() => import("./pages/Contact"));
-const DoctorBenefits = lazy(() => import("./pages/DoctorBenefits"));
-const Terms = lazy(() => import("./pages/Terms"));
-const Privacy = lazy(() => import("./pages/Privacy"));
-const RefundPolicy = lazy(() => import("./pages/RefundPolicy"));
-const Doctors = lazy(() => import("./pages/Doctors"));
-const DoctorDetail = lazy(() => import("./pages/DoctorDetail"));
-const DependentInvite = lazy(() => import("./pages/DependentInvite"));
-const PracticeSetup = lazy(() => import("./pages/PracticeSetup"));
-const PracticeTeam = lazy(() => import("./pages/PracticeTeam"));
-const PracticeSettings = lazy(() => import("./pages/PracticeSettings"));
-const WellnessPlus = lazy(() => import("./pages/WellnessPlus"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const Login = lazyWithRetry(() => import("./pages/Login"));
+const Signup = lazyWithRetry(() => import("./pages/Signup"));
+const DoctorSignup = lazyWithRetry(() => import("./pages/DoctorSignup"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
+const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
+const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
+const EmailConfirmed = lazyWithRetry(() => import("./pages/EmailConfirmed"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const DoctorDashboard = lazyWithRetry(() => import("./pages/DoctorDashboard"));
+const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
+const CallPage = lazyWithRetry(() => import("./pages/CallPage"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const Contact = lazyWithRetry(() => import("./pages/Contact"));
+const DoctorBenefits = lazyWithRetry(() => import("./pages/DoctorBenefits"));
+const Terms = lazyWithRetry(() => import("./pages/Terms"));
+const Privacy = lazyWithRetry(() => import("./pages/Privacy"));
+const RefundPolicy = lazyWithRetry(() => import("./pages/RefundPolicy"));
+const Doctors = lazyWithRetry(() => import("./pages/Doctors"));
+const DoctorDetail = lazyWithRetry(() => import("./pages/DoctorDetail"));
+const DependentInvite = lazyWithRetry(() => import("./pages/DependentInvite"));
+const PracticeSetup = lazyWithRetry(() => import("./pages/PracticeSetup"));
+const PracticeTeam = lazyWithRetry(() => import("./pages/PracticeTeam"));
+const PracticeSettings = lazyWithRetry(() => import("./pages/PracticeSettings"));
+const WellnessPlus = lazyWithRetry(() => import("./pages/WellnessPlus"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
