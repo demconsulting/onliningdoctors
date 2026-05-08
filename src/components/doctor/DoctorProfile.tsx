@@ -223,13 +223,15 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         </CardContent>
       </Card>
 
-      {/* Practice / Company Details */}
+      {/* Practice — single source of truth */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display">
-            <Building2 className="h-5 w-5 text-primary" /> Practice / Company Details
+            <Building2 className="h-5 w-5 text-primary" /> Your Practice
           </CardTitle>
-          <p className="text-sm text-muted-foreground">These details will appear on your prescriptions.</p>
+          <p className="text-sm text-muted-foreground">
+            One place for your practice/company details — used on prescriptions, billing, and team management.
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {practice ? (
@@ -242,7 +244,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                     Practice #{practice.practice_number} · {practice.email} · {practice.phone}
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    You already have a registered Practice Account. Your practice details are managed there and used on your prescriptions automatically — no need to enter them again here.
+                    These details automatically appear on your prescriptions and are used as your billing company below.
                   </p>
                 </div>
               </div>
@@ -255,87 +257,19 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                 </Button>
               </div>
             </div>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <Label>Practice / Company Logo</Label>
-                <div className="flex items-center gap-4">
-                  {practiceLogoSignedUrl && (
-                    <div className="h-16 w-32 rounded border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
-                      <img src={practiceLogoSignedUrl} alt="Practice Logo" className="max-h-full max-w-full object-contain" />
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <input
-                      ref={practiceLogoRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        if (file.size > 5 * 1024 * 1024) {
-                          toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
-                          return;
-                        }
-                        setUploadingPracticeLogo(true);
-                        const ext = file.name.split(".").pop();
-                        const path = `${user.id}/practice_logo_${Date.now()}.${ext}`;
-                        const { error } = await supabase.storage.from("prescription-assets").upload(path, file, { upsert: true });
-                        if (error) {
-                          toast({ variant: "destructive", title: "Upload failed", description: error.message });
-                        } else {
-                          setDoctor(prev => ({ ...prev, practice_logo_url: path }));
-                          const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(path, 3600);
-                          if (url) setPracticeLogoSignedUrl(url.signedUrl);
-                          toast({ title: "Practice logo uploaded" });
-                        }
-                        setUploadingPracticeLogo(false);
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => practiceLogoRef.current?.click()}
-                      disabled={uploadingPracticeLogo}
-                    >
-                      {uploadingPracticeLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {doctor.practice_logo_url ? "Replace Logo" : "Upload Logo"}
-                    </Button>
-                    {doctor.practice_logo_url && !practiceLogoSignedUrl && (
-                      <span className="flex items-center gap-1 text-sm text-green-600">
-                        <FileCheck className="h-4 w-4" /> Uploaded
-                      </span>
-                    )}
-                  </div>
-                </div>
+          ) : !practiceLoading && (
+            <div className="rounded-lg border border-dashed p-5 text-center space-y-3">
+              <Building2 className="mx-auto h-8 w-8 text-primary" />
+              <div>
+                <div className="font-semibold">Set up your Practice</div>
+                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+                  Register your practice/company once to power your prescription letterhead, billing entity, and team — even if you're a solo doctor.
+                </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Practice / Company Name</Label>
-                  <Input value={doctor.practice_name} onChange={(e) => setDoctor({ ...doctor, practice_name: e.target.value })} placeholder="e.g. City Medical Centre" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Practice Email</Label>
-                  <Input type="email" value={doctor.practice_email} onChange={(e) => setDoctor({ ...doctor, practice_email: e.target.value })} placeholder="e.g. info@citymedicine.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Practice Phone</Label>
-                  <Input value={doctor.practice_phone} onChange={(e) => setDoctor({ ...doctor, practice_phone: e.target.value })} placeholder="e.g. +27 21 123 4567" />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">Your address from Personal Information above will also appear on prescriptions.</p>
-              {!practiceLoading && (
-                <div className="flex items-center justify-between rounded-md border border-dashed p-3">
-                  <p className="text-xs text-muted-foreground">Run a multi-doctor practice? Register a Practice Account to manage your team and centralise these details.</p>
-                  <Button type="button" size="sm" variant="outline" onClick={() => navigate("/practice/setup")}>
-                    Register practice <ArrowRight className="ml-1 h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </>
+              <Button type="button" onClick={() => navigate("/practice/setup")} className="gap-2">
+                Set up practice <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
