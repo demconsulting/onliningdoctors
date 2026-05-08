@@ -216,6 +216,20 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     return new Set(availability.map(a => a.day_of_week));
   }, [availability]);
 
+  // Auto-select today's date if doctor is available today; otherwise next available day
+  useEffect(() => {
+    if (availability.length === 0 || selectedDate) return;
+    const today = startOfDay(new Date());
+    for (let i = 0; i < 14; i++) {
+      const candidate = new Date(today);
+      candidate.setDate(today.getDate() + i);
+      if (availableDaysOfWeek.has(getDay(candidate))) {
+        setSelectedDate(candidate);
+        return;
+      }
+    }
+  }, [availability, availableDaysOfWeek, selectedDate]);
+
   // Disable dates that are in the past or not on available days
   const isDateDisabled = (date: Date) => {
     if (isBefore(date, startOfDay(new Date()))) return true;
