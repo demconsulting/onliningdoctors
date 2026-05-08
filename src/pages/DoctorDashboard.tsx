@@ -14,6 +14,9 @@ import DoctorOverview from "@/components/doctor/DoctorOverview";
 // Lazy-load heavy / less-frequented tabs
 const DoctorBilling = lazy(() => import("@/components/doctor/DoctorBilling"));
 const DoctorWellnessPlus = lazy(() => import("@/components/doctor/DoctorWellnessPlus"));
+const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
+const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
+const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
