@@ -37,14 +37,26 @@ const AdminFinancialSettings = () => {
   const [plans, setPlans] = useState<FeeSettings[]>([]);
   const [editing, setEditing] = useState<FeeSettings | (Omit<FeeSettings, "id"> & { id?: string }) | null>(null);
   const [open, setOpen] = useState(false);
+  const [doctors, setDoctors] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from("platform_fee_settings").select("*").order("is_default", { ascending: false }).order("name");
-    setPlans((data as any) || []);
+    const [plansRes, docsRes] = await Promise.all([
+      supabase.from("platform_fee_settings").select("*").order("is_default", { ascending: false }).order("name"),
+      supabase.from("doctors").select("id, profile_id, fee_settings_id, profiles:profile_id(full_name)").eq("is_verified", true).order("created_at", { ascending: false }).limit(200),
+    ]);
+    setPlans((plansRes.data as any) || []);
+    setDoctors((docsRes.data as any) || []);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
+
+  const setDoctorPlan = async (doctorId: string, planId: string | null) => {
+    const { error } = await supabase.from("doctors").update({ fee_settings_id: planId }).eq("id", doctorId);
+    if (error) { toast({ variant: "destructive", title: "Update failed", description: error.message }); return; }
+    toast({ title: "Doctor fee plan updated" });
+    setDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, fee_settings_id: planId } : d));
+  };
 
   const openNew = () => { setEditing({ ...BLANK }); setOpen(true); };
   const openEdit = (p: FeeSettings) => { setEditing({ ...p }); setOpen(true); };
