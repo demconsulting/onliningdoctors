@@ -182,7 +182,7 @@ serve(async (req) => {
 
     // --- Initialize payment ---
     if (action === "initialize") {
-      const { appointment_id, currency, email, doctor_id, callback_url } =
+      const { appointment_id, currency, email, doctor_id, callback_url, pricing_tier_id: bodyTierId, transaction_type } =
         bodyJson as any;
 
       if (!appointment_id || !email || !doctor_id) {
@@ -340,6 +340,7 @@ serve(async (req) => {
         paystack_reference: reference,
         paystack_access_code: paystackData.data.access_code,
         fee_bearer: feeBearer,
+        transaction_type: transaction_type || null,
       });
 
       return new Response(
