@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState, type ComponentType } from "react";
+import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 
 // Recover from stale chunk hashes after a redeploy: if a dynamic import
 // fails (old index.html cached, new chunks have different hashes), force a
@@ -14,21 +14,61 @@ const lazyWithRetry = <T extends ComponentType<unknown>>(
   lazy(async () => {
     const KEY = "lovable:chunk-reload";
     try {
-      return await factory();
+      const mod = await factory();
+      if (typeof window !== "undefined") sessionStorage.removeItem(KEY);
+      return mod;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const isChunkErr =
         /Importing a module script failed|Failed to fetch dynamically imported module|ChunkLoadError|error loading dynamically imported module/i.test(
           msg,
         );
-      if (isChunkErr && typeof window !== "undefined" && !sessionStorage.getItem(KEY)) {
-        sessionStorage.setItem(KEY, "1");
+      const reloadToken = typeof window !== "undefined" ? `${window.location.pathname}:${msg}` : msg;
+      if (isChunkErr && typeof window !== "undefined" && sessionStorage.getItem(KEY) !== reloadToken) {
+        sessionStorage.setItem(KEY, reloadToken);
         window.location.reload();
         return new Promise<{ default: T }>(() => {});
       }
       throw err;
     }
   });
+
+class ChunkErrorBoundary extends Component<
+  { children: ReactNode; compact?: boolean },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Lazy module failed to load", error, info.componentStack);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    if (this.props.compact) return null;
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-6 text-foreground">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-semibold text-foreground">We need to refresh this page</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            A page module did not load after the latest update.
+          </p>
+          <button
+            type="button"
+            className="mt-6 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+            onClick={() => window.location.reload()}
+          >
+            Refresh
+          </button>
+        </div>
+      </main>
+    );
+  }
+}
 
 // Lazy-load the floating chat widget AND defer mounting it until the user
 // interacts or the page has settled, so its framer-motion + realtime payload
@@ -96,9 +136,11 @@ const DeferredChatWidget = () => {
   }, []);
   if (!show) return null;
   return (
-    <Suspense fallback={null}>
-      <ChatWidget />
-    </Suspense>
+    <ChunkErrorBoundary compact>
+      <Suspense fallback={null}>
+        <ChatWidget />
+      </Suspense>
+    </ChunkErrorBoundary>
   );
 };
 
@@ -108,37 +150,39 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signin" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/signup/doctor" element={<DoctorSignup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/email-confirmed" element={<EmailConfirmed />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/call/:appointmentId" element={<CallPage />} />
-            <Route path="/doctors" element={<Doctors />} />
-            <Route path="/doctors/:id" element={<DoctorDetail />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/doctor-benefits" element={<DoctorBenefits />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/refund-policy" element={<RefundPolicy />} />
-            <Route path="/dependent-invite" element={<DependentInvite />} />
-            <Route path="/practice/setup" element={<PracticeSetup />} />
-            <Route path="/practice/team" element={<PracticeTeam />} />
-            <Route path="/practice/settings" element={<PracticeSettings />} />
-            <Route path="/wellness-plus" element={<WellnessPlus />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+        <ChunkErrorBoundary>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signin" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/signup/doctor" element={<DoctorSignup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/email-confirmed" element={<EmailConfirmed />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/call/:appointmentId" element={<CallPage />} />
+              <Route path="/doctors" element={<Doctors />} />
+              <Route path="/doctors/:id" element={<DoctorDetail />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/doctor-benefits" element={<DoctorBenefits />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
+              <Route path="/dependent-invite" element={<DependentInvite />} />
+              <Route path="/practice/setup" element={<PracticeSetup />} />
+              <Route path="/practice/team" element={<PracticeTeam />} />
+              <Route path="/practice/settings" element={<PracticeSettings />} />
+              <Route path="/wellness-plus" element={<WellnessPlus />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </ChunkErrorBoundary>
         <DeferredChatWidget />
       </BrowserRouter>
     </TooltipProvider>
