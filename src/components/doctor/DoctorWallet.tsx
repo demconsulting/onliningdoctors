@@ -22,14 +22,12 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
+import { resolveFeeSettings, calculateFees, type FeeSettings } from "@/lib/feeCalculator";
 
 interface Props {
   user: User;
   doctorCountry?: string | null;
 }
-
-const PLATFORM_FEE_PCT = 10; // 10% platform commission for wallet display
-const PROCESSING_FEE_FLAT = 5.5; // flat processing fee approximation
 
 type TxStatus = "pending" | "processing" | "paid" | "failed" | "refunded";
 
