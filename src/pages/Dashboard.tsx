@@ -126,7 +126,7 @@ const Dashboard = () => {
           </TabsContent>
           <TabsContent value="book">
             <Suspense fallback={<TabFallback />}>
-              <BookAppointment user={user} onBooked={() => setActiveTab("appointments")} />
+              <BookAppointment user={user} preselectDoctorId={preselectDoctorId} onBooked={() => setActiveTab("appointments")} />
             </Suspense>
           </TabsContent>
           <TabsContent value="family">
