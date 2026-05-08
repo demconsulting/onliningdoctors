@@ -91,6 +91,8 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
   const [cityFilter, setCityFilter] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [time, setTime] = useState("");
+  const [paymentMethodType, setPaymentMethodType] = useState<"card" | "medical_aid">("card");
+  const [doctorTiers, setDoctorTiers] = useState<any[]>([]);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -210,6 +212,24 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
         setLoadingAvailability(false);
       });
   }, [selectedDoctor]);
+
+  // Load doctor's pricing tiers when doctor is selected
+  useEffect(() => {
+    if (!selectedDoctor) { setDoctorTiers([]); return; }
+    supabase.from("doctor_pricing_tiers").select("*").eq("doctor_id", selectedDoctor).eq("is_active", true)
+      .then(({ data }) => setDoctorTiers(data || []));
+    setPaymentMethodType("card");
+  }, [selectedDoctor]);
+
+  const activeTier = useMemo(() => {
+    if (paymentMethodType === "medical_aid") {
+      return doctorTiers.find((t: any) => t.tier_type === "medical_aid")
+        || doctorTiers.find((t: any) => t.tier_type === "private");
+    }
+    return doctorTiers.find((t: any) => t.tier_type === "private") || doctorTiers[0];
+  }, [doctorTiers, paymentMethodType]);
+
+  const hasMedicalAidTier = doctorTiers.some((t: any) => t.tier_type === "medical_aid");
 
   // Available days of week (0=Sun in date-fns, but doctor_availability uses 0=Sun too)
   const availableDaysOfWeek = useMemo(() => {
