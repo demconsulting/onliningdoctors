@@ -38,6 +38,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [saving, setSaving] = useState(false);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { practice, loading: practiceLoading } = usePractice(user.id);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     full_name: "",
