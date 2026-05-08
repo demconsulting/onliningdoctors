@@ -23,7 +23,7 @@ const lazyWithRetry = <T extends ComponentType<unknown>>(
         /Importing a module script failed|Failed to fetch dynamically imported module|ChunkLoadError|error loading dynamically imported module/i.test(
           msg,
         );
-      const reloadToken = `${window.location.pathname}:${msg}`;
+      const reloadToken = typeof window !== "undefined" ? `${window.location.pathname}:${msg}` : msg;
       if (isChunkErr && typeof window !== "undefined" && sessionStorage.getItem(KEY) !== reloadToken) {
         sessionStorage.setItem(KEY, reloadToken);
         window.location.reload();
