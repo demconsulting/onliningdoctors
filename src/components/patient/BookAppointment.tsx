@@ -19,6 +19,7 @@ import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { format, getDay, isBefore, startOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { resolveFeeSettings, calculateFees, type FeeSettings } from "@/lib/feeCalculator";
 
 interface BookAppointmentProps {
   user: User;
