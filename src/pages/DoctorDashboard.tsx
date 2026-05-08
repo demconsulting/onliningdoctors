@@ -113,7 +113,7 @@ const DoctorDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Mobile-friendly: horizontal scroll on small screens */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-8">
+            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-9">
               <TabsTrigger value="dashboard" className="gap-1.5">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </TabsTrigger>
@@ -125,6 +125,9 @@ const DoctorDashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="pricing" className="gap-1.5">
                 <DollarSign className="h-4 w-4" /> Pricing
+              </TabsTrigger>
+              <TabsTrigger value="medical-aid" className="gap-1.5">
+                <ShieldCheck className="h-4 w-4" /> Medical Aid
               </TabsTrigger>
               <TabsTrigger value="wallet" className="gap-1.5">
                 <WalletCards className="h-4 w-4" /> Wallet
