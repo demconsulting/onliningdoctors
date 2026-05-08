@@ -13,6 +13,9 @@ import LocationSelect from "@/components/shared/LocationSelect";
 import TagInput from "@/components/shared/TagInput";
 import AvatarUpload from "@/components/shared/AvatarUpload";
 import DoctorBilling from "@/components/doctor/DoctorBilling";
+import { usePractice } from "@/hooks/usePractice";
+import { useNavigate } from "react-router-dom";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 interface DoctorProfileProps {
   user: User;
