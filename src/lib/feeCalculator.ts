@@ -47,7 +47,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
         .eq("id", overrideId)
         .eq("is_active", true)
         .maybeSingle();
-      if (data) return data as FeeSettings;
+      if (data) return data as unknown as FeeSettings;
     }
   }
   const { data } = await supabase
