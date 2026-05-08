@@ -5,31 +5,63 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { Loader2 } from "lucide-react";
 
-const AdminUsers = lazy(() => import("@/components/admin/AdminUsers"));
-const AdminAppointments = lazy(() => import("@/components/admin/AdminAppointments"));
-const AdminReviews = lazy(() => import("@/components/admin/AdminReviews"));
-const AdminConsultationOutcomes = lazy(() => import("@/components/admin/AdminConsultationOutcomes"));
-const AdminSpecialties = lazy(() => import("@/components/admin/AdminSpecialties"));
-const AdminContacts = lazy(() => import("@/components/admin/AdminContacts"));
-const AdminFaqs = lazy(() => import("@/components/admin/AdminFaqs"));
-const AdminHero = lazy(() => import("@/components/admin/AdminHero"));
-const AdminStats = lazy(() => import("@/components/admin/AdminStats"));
-const AdminAuditLogs = lazy(() => import("@/components/admin/AdminAuditLogs"));
-const AdminDoctorVerification = lazy(() => import("@/components/admin/AdminDoctorVerification"));
-const AdminSiteSettings = lazy(() => import("@/components/admin/AdminSiteSettings"));
-const AdminWhyChoose = lazy(() => import("@/components/admin/AdminWhyChoose"));
-const AdminFindDoctor = lazy(() => import("@/components/admin/AdminFindDoctor"));
-const AdminDoctorCTA = lazy(() => import("@/components/admin/AdminDoctorCTA"));
-const AdminFooter = lazy(() => import("@/components/admin/AdminFooter"));
-const AdminBranding = lazy(() => import("@/components/admin/AdminBranding"));
-const AdminSectionOrder = lazy(() => import("@/components/admin/AdminSectionOrder"));
-const AdminPaymentConfig = lazy(() => import("@/components/admin/AdminPaymentConfig"));
-const AdminPayments = lazy(() => import("@/components/admin/AdminPayments"));
-const AdminPayouts = lazy(() => import("@/components/admin/AdminPayouts"));
-const AdminAIAssistant = lazy(() => import("@/components/admin/AdminAIAssistant"));
-const AdminCountries = lazy(() => import("@/components/admin/AdminCountries"));
-const AdminLegalDocuments = lazy(() => import("@/components/admin/AdminLegalDocuments"));
-const AdminConsultationCategories = lazy(() => import("@/components/admin/AdminConsultationCategories"));
+// Map of section key -> dynamic import factory. Used to both lazy-mount and
+// to prefetch the chunk on sidebar hover so clicks feel instant.
+const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> = {
+  "users": () => import("@/components/admin/AdminUsers"),
+  "appointments": () => import("@/components/admin/AdminAppointments"),
+  "reviews": () => import("@/components/admin/AdminReviews"),
+  "consultation-outcomes": () => import("@/components/admin/AdminConsultationOutcomes"),
+  "specialties": () => import("@/components/admin/AdminSpecialties"),
+  "contacts": () => import("@/components/admin/AdminContacts"),
+  "faqs": () => import("@/components/admin/AdminFaqs"),
+  "hero": () => import("@/components/admin/AdminHero"),
+  "stats": () => import("@/components/admin/AdminStats"),
+  "audit-logs": () => import("@/components/admin/AdminAuditLogs"),
+  "doctor-verification": () => import("@/components/admin/AdminDoctorVerification"),
+  "site-settings": () => import("@/components/admin/AdminSiteSettings"),
+  "why-choose": () => import("@/components/admin/AdminWhyChoose"),
+  "find-doctor": () => import("@/components/admin/AdminFindDoctor"),
+  "doctor-cta": () => import("@/components/admin/AdminDoctorCTA"),
+  "footer": () => import("@/components/admin/AdminFooter"),
+  "branding": () => import("@/components/admin/AdminBranding"),
+  "section-order": () => import("@/components/admin/AdminSectionOrder"),
+  "payment-config": () => import("@/components/admin/AdminPaymentConfig"),
+  "payments": () => import("@/components/admin/AdminPayments"),
+  "payouts": () => import("@/components/admin/AdminPayouts"),
+  "ai-assistant": () => import("@/components/admin/AdminAIAssistant"),
+  "countries": () => import("@/components/admin/AdminCountries"),
+  "legal-documents": () => import("@/components/admin/AdminLegalDocuments"),
+  "consultation-categories": () => import("@/components/admin/AdminConsultationCategories"),
+};
+
+export const prefetchAdminSection = (key: string) => { loaders[key]?.(); };
+
+const AdminUsers = lazy(loaders["users"]);
+const AdminAppointments = lazy(loaders["appointments"]);
+const AdminReviews = lazy(loaders["reviews"]);
+const AdminConsultationOutcomes = lazy(loaders["consultation-outcomes"]);
+const AdminSpecialties = lazy(loaders["specialties"]);
+const AdminContacts = lazy(loaders["contacts"]);
+const AdminFaqs = lazy(loaders["faqs"]);
+const AdminHero = lazy(loaders["hero"]);
+const AdminStats = lazy(loaders["stats"]);
+const AdminAuditLogs = lazy(loaders["audit-logs"]);
+const AdminDoctorVerification = lazy(loaders["doctor-verification"]);
+const AdminSiteSettings = lazy(loaders["site-settings"]);
+const AdminWhyChoose = lazy(loaders["why-choose"]);
+const AdminFindDoctor = lazy(loaders["find-doctor"]);
+const AdminDoctorCTA = lazy(loaders["doctor-cta"]);
+const AdminFooter = lazy(loaders["footer"]);
+const AdminBranding = lazy(loaders["branding"]);
+const AdminSectionOrder = lazy(loaders["section-order"]);
+const AdminPaymentConfig = lazy(loaders["payment-config"]);
+const AdminPayments = lazy(loaders["payments"]);
+const AdminPayouts = lazy(loaders["payouts"]);
+const AdminAIAssistant = lazy(loaders["ai-assistant"]);
+const AdminCountries = lazy(loaders["countries"]);
+const AdminLegalDocuments = lazy(loaders["legal-documents"]);
+const AdminConsultationCategories = lazy(loaders["consultation-categories"]);
 
 const SectionFallback = () => (
   <div className="flex justify-center py-10" role="status" aria-label="Loading admin section">

@@ -1,5 +1,6 @@
 import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { prefetchAdminSection } from "@/pages/AdminDashboard";
 import {
   Sidebar,
   SidebarContent,
@@ -67,6 +68,9 @@ const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarProps) => 
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     onClick={() => onSectionChange(item.key)}
+                    onMouseEnter={() => prefetchAdminSection(item.key)}
+                    onFocus={() => prefetchAdminSection(item.key)}
+                    onTouchStart={() => prefetchAdminSection(item.key)}
                     className={activeSection === item.key ? "bg-muted text-primary font-medium" : "hover:bg-muted/50"}
                   >
                     <item.icon className="mr-2 h-4 w-4" />
