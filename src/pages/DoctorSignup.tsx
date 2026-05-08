@@ -28,7 +28,7 @@ const DoctorSignup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!licenseNumber.trim()) {
-      toast({ variant: "destructive", title: "License number is required" });
+      toast({ variant: "destructive", title: "HPCSA Registration Number is required" });
       return;
     }
     if (!country) {
@@ -90,8 +90,9 @@ const DoctorSignup = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="license">License / Certificate Number</Label>
-                <Input id="license" placeholder="e.g. MED-2024-12345" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
+                <Label htmlFor="license">HPCSA Registration Number</Label>
+                <Input id="license" placeholder="e.g. MP-0612345" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
+                <p className="text-xs text-muted-foreground">Verified with the Health Professions Council of South Africa (HPCSA).</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">Country of Operation <span className="text-destructive">*</span></Label>

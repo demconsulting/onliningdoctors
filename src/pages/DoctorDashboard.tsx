@@ -4,16 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Calendar, Clock, DollarSign, Stethoscope, TrendingUp, BookTemplate, FileText } from "lucide-react";
+import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
 import PricingTiers from "@/components/doctor/PricingTiers";
 import DoctorAppointments from "@/components/doctor/DoctorAppointments";
-// Lazy-load Earnings — pulls in recharts (~100KB) and is only used on its own tab.
+import DoctorOverview from "@/components/doctor/DoctorOverview";
+// Lazy-load heavy / less-frequented tabs
+const DoctorBilling = lazy(() => import("@/components/doctor/DoctorBilling"));
+const DoctorWellnessPlus = lazy(() => import("@/components/doctor/DoctorWellnessPlus"));
 const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
-const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
 const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
+const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
@@ -26,7 +29,7 @@ const DoctorDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDoctor, setIsDoctor] = useState(false);
-  const [activeTab, setActiveTab] = useState("appointments");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [doctorCountry, setDoctorCountry] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -99,53 +102,44 @@ const DoctorDashboard = () => {
       <main className="container mx-auto flex-1 px-4 py-8">
         <div className="mb-6">
           <h1 className="font-display text-3xl font-bold text-foreground">Doctor Dashboard</h1>
-          <p className="text-muted-foreground">Manage your practice, {user.user_metadata?.full_name || user.email}</p>
+          <p className="text-muted-foreground">Welcome back, {user.user_metadata?.full_name || user.email}</p>
         </div>
 
         <PracticeDashboardCard userId={user.id} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 lg:w-auto">
-            <TabsTrigger value="appointments" className="gap-1.5">
-              <Calendar className="h-4 w-4" /> <span className="hidden sm:inline">Appointments</span><span className="sm:hidden">Appts</span>
-            </TabsTrigger>
-            <TabsTrigger value="prescriptions" className="gap-1.5">
-              <FileText className="h-4 w-4" /> <span className="hidden sm:inline">Prescriptions</span><span className="sm:hidden">Rx</span>
-            </TabsTrigger>
-            <TabsTrigger value="earnings" className="gap-1.5">
-              <TrendingUp className="h-4 w-4" /> Earnings
-            </TabsTrigger>
-            <TabsTrigger value="templates" className="gap-1.5">
-              <BookTemplate className="h-4 w-4" /> Templates
-            </TabsTrigger>
-            <TabsTrigger value="availability" className="gap-1.5">
-              <Clock className="h-4 w-4" /> <span className="hidden sm:inline">Availability</span><span className="sm:hidden">Avail</span>
-            </TabsTrigger>
-            <TabsTrigger value="pricing" className="gap-1.5">
-              <DollarSign className="h-4 w-4" /> Pricing
-            </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-1.5">
-              <Stethoscope className="h-4 w-4" /> Profile
-            </TabsTrigger>
-          </TabsList>
+          {/* Mobile-friendly: horizontal scroll on small screens */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-7">
+              <TabsTrigger value="dashboard" className="gap-1.5">
+                <LayoutDashboard className="h-4 w-4" /> Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="appointments" className="gap-1.5">
+                <Calendar className="h-4 w-4" /> Appointments
+              </TabsTrigger>
+              <TabsTrigger value="availability" className="gap-1.5">
+                <Clock className="h-4 w-4" /> Availability
+              </TabsTrigger>
+              <TabsTrigger value="pricing" className="gap-1.5">
+                <DollarSign className="h-4 w-4" /> Pricing
+              </TabsTrigger>
+              <TabsTrigger value="profile" className="gap-1.5">
+                <Stethoscope className="h-4 w-4" /> Profile
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="gap-1.5">
+                <Wallet className="h-4 w-4" /> Payments
+              </TabsTrigger>
+              <TabsTrigger value="wellness" className="gap-1.5">
+                <Sparkles className="h-4 w-4" /> Wellness+
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
+          <TabsContent value="dashboard">
+            <DoctorOverview user={user} doctorCountry={doctorCountry} onNavigateTab={setActiveTab} />
+          </TabsContent>
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
-          </TabsContent>
-          <TabsContent value="prescriptions">
-            <Suspense fallback={<TabFallback />}>
-              <DoctorPrescriptions user={user} />
-            </Suspense>
-          </TabsContent>
-          <TabsContent value="earnings">
-            <Suspense fallback={<TabFallback />}>
-              <DoctorEarnings user={user} doctorCountry={doctorCountry} />
-            </Suspense>
-          </TabsContent>
-          <TabsContent value="templates">
-            <Suspense fallback={<TabFallback />}>
-              <PrescriptionTemplates user={user} />
-            </Suspense>
           </TabsContent>
           <TabsContent value="availability">
             <AvailabilityManager user={user} />
@@ -155,6 +149,26 @@ const DoctorDashboard = () => {
           </TabsContent>
           <TabsContent value="profile">
             <DoctorProfile user={user} />
+          </TabsContent>
+          <TabsContent value="payments">
+            <Suspense fallback={<TabFallback />}>
+              <DoctorBilling user={user} />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="wellness">
+            <Suspense fallback={<TabFallback />}>
+              <DoctorWellnessPlus />
+            </Suspense>
+          </TabsContent>
+          {/* Advanced tools — accessible from the Dashboard overview */}
+          <TabsContent value="earnings">
+            <Suspense fallback={<TabFallback />}><DoctorEarnings user={user} doctorCountry={doctorCountry} /></Suspense>
+          </TabsContent>
+          <TabsContent value="prescriptions">
+            <Suspense fallback={<TabFallback />}><DoctorPrescriptions user={user} /></Suspense>
+          </TabsContent>
+          <TabsContent value="templates">
+            <Suspense fallback={<TabFallback />}><PrescriptionTemplates user={user} /></Suspense>
           </TabsContent>
         </Tabs>
       </main>

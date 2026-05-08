@@ -118,8 +118,9 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display">
-            <Landmark className="h-5 w-5 text-primary" /> Billing & Banking Details
+            <Landmark className="h-5 w-5 text-primary" /> Payout Settings
           </CardTitle>
+          <p className="text-sm text-muted-foreground">Where we send your earnings. Required to receive payments.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Billing Entity */}
@@ -239,11 +240,15 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
                 <Label>Branch Code</Label>
                 <Input value={billing.branch_code} onChange={(e) => update("branch_code", e.target.value)} placeholder="e.g. 250655" />
               </div>
-              <div className="space-y-2">
-                <Label>SWIFT Code (optional)</Label>
-                <Input value={billing.bank_swift_code} onChange={(e) => update("bank_swift_code", e.target.value)} placeholder="e.g. FIRNZAJJ" />
-              </div>
             </div>
+            <details className="group rounded-lg border bg-muted/30 p-3">
+              <summary className="cursor-pointer text-sm font-medium text-muted-foreground">International payouts (SWIFT)</summary>
+              <div className="mt-3 space-y-2">
+                <Label>SWIFT Code</Label>
+                <Input value={billing.bank_swift_code} onChange={(e) => update("bank_swift_code", e.target.value)} placeholder="e.g. FIRNZAJJ" />
+                <p className="text-xs text-muted-foreground">Only required if you receive international payouts.</p>
+              </div>
+            </details>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
