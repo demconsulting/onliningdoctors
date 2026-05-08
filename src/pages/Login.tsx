@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import logoSrc from "@/assets/logo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyAuthError } from "@/lib/authErrors";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,30 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { toast } = useToast();
+
+  const routeAfterLogin = async (userId: string) => {
+    if (redirectTo) { navigate(redirectTo); return; }
+    const [{ data: roles }, { data: adminRoles }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+      supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin"),
+    ]);
+    if (adminRoles && adminRoles.length > 0) { navigate("/admin"); return; }
+    const isDoctor = roles?.some(r => r.role === "doctor");
+    navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
+  };
 
   useEffect(() => {
     const win = window as Window & { requestIdleCallback?: (cb: () => void) => number };
     if (typeof win.requestIdleCallback === "function") win.requestIdleCallback(prefetchDashboards);
     else setTimeout(prefetchDashboards, 300);
+    // If already logged in, skip the form and go straight to the destination.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) routeAfterLogin(session.user.id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -41,15 +59,8 @@ const Login = () => {
       toast({ variant: "destructive", title: "Sign in failed", description: friendlyAuthError(error.message) });
       return;
     }
-    // Resolve role + admin status in parallel and route accordingly.
-    const [{ data: roles }, { data: adminRoles }] = await Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", data.user.id),
-      supabase.from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "admin"),
-    ]);
     setLoading(false);
-    if (adminRoles && adminRoles.length > 0) { navigate("/admin"); return; }
-    const isDoctor = roles?.some(r => r.role === "doctor");
-    navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
+    routeAfterLogin(data.user.id);
   };
 
   const handleForgotPassword = () => navigate("/forgot-password");
