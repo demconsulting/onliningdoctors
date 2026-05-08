@@ -18,6 +18,8 @@ const DoctorEarnings = lazy(() => import("@/components/doctor/DoctorEarnings"));
 const DoctorWallet = lazy(() => import("@/components/doctor/DoctorWallet"));
 const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescriptions"));
 const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
+const DoctorMedicalAids = lazy(() => import("@/components/doctor/DoctorMedicalAids"));
+const DoctorMedicalAidRequests = lazy(() => import("@/components/doctor/DoctorMedicalAidRequests"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
