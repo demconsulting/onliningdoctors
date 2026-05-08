@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 interface BookAppointmentProps {
   user: User;
   onBooked?: () => void;
+  preselectDoctorId?: string | null;
 }
 
 interface AvailabilitySlot {
@@ -76,7 +77,7 @@ function getTimezoneFromCountry(countryCode: string | null): { name: string; abb
   return timezones[countryCode || ""] || { name: "Local Time", abbreviation: "UTC" };
 }
 
-const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
+const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
   const [patientCountry, setPatientCountry] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
@@ -144,6 +145,30 @@ const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
       if (data) setSpecialties(data);
     });
   }, []);
+
+  // Preselect doctor from query param: load their specialty, which will load doctors list
+  useEffect(() => {
+    if (!preselectDoctorId) return;
+    let cancelled = false;
+    supabase
+      .from("doctors")
+      .select("specialty_id")
+      .eq("profile_id", preselectDoctorId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled || !data?.specialty_id) return;
+        setSelectedSpecialty(data.specialty_id);
+      });
+    return () => { cancelled = true; };
+  }, [preselectDoctorId]);
+
+  // Once doctors load and preselect is requested, select that doctor
+  useEffect(() => {
+    if (!preselectDoctorId || doctors.length === 0) return;
+    if (doctors.some(d => d.profile_id === preselectDoctorId)) {
+      setSelectedDoctor(preselectDoctorId);
+    }
+  }, [preselectDoctorId, doctors]);
 
   useEffect(() => {
     if (!selectedSpecialty) {
