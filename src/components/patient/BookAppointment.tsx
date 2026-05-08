@@ -77,7 +77,7 @@ function getTimezoneFromCountry(countryCode: string | null): { name: string; abb
   return timezones[countryCode || ""] || { name: "Local Time", abbreviation: "UTC" };
 }
 
-const BookAppointment = ({ user, onBooked }: BookAppointmentProps) => {
+const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentProps) => {
   const { geo } = useGeoLocation();
   const [patientCountry, setPatientCountry] = useState<string | null>(null);
   const [doctors, setDoctors] = useState<any[]>([]);
