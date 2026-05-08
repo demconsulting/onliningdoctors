@@ -25,9 +25,10 @@ const TabFallback = () => (
 const Dashboard = () => {
   const [user, setUser] = useState<SupaUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("appointments");
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const preselectDoctorId = searchParams.get("doctor");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "appointments");
   const { toast } = useToast();
 
   // Verify payment on return from Paystack
