@@ -118,8 +118,9 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display">
-            <Landmark className="h-5 w-5 text-primary" /> Billing & Banking Details
+            <Landmark className="h-5 w-5 text-primary" /> Payout Settings
           </CardTitle>
+          <p className="text-sm text-muted-foreground">Where we send your earnings. Required to receive payments.</p>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Billing Entity */}
