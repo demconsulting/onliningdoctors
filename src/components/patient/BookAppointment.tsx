@@ -315,7 +315,8 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
 
     setLoading(true);
 
-    const fee = selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0;
+    const fee = activeTier ? Number(activeTier.price) : (selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0);
+    const tierType = activeTier?.tier_type || (paymentMethodType === "medical_aid" ? "medical_aid" : "private");
     const needsPayment = fee > 0;
 
     const { data: apptData, error } = await supabase.from("appointments").insert({
@@ -323,10 +324,13 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
       doctor_id: selectedDoctor,
       dependent_id: forWhom === "self" ? null : forWhom,
       scheduled_at: scheduledAt,
-      duration_minutes: 30,
+      duration_minutes: activeTier?.duration_minutes || 30,
       reason: reason.trim() || null,
       status: needsPayment ? "awaiting_payment" : "pending",
-    }).select("id").single();
+      payment_method_type: paymentMethodType,
+      pricing_tier_type: tierType,
+      pricing_tier_id: activeTier?.id || null,
+    } as any).select("id").single();
 
     if (error) {
       setLoading(false);
