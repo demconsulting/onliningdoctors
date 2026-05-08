@@ -163,6 +163,7 @@ export type Database = {
           doctor_id: string
           duration_minutes: number
           id: string
+          medical_aid_request_id: string | null
           notes: string | null
           patient_id: string
           payment_method_type: string | null
@@ -182,6 +183,7 @@ export type Database = {
           doctor_id: string
           duration_minutes?: number
           id?: string
+          medical_aid_request_id?: string | null
           notes?: string | null
           patient_id: string
           payment_method_type?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           doctor_id?: string
           duration_minutes?: number
           id?: string
+          medical_aid_request_id?: string | null
           notes?: string | null
           patient_id?: string
           payment_method_type?: string | null
@@ -712,6 +715,45 @@ export type Database = {
           },
         ]
       }
+      doctor_medical_aids: {
+        Row: {
+          consultation_rate: number
+          created_at: string
+          default_copayment: number
+          doctor_id: string
+          id: string
+          is_active: boolean
+          plan: string | null
+          requires_authorization: boolean
+          scheme_name: string
+          updated_at: string
+        }
+        Insert: {
+          consultation_rate: number
+          created_at?: string
+          default_copayment?: number
+          doctor_id: string
+          id?: string
+          is_active?: boolean
+          plan?: string | null
+          requires_authorization?: boolean
+          scheme_name: string
+          updated_at?: string
+        }
+        Update: {
+          consultation_rate?: number
+          created_at?: string
+          default_copayment?: number
+          doctor_id?: string
+          id?: string
+          is_active?: boolean
+          plan?: string | null
+          requires_authorization?: boolean
+          scheme_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_pricing_tiers: {
         Row: {
           created_at: string
@@ -1103,6 +1145,63 @@ export type Database = {
             referencedColumns: ["code"]
           },
         ]
+      }
+      medical_aid_requests: {
+        Row: {
+          appointment_id: string | null
+          approved_rate: number | null
+          copayment_amount: number | null
+          created_at: string
+          dependent_code: string | null
+          dependent_id: string | null
+          doctor_id: string
+          doctor_notes: string | null
+          id: string
+          main_member_name: string
+          membership_number: string
+          patient_id: string
+          plan: string | null
+          scheme_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          approved_rate?: number | null
+          copayment_amount?: number | null
+          created_at?: string
+          dependent_code?: string | null
+          dependent_id?: string | null
+          doctor_id: string
+          doctor_notes?: string | null
+          id?: string
+          main_member_name: string
+          membership_number: string
+          patient_id: string
+          plan?: string | null
+          scheme_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          approved_rate?: number | null
+          copayment_amount?: number | null
+          created_at?: string
+          dependent_code?: string | null
+          dependent_id?: string | null
+          doctor_id?: string
+          doctor_notes?: string | null
+          id?: string
+          main_member_name?: string
+          membership_number?: string
+          patient_id?: string
+          plan?: string | null
+          scheme_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
