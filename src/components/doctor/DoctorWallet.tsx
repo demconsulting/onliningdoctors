@@ -97,17 +97,22 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
       setAutoWeekly(!!(doctorRes.data as any)?.auto_weekly_payout);
       setHasBilling(!!billRes.data);
       setPayouts(payoutRes.data || []);
+      const fs = await resolveFeeSettings(user.id);
+      setFeeSettings(fs);
       setLoading(false);
     })();
   }, [user.id]);
+
+  const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
 
   // Build transaction rows w/ fee breakdown
   const transactions = useMemo(() => {
     return payments.map(p => {
       const status = mapStatus(p);
       const gross = Number(p.amount) || 0;
-      const platformFee = +(gross * (PLATFORM_FEE_PCT / 100)).toFixed(2);
-      const processingFee = status === "paid" ? (Number(p.fee_amount) || PROCESSING_FEE_FLAT) : 0;
+      const fb = feeSettings ? calculateFees(gross, feeSettings) : { platformFee: 0, processingFee: 0, doctorNet: gross };
+      const platformFee = fb.platformFee;
+      const processingFee = status === "paid" ? (Number(p.fee_amount) || fb.processingFee) : 0;
       const net = +(gross - platformFee - processingFee).toFixed(2);
       return {
         id: p.id,
