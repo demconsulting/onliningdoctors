@@ -23,6 +23,9 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
   const [saving, setSaving] = useState(false);
   const [isNew, setIsNew] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { practice, loading: practiceLoading } = usePractice(user.id);
+  const hasPractice = !!practice;
 
   const [billing, setBilling] = useState({
     billing_type: "individual",
