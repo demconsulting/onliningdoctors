@@ -322,9 +322,13 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
 
     const isMedicalAid = paymentMethodType === "medical_aid";
     const cardTier = doctorTiers.find((t: any) => t.tier_type === "private") || doctorTiers[0];
+    // Source of truth for what the patient pays = the doctor's listed consultation_fee shown in the UI.
+    // Fall back to the private pricing tier only if the doctor has no listed fee.
     const fee = isMedicalAid
       ? Number(activeMedicalAid?.copayment_amount ?? activeMedicalAid?.approved_rate ?? 0)
-      : (cardTier ? Number(cardTier.price) : (selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0));
+      : (selectedDoc?.consultation_fee != null
+          ? Number(selectedDoc.consultation_fee)
+          : (cardTier ? Number(cardTier.price) : 0));
     const tierType = isMedicalAid ? "medical_aid" : "private";
     // For medical aid: only collect co-payment now; full consult settled separately by scheme
     const needsPayment = fee > 0;
