@@ -126,6 +126,7 @@ const AdminDashboard = () => {
       case "faqs": return <AdminFaqs />;
       case "consultation-categories": return <AdminConsultationCategories />;
       case "payment-config": return <AdminPaymentConfig />;
+      case "financial-settings": return <AdminFinancialSettings />;
       case "payments": return <AdminPayments />;
       case "payouts": return <AdminPayouts />;
       case "countries": return <AdminCountries />;
