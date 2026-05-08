@@ -1,110 +1,116 @@
-# Doctor Pricing, Wallet & Earnings System
+# Patient Payment UI Restructure
 
-A Phase-1 fintech-grade pricing + wallet experience for doctors, with mobile-first UI, transparent fee breakdowns, and a future-ready schema.
+Reshape the patient booking experience so internal financial details disappear from patient view and medical aid bookings require explicit doctor verification before a slot can be picked.
 
-## 1. Pricing System (Multi-tier)
+## 1. Patient-facing simplification (BookAppointment)
 
-Replace single `consultation_fee` workflow with up to 4 configurable consultation types per doctor:
+- Remove every fee breakdown from the patient flow: no platform fee, no processing fee, no VAT line, no "Doctor receives" line, no "You pay vs gross" math.
+- The patient sees a single line: **"Consultation Fee: R___"** (using the doctor's currency).
+- Card payment flow remains instant: pick payment method → pick slot → pay → done.
+- Replace the misleading copy `"Doctor hasn't enabled medical aid pricing — private rate applies."` with: **"Medical aid consultations require verification before booking."**
+- All fee calculator usage in `BookAppointment.tsx` is removed (kept only inside Doctor Wallet, Earnings, and Admin Financial dashboards).
 
-- **Private / Card** (required)
-- **Medical Aid** (optional)
-- **Follow-up** (optional)
-- **Specialist** (optional)
+## 2. Medical Aid verification flow (new)
 
-UI: redesign `PricingTiers.tsx` into a card-grid form. Each tier:
-- toggle (active/inactive)
-- price input (validated against the existing `consultation_categories` band)
-- short description
-- duration (default 30 min)
+When the patient picks **Medical Aid**, the booking flow branches:
 
-Storage: reuse existing `doctor_pricing_tiers` table (already has `name`, `price`, `duration_minutes`, `is_active`). Add a typed `tier_type` enum column (`private | medical_aid | follow_up | specialist`) so booking can resolve fees deterministically. Keep `doctors.consultation_fee` synced to the lowest active tier (existing behavior preserved for directory listing).
-
-## 2. Patient Booking — Payment Method Selection
-
-In `BookAppointment.tsx`, after doctor + slot:
-- Step "Payment method": `Card Payment` or `Medical Aid Verification`
-- Resolve fee from the matching `doctor_pricing_tiers` row (`private` vs `medical_aid`); fallback to `private` if medical aid not set, with a notice
-- Show transparent breakdown (fee, platform 10%, processing ~R5.50, doctor net) before paying
-- Persist the chosen `payment_method_type` and `tier_type` on `appointments` (new nullable columns) and on `payments.metadata`
-
-Phase 1 medical-aid: just records the patient's intent + scheme info (already collected). Doctor later marks outcome as `covered | co_payment | private` from appointment detail. No claim processing.
-
-## 3. Wallet System (new Doctor tab)
-
-New tab `Wallet` in `DoctorDashboard.tsx` (replaces/absorbs the lazy `earnings` route). Component: `DoctorWallet.tsx`.
-
-**Summary cards** (localized currency from doctor's country):
-- Available Balance — paid payments not yet in a paid payout
-- Pending Balance — payments in `pending|processing` or appts awaiting completion
-- Total Earnings (lifetime net)
-- Total Platform Fees
-- Total Withdrawals (sum of paid payouts)
-
-**Earnings chart**: 30-day net earnings AreaChart (reuse style from `DoctorEarnings.tsx`).
-
-**Transaction table**:
-columns — Date · Patient · Type · Gross · Platform Fee · Processing Fee · Net · Status. Filters: date range, type, status. Mobile: card list.
-
-Statuses derived from `payments.status` + payout linkage:
-`pending | processing | paid | failed | refunded`.
-
-**Fee transparency block** — explicit formula card (Gross → −Platform 10% → −Processing → Net) so every doctor sees how the math works.
-
-## 4. Payout Workflow
-
-Reuse existing `payout_requests` table.
-
-- "Request Withdrawal" button — opens modal with available balance, minimum payout (R200), confirms bank details from `doctor_billing`
-- Inserts a `payout_requests` row with all currently-available `payment_ids`, status `pending`
-- Section "Payouts" lists requests with statuses `pending | processing | paid` (admin-controlled in `AdminPayouts.tsx`)
-- Optional toggle "Enable weekly auto-payout" — stored on doctor (Phase-1 visual only; backend cron can be added later)
-
-## 5. Transaction Types
-
-Add `transaction_type` to `payments` (nullable):
-`card_consultation | medical_aid_consultation | co_payment | refund | adjustment`.
-
-Adjustments/refunds insertable only by admin via existing AdminPayments path (no UI changes here).
-
-## 6. Schema changes (migration)
-
-```
--- Pricing tier typing
-create type pricing_tier_type as enum ('private','medical_aid','follow_up','specialist');
-alter table doctor_pricing_tiers add column tier_type pricing_tier_type;
-
--- Booking metadata
-alter table appointments
-  add column payment_method_type text,   -- 'card' | 'medical_aid'
-  add column pricing_tier_type pricing_tier_type;
-
--- Payment categorisation
-alter table payments add column transaction_type text;
-
--- Doctor preferences
-alter table doctors add column auto_weekly_payout boolean not null default false;
+```text
+[Pick doctor] → [Pick payment method = Medical Aid]
+   → [Submit medical aid form]
+        - Provider (dropdown of doctor's supported aids)
+        - Plan
+        - Membership number
+        - Main member name
+        - Dependent code (optional)
+   → "Request Verification" button
+        → creates a medical_aid_requests row (status = pending)
+        → notifies the doctor
+   → Patient sees status card: "Awaiting verification"
+   → Doctor reviews and chooses one of:
+        - Approve (sets approved rate + optional co-payment)
+        - Reject (with reason)
+        - Request co-payment (sets copay amount, status = copay_requested)
+        - Request private payment instead (status = private_requested)
+   → Patient is notified
+   → Only when status = approved or copay_requested can the patient
+     pick a date/time slot. Booking is linked to the request id.
 ```
 
-No RLS changes required — new columns inherit existing policies.
+A new patient subview **"Medical Aid Requests"** lists the patient's requests with statuses and lets them continue to slot selection once approved.
 
-## 7. Files
+A new doctor subview **"Medical Aid Requests"** lets doctors approve / reject / set co-payment / convert to private.
 
-Created
-- `src/components/doctor/DoctorWallet.tsx`
-- `src/components/doctor/WalletTransactionsTable.tsx`
-- `src/components/doctor/WalletPayoutPanel.tsx`
-- `src/components/patient/PaymentMethodStep.tsx`
+## 3. Doctor-side medical aid configuration
 
-Edited
-- `src/components/doctor/PricingTiers.tsx` — multi-tier editor
-- `src/pages/DoctorDashboard.tsx` — add Wallet tab; remove standalone Earnings tab
-- `src/components/doctor/DoctorOverview.tsx` — link "Earnings" quick action to Wallet
-- `src/components/patient/BookAppointment.tsx` — payment-method step + fee breakdown + persist tier
-- `supabase/functions/paystack-payment/index.ts` — accept `tier_type` + `transaction_type`, store on payment
+Doctors configure (in their pricing area):
+- **Supported medical aids**: provider name, optional plan
+- **Consultation rate per scheme**
+- **Default co-payment**
+- **Requires authorization** toggle
 
-## 8. Out of scope (Phase 1)
+The existing single `medical_aid` pricing tier is replaced by per-scheme rates so different schemes can have different rates and co-payments.
 
-- Real medical-aid claim submission / EDI
-- Practice-level revenue splitting (schema is forward-compatible via existing `practices` link)
-- Automated cron payouts (toggle is UI-only)
-- Subscription billing
+## 4. Doctor Wallet / Admin Financial Dashboard (unchanged behavior)
+
+All financial breakdowns (gross, platform fee, processing fee, fixed fee, VAT, net payout, settlement history) stay visible **only** in:
+- `DoctorWallet.tsx`
+- Doctor Earnings
+- `AdminFinancialSettings.tsx` / Admin financials
+
+No change to the fee calculator engine itself.
+
+---
+
+## Technical details
+
+### Database migration
+
+New tables:
+
+- `doctor_medical_aids`
+  - `doctor_id uuid`, `scheme_name text`, `plan text NULL`,
+    `consultation_rate numeric`, `default_copayment numeric DEFAULT 0`,
+    `requires_authorization boolean DEFAULT false`, `is_active boolean DEFAULT true`
+  - RLS: doctor manages own; public can SELECT active rows (for patient dropdown).
+
+- `medical_aid_requests`
+  - `patient_id`, `doctor_id`, `dependent_id NULL`,
+    `scheme_name`, `plan`, `membership_number`, `main_member_name`, `dependent_code NULL`,
+    `status text` ∈ `pending | approved | rejected | copay_requested | private_requested | cancelled`,
+    `approved_rate numeric NULL`, `copayment_amount numeric NULL`,
+    `doctor_notes text NULL`, `appointment_id uuid NULL` (set once a slot is booked),
+    timestamps.
+  - RLS: patient sees own; doctor sees their own; admin sees all; patient inserts own; doctor updates own; patient cancels own.
+  - Trigger: notify doctor on insert; notify patient on status change.
+
+Appointments table: add nullable `medical_aid_request_id uuid` to link a booked slot back to the approved request.
+
+### Frontend changes
+
+- `src/components/patient/BookAppointment.tsx`
+  - Strip fee calculator imports and breakdown UI; show only consultation fee line.
+  - Branch on `paymentMethodType`:
+    - `card` → continue current slot picker + Paystack flow.
+    - `medical_aid` → render `<MedicalAidRequestForm />` instead of slot picker; disable slot picker until an approved request is selected.
+  - When an approved request exists, show a compact "Verified – R<approved_rate> (+ co-pay R<x>)" banner and re-enable slot selection. Booking insert includes `medical_aid_request_id`, `pricing_tier_type='medical_aid'`, and uses the approved rate.
+- `src/components/patient/MedicalAidRequests.tsx` (new): list, status badges, "Continue to booking" CTA for approved/copay rows.
+- `src/components/doctor/MedicalAidRequests.tsx` (new): inbox with Approve / Reject / Request Co-payment / Convert to Private actions.
+- `src/components/doctor/MedicalAidConfig.tsx` (new): CRUD for `doctor_medical_aids`.
+- `src/pages/PatientDashboard.tsx` and `src/pages/DoctorDashboard.tsx`: add the new tabs.
+- Remove `medical_aid` tier auto-pricing in `PricingTiers.tsx` (or repurpose as fallback) since rates now come from `doctor_medical_aids`.
+
+### Wording updates
+
+- Card method card subtitle: "Pay now with card. Instant confirmation."
+- Medical aid method card subtitle: **"Submit your medical aid details for approval and scheduling."**
+- Empty/disabled state under medical aid: **"Medical aid consultations require verification before booking."**
+
+### Out of scope (kept as-is)
+
+- Fee calculator engine and `platform_fee_settings`.
+- DoctorWallet, Admin Financial Settings, Earnings dashboard internals.
+- Paystack integration (still used for card and for co-payment when applicable).
+
+---
+
+Approve this plan and I'll run the migration and implement the UI in one pass.
