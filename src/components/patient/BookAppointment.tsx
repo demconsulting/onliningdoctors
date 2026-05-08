@@ -222,6 +222,12 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     setPaymentMethodType("card");
   }, [selectedDoctor]);
 
+  const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
+  useEffect(() => {
+    if (!selectedDoctor) { setFeeSettings(null); return; }
+    resolveFeeSettings(selectedDoctor).then(setFeeSettings);
+  }, [selectedDoctor]);
+
   const activeTier = useMemo(() => {
     if (paymentMethodType === "medical_aid") {
       return doctorTiers.find((t: any) => t.tier_type === "medical_aid")
