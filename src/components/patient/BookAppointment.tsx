@@ -673,13 +673,15 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
           {/* Step 3: Date & Time — availability-aware */}
           {selectedDoctor && (
             <>
-              {/* Payment Method + Fee Breakdown */}
+              {/* Payment Method (patient-facing — no internal fee breakdown) */}
               {(() => {
                 const selectedDoc = doctors.find(d => d.profile_id === selectedDoctor);
                 const docCountry = selectedDoc?.profile?.country || "";
                 const feeSymbol = getCurrencySymbol(docCountry || patientCountry || geo?.countryCode || geo?.countryName);
-                const fee = activeTier ? Number(activeTier.price) : (selectedDoc?.consultation_fee ? Number(selectedDoc.consultation_fee) : 0);
-                const fb = feeSettings ? calculateFees(fee, feeSettings) : null;
+                const cardFee = (doctorTiers.find((t: any) => t.tier_type === "private") || doctorTiers[0])?.price
+                  ?? selectedDoc?.consultation_fee ?? 0;
+                const maidFee = activeMedicalAid?.approved_rate ?? null;
+                const maidCopay = activeMedicalAid?.copayment_amount ?? null;
                 return (
                   <div className="space-y-3">
                     <Label>Payment Method *</Label>
@@ -692,46 +694,38 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                       <button type="button" onClick={() => setPaymentMethodType("medical_aid")}
                         className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "medical_aid" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
                         <p className="font-semibold text-sm">Medical Aid</p>
-                        <p className="text-xs text-muted-foreground">{hasMedicalAidTier ? "Use your medical aid; doctor handles the claim." : "Doctor hasn't enabled medical aid pricing — private rate applies."}</p>
+                        <p className="text-xs text-muted-foreground">Submit your medical aid details for approval and scheduling.</p>
                       </button>
                     </div>
 
-                    {fee > 0 && fb && (
-                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm">
+                    {paymentMethodType === "card" && Number(cardFee) > 0 && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm flex items-center justify-between">
+                        <span className="text-muted-foreground">Consultation Fee</span>
+                        <span className="font-semibold text-foreground">{feeSymbol}{Number(cardFee).toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {paymentMethodType === "medical_aid" && (
+                      <MedicalAidPanel
+                        patientId={user.id}
+                        doctorId={selectedDoctor}
+                        currencySymbol={feeSymbol}
+                        onActiveRequestChange={setActiveMedicalAid}
+                      />
+                    )}
+
+                    {paymentMethodType === "medical_aid" && activeMedicalAid && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Consultation Fee ({paymentMethodType === "medical_aid" ? "Medical Aid" : "Private"})</span>
-                          <span className="font-semibold">{feeSymbol}{fb.gross.toFixed(2)}</span>
+                          <span className="text-muted-foreground">Consultation Fee</span>
+                          <span className="font-semibold text-foreground">{feeSymbol}{Number(maidFee || 0).toFixed(2)}</span>
                         </div>
-                        {fb.platformFee > 0 && (
-                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Platform fee ({fb.settings.platform_fee_percent}%)</span><span>−{feeSymbol}{fb.platformFee.toFixed(2)}</span>
+                        {maidCopay != null && Number(maidCopay) > 0 && (
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">Co-payment due</span>
+                            <span className="font-medium">{feeSymbol}{Number(maidCopay).toFixed(2)}</span>
                           </div>
                         )}
-                        {fb.processingFee > 0 && (
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Processing fee{fb.settings.processing_fee_percent ? ` (${fb.settings.processing_fee_percent}% + ${feeSymbol}${fb.settings.processing_fee_fixed})` : ""}</span><span>−{feeSymbol}{fb.processingFee.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {fb.fixedFee > 0 && (
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Transaction fee</span><span>−{feeSymbol}{fb.fixedFee.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {fb.vat > 0 && (
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>VAT ({fb.settings.vat_percent}%)</span><span>−{feeSymbol}{fb.vat.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {fb.settings.fee_bearer === "patient" && fb.totalFees > 0 && (
-                          <div className="mt-2 flex items-center justify-between border-t pt-2">
-                            <span className="text-xs text-muted-foreground">You pay</span>
-                            <span className="font-semibold">{feeSymbol}{fb.patientPays.toFixed(2)}</span>
-                          </div>
-                        )}
-                        <div className="mt-2 flex items-center justify-between border-t pt-2">
-                          <span className="text-xs text-muted-foreground">Doctor receives</span>
-                          <span className="font-semibold text-primary">{feeSymbol}{fb.doctorNet.toFixed(2)}</span>
-                        </div>
                       </div>
                     )}
                   </div>
