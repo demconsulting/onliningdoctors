@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import logoSrc from "@/assets/logo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyAuthError } from "@/lib/authErrors";
 import { Button } from "@/components/ui/button";
