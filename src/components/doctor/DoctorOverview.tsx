@@ -211,7 +211,7 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
           <CardTitle className="font-display text-lg">Advanced tools</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3">
-          <ActionTile icon={<TrendingUp className="h-4 w-4" />} label="Earnings & Payouts" onClick={() => onNavigateTab("earnings")} />
+          <ActionTile icon={<TrendingUp className="h-4 w-4" />} label="Wallet & Payouts" onClick={() => onNavigateTab("wallet")} />
           <ActionTile icon={<FileText className="h-4 w-4" />} label="Prescriptions" onClick={() => onNavigateTab("prescriptions")} />
           <ActionTile icon={<BookTemplate className="h-4 w-4" />} label="Prescription Templates" onClick={() => onNavigateTab("templates")} />
         </CardContent>
