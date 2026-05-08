@@ -65,7 +65,7 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
         setMonthlyEarnings(total);
       }
       setHasAvailability(!!availRes.data?.length);
-      setHasPricing(!!priceRes.data?.length || !!(docRes.data as any)?.consultation_fee);
+      setHasPricing(!!(docRes.data as any)?.consultation_fee);
       setLoading(false);
     };
     load();
