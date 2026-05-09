@@ -24,8 +24,18 @@
     <!-- Performance: Google Fonts (loaded via @import in index.css) needs early DNS + TLS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- LCP: only desktop preloads the hero image. On mobile we render a CSS gradient
-         first and load the doctor image after first paint, so text/CTA become LCP. -->
+    <!-- LCP: per-device hero preloads. Mobile gets the tiny ~11KB WebP so it
+         can become LCP without a separate network round-trip; desktop preloads
+         the full-resolution backdrop. Each is gated by a media query so the
+         browser only downloads the variant for the current viewport. -->
+    <link
+      rel="preload"
+      as="image"
+      href="/hero-bg-mobile.webp"
+      fetchpriority="high"
+      type="image/webp"
+      media="(max-width: 767px)"
+    >
     <link
       rel="preload"
       as="image"
