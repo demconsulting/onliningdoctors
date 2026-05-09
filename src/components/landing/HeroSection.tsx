@@ -100,9 +100,21 @@ const HeroSection = () => {
           "linear-gradient(135deg, hsl(199 89% 22%) 0%, hsl(210 60% 14%) 55%, hsl(220 30% 8%) 100%)",
       }}
     >
-      {/* Desktop: image rendered immediately. Mobile: no image at all — the
-          gradient backdrop above serves as the mobile hero. */}
-      {!isMobile && (
+      {/* Per-device hero image. Mobile loads a tiny ~11KB WebP (preloaded in
+          index.html) so the hero paints quickly without the desktop payload.
+          Desktop loads the full-resolution backdrop. */}
+      {isMobile ? (
+        <img
+          src="/hero-bg-mobile.webp"
+          alt=""
+          width={768}
+          height={440}
+          loading="eager"
+          {...({ fetchpriority: "high" } as { fetchpriority: string })}
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
         <img
           src="/hero-bg.webp"
           alt=""
