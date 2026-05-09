@@ -130,6 +130,18 @@
   }
 }
 
+/* Mobile + reduced-motion: skip hero entrance animations entirely so the
+   text/CTA paint immediately (better LCP / TBT on low-end phones). */
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-up-delayed,
+  .animate-fade-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 @layer utilities {
   .gradient-primary {
     background: linear-gradient(135deg, hsl(199, 89%, 48%), hsl(172, 66%, 50%));
