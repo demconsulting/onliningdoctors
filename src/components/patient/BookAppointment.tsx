@@ -193,9 +193,11 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
   }, [selectedSpecialty]);
 
   // Fetch doctor availability when doctor is selected
+  const [blockedTimes, setBlockedTimes] = useState<Array<{ start_time: string; end_time: string }>>([]);
   useEffect(() => {
     if (!selectedDoctor) {
       setAvailability([]);
+      setBlockedTimes([]);
       setSelectedDate(undefined);
       setTime("");
       return;
@@ -203,15 +205,22 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     setLoadingAvailability(true);
     setSelectedDate(undefined);
     setTime("");
-    supabase
-      .from("doctor_availability")
-      .select("day_of_week, start_time, end_time, is_available, slot_duration_minutes")
-      .eq("doctor_id", selectedDoctor)
-      .eq("is_available", true)
-      .then(({ data }) => {
-        setAvailability((data as AvailabilitySlot[]) || []);
-        setLoadingAvailability(false);
-      });
+    Promise.all([
+      supabase
+        .from("doctor_availability")
+        .select("day_of_week, start_time, end_time, is_available, slot_duration_minutes")
+        .eq("doctor_id", selectedDoctor)
+        .eq("is_available", true),
+      supabase
+        .from("doctor_blocked_times")
+        .select("start_time, end_time")
+        .eq("doctor_id", selectedDoctor)
+        .gte("end_time", new Date().toISOString()),
+    ]).then(([{ data: avail }, { data: blocks }]) => {
+      setAvailability((avail as AvailabilitySlot[]) || []);
+      setBlockedTimes(blocks || []);
+      setLoadingAvailability(false);
+    });
   }, [selectedDoctor]);
 
   // Load doctor's pricing tiers when doctor is selected
