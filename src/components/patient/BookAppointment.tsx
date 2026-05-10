@@ -17,7 +17,7 @@ import SuggestionChips from "@/components/shared/SuggestionChips";
 import ConsentCheckboxes from "@/components/patient/ConsentCheckboxes";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
-import { format, getDay, isBefore, startOfDay } from "date-fns";
+import { format, getDay, isBefore, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import MedicalAidPanel, { type ActiveMedicalAidRequest } from "@/components/patient/MedicalAidPanel";
 
