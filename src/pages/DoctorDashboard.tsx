@@ -151,6 +151,11 @@ const DoctorDashboard = () => {
           <TabsContent value="dashboard">
             <DoctorOverview user={user} doctorCountry={doctorCountry} onNavigateTab={setActiveTab} />
           </TabsContent>
+          <TabsContent value="calendar">
+            <Suspense fallback={<TabFallback />}>
+              <PracticeCalendar user={user} doctorId={user.id} canManage />
+            </Suspense>
+          </TabsContent>
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
           </TabsContent>
