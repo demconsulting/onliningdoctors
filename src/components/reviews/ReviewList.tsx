@@ -13,14 +13,9 @@ const ReviewList = ({ doctorId }: ReviewListProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Query reviews WITHOUT joining patient profile — anonymous display
+    // Use SECURITY DEFINER RPC so the patient_id column is never exposed to clients
     supabase
-      .from("reviews")
-      .select("id, rating, comment, doctor_clear_helpful, doctor_professional, would_recommend, created_at")
-      .eq("doctor_id", doctorId)
-      .eq("is_visible", true)
-      .eq("moderation_status", "approved")
-      .order("created_at", { ascending: false })
+      .rpc("get_public_reviews", { _doctor_id: doctorId })
       .then(({ data }) => {
         if (data) setReviews(data);
         setLoading(false);
