@@ -114,9 +114,12 @@ const DoctorDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Mobile-friendly: horizontal scroll on small screens */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-9">
+            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-10">
               <TabsTrigger value="dashboard" className="gap-1.5">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1.5">
+                <CalendarRange className="h-4 w-4" /> Calendar
               </TabsTrigger>
               <TabsTrigger value="appointments" className="gap-1.5">
                 <Calendar className="h-4 w-4" /> Appointments
