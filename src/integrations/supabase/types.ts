@@ -2053,30 +2053,6 @@ export type Database = {
       }
     }
     Views: {
-      doctor_blocked_times_public: {
-        Row: {
-          block_type: string | null
-          doctor_id: string | null
-          end_time: string | null
-          id: string | null
-          start_time: string | null
-        }
-        Insert: {
-          block_type?: string | null
-          doctor_id?: string | null
-          end_time?: string | null
-          id?: string | null
-          start_time?: string | null
-        }
-        Update: {
-          block_type?: string | null
-          doctor_id?: string | null
-          end_time?: string | null
-          id?: string | null
-          start_time?: string | null
-        }
-        Relationships: []
-      }
       public_doctors: {
         Row: {
           avatar_url: string | null
@@ -2126,42 +2102,6 @@ export type Database = {
           },
         ]
       }
-      public_reviews: {
-        Row: {
-          appointment_id: string | null
-          comment: string | null
-          created_at: string | null
-          doctor_clear_helpful: boolean | null
-          doctor_id: string | null
-          doctor_professional: boolean | null
-          id: string | null
-          rating: number | null
-          would_recommend: boolean | null
-        }
-        Insert: {
-          appointment_id?: string | null
-          comment?: string | null
-          created_at?: string | null
-          doctor_clear_helpful?: boolean | null
-          doctor_id?: string | null
-          doctor_professional?: boolean | null
-          id?: string | null
-          rating?: number | null
-          would_recommend?: boolean | null
-        }
-        Update: {
-          appointment_id?: string | null
-          comment?: string | null
-          created_at?: string | null
-          doctor_clear_helpful?: boolean | null
-          doctor_id?: string | null
-          doctor_professional?: boolean | null
-          id?: string | null
-          rating?: number | null
-          would_recommend?: boolean | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       check_appointment_conflict: {
@@ -2174,6 +2114,19 @@ export type Database = {
         Returns: boolean
       }
       expire_stale_payments: { Args: never; Returns: undefined }
+      get_public_reviews: {
+        Args: { _doctor_id: string }
+        Returns: {
+          comment: string
+          created_at: string
+          doctor_clear_helpful: boolean
+          doctor_id: string
+          doctor_professional: boolean
+          id: string
+          rating: number
+          would_recommend: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
