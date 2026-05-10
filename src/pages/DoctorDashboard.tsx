@@ -20,6 +20,7 @@ const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescri
 const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
 const DoctorMedicalAids = lazy(() => import("@/components/doctor/DoctorMedicalAids"));
 const DoctorMedicalAidRequests = lazy(() => import("@/components/doctor/DoctorMedicalAidRequests"));
+const PracticeCalendar = lazy(() => import("@/components/calendar/PracticeCalendar"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
