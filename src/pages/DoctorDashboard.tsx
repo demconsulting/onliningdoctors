@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles, WalletCards, ShieldCheck } from "lucide-react";
+import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles, WalletCards, ShieldCheck, CalendarRange } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
@@ -20,6 +20,7 @@ const DoctorPrescriptions = lazy(() => import("@/components/doctor/DoctorPrescri
 const PrescriptionTemplates = lazy(() => import("@/components/doctor/PrescriptionTemplates"));
 const DoctorMedicalAids = lazy(() => import("@/components/doctor/DoctorMedicalAids"));
 const DoctorMedicalAidRequests = lazy(() => import("@/components/doctor/DoctorMedicalAidRequests"));
+const PracticeCalendar = lazy(() => import("@/components/calendar/PracticeCalendar"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
@@ -113,9 +114,12 @@ const DoctorDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Mobile-friendly: horizontal scroll on small screens */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-9">
+            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-10">
               <TabsTrigger value="dashboard" className="gap-1.5">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="calendar" className="gap-1.5">
+                <CalendarRange className="h-4 w-4" /> Calendar
               </TabsTrigger>
               <TabsTrigger value="appointments" className="gap-1.5">
                 <Calendar className="h-4 w-4" /> Appointments
@@ -146,6 +150,11 @@ const DoctorDashboard = () => {
 
           <TabsContent value="dashboard">
             <DoctorOverview user={user} doctorCountry={doctorCountry} onNavigateTab={setActiveTab} />
+          </TabsContent>
+          <TabsContent value="calendar">
+            <Suspense fallback={<TabFallback />}>
+              <PracticeCalendar user={user} doctorId={user.id} canManage />
+            </Suspense>
           </TabsContent>
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />

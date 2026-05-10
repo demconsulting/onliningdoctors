@@ -157,15 +157,21 @@ export type Database = {
       }
       appointments: {
         Row: {
+          appointment_type: string
           cancellation_reason: string | null
           created_at: string
+          created_by: string | null
           dependent_id: string | null
           doctor_id: string
           duration_minutes: number
+          end_time: string | null
           id: string
           medical_aid_request_id: string | null
           notes: string | null
-          patient_id: string
+          patient_email: string | null
+          patient_id: string | null
+          patient_name: string | null
+          patient_phone: string | null
           payment_method_type: string | null
           pricing_tier_id: string | null
           pricing_tier_type:
@@ -177,15 +183,21 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          appointment_type?: string
           cancellation_reason?: string | null
           created_at?: string
+          created_by?: string | null
           dependent_id?: string | null
           doctor_id: string
           duration_minutes?: number
+          end_time?: string | null
           id?: string
           medical_aid_request_id?: string | null
           notes?: string | null
-          patient_id: string
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
           payment_method_type?: string | null
           pricing_tier_id?: string | null
           pricing_tier_type?:
@@ -197,15 +209,21 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          appointment_type?: string
           cancellation_reason?: string | null
           created_at?: string
+          created_by?: string | null
           dependent_id?: string | null
           doctor_id?: string
           duration_minutes?: number
+          end_time?: string | null
           id?: string
           medical_aid_request_id?: string | null
           notes?: string | null
-          patient_id?: string
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
           payment_method_type?: string | null
           pricing_tier_id?: string | null
           pricing_tier_type?:
@@ -714,6 +732,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doctor_blocked_times: {
+        Row: {
+          block_type: string
+          created_at: string
+          created_by: string | null
+          doctor_id: string
+          end_time: string
+          id: string
+          practice_id: string | null
+          reason: string | null
+          start_time: string
+        }
+        Insert: {
+          block_type?: string
+          created_at?: string
+          created_by?: string | null
+          doctor_id: string
+          end_time: string
+          id?: string
+          practice_id?: string | null
+          reason?: string | null
+          start_time: string
+        }
+        Update: {
+          block_type?: string
+          created_at?: string
+          created_by?: string | null
+          doctor_id?: string
+          end_time?: string
+          id?: string
+          practice_id?: string | null
+          reason?: string | null
+          start_time?: string
+        }
+        Relationships: []
       }
       doctor_medical_aids: {
         Row: {
@@ -2050,6 +2104,15 @@ export type Database = {
       }
     }
     Functions: {
+      check_appointment_conflict: {
+        Args: {
+          _doctor_id: string
+          _end: string
+          _exclude_appt_id?: string
+          _start: string
+        }
+        Returns: boolean
+      }
       expire_stale_payments: { Args: never; Returns: undefined }
       has_role: {
         Args: {

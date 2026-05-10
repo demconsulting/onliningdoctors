@@ -17,7 +17,7 @@ import SuggestionChips from "@/components/shared/SuggestionChips";
 import ConsentCheckboxes from "@/components/patient/ConsentCheckboxes";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
-import { format, getDay, isBefore, startOfDay } from "date-fns";
+import { format, getDay, isBefore, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import MedicalAidPanel, { type ActiveMedicalAidRequest } from "@/components/patient/MedicalAidPanel";
 
@@ -193,9 +193,11 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
   }, [selectedSpecialty]);
 
   // Fetch doctor availability when doctor is selected
+  const [blockedTimes, setBlockedTimes] = useState<Array<{ start_time: string; end_time: string }>>([]);
   useEffect(() => {
     if (!selectedDoctor) {
       setAvailability([]);
+      setBlockedTimes([]);
       setSelectedDate(undefined);
       setTime("");
       return;
@@ -203,15 +205,22 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     setLoadingAvailability(true);
     setSelectedDate(undefined);
     setTime("");
-    supabase
-      .from("doctor_availability")
-      .select("day_of_week, start_time, end_time, is_available, slot_duration_minutes")
-      .eq("doctor_id", selectedDoctor)
-      .eq("is_available", true)
-      .then(({ data }) => {
-        setAvailability((data as AvailabilitySlot[]) || []);
-        setLoadingAvailability(false);
-      });
+    Promise.all([
+      supabase
+        .from("doctor_availability")
+        .select("day_of_week, start_time, end_time, is_available, slot_duration_minutes")
+        .eq("doctor_id", selectedDoctor)
+        .eq("is_available", true),
+      supabase
+        .from("doctor_blocked_times")
+        .select("start_time, end_time")
+        .eq("doctor_id", selectedDoctor)
+        .gte("end_time", new Date().toISOString()),
+    ]).then(([{ data: avail }, { data: blocks }]) => {
+      setAvailability((avail as AvailabilitySlot[]) || []);
+      setBlockedTimes(blocks || []);
+      setLoadingAvailability(false);
+    });
   }, [selectedDoctor]);
 
   // Load doctor's pricing tiers when doctor is selected
@@ -272,24 +281,26 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
       const duration = s.slot_duration_minutes ?? 30;
       slots.push(...generateTimeSlots(s.start_time, s.end_time, duration));
     }
-    
-    // Filter out passed times if selected date is today
+
     const now = new Date();
     const isToday = selectedDate.toDateString() === now.toDateString();
-    
-    if (isToday) {
-      return [...new Set(slots)]
-        .sort()
-        .filter(slot => {
-          const [h, m] = slot.split(":").map(Number);
-          const slotTime = new Date(selectedDate);
-          slotTime.setHours(h, m, 0, 0);
-          return slotTime > now;
-        });
-    }
-    
-    return [...new Set(slots)].sort();
-  }, [selectedDate, availability]);
+    const dayStart = startOfDay(selectedDate);
+    const dayEnd = endOfDay(selectedDate);
+    const dayBlocks = blockedTimes
+      .map((b) => ({ s: new Date(b.start_time), e: new Date(b.end_time) }))
+      .filter((b) => b.s <= dayEnd && b.e >= dayStart);
+
+    return [...new Set(slots)]
+      .sort()
+      .filter((slot) => {
+        const [h, m] = slot.split(":").map(Number);
+        const slotTime = new Date(selectedDate);
+        slotTime.setHours(h, m, 0, 0);
+        if (isToday && slotTime <= now) return false;
+        const slotEnd = new Date(slotTime.getTime() + 30 * 60000);
+        return !dayBlocks.some((b) => slotTime < b.e && slotEnd > b.s);
+      });
+  }, [selectedDate, availability, blockedTimes]);
 
   const countries = [...new Set(doctors.map(d => d.profile?.country).filter(Boolean))].sort();
   const cities = [...new Set(doctors.map(d => d.profile?.city).filter(Boolean))].sort();
