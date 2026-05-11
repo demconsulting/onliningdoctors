@@ -66,7 +66,10 @@ serve(async (req) => {
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
     const body = await req.json().catch(() => ({}));
-    const { appointment_id, kind } = body as { appointment_id?: string; kind?: string };
+    const { appointment_id, kind, minutes_before } = body as { appointment_id?: string; kind?: string; minutes_before?: number };
+    const minBefore = kind === "reminder" && Number.isFinite(Number(minutes_before)) && Number(minutes_before) > 0
+      ? Math.round(Number(minutes_before))
+      : null;
     if (!appointment_id || !["booking_confirmation", "reminder"].includes(kind || "")) {
       return new Response(JSON.stringify({ error: "Missing appointment_id or invalid kind" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
