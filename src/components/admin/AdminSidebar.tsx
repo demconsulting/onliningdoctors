@@ -40,6 +40,7 @@ const items = [
   { title: "AI Assistant", key: "ai-assistant", icon: Bot },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
+  { title: "Email Test & Logs", key: "email-test", icon: Mail },
 ];
 
 interface AdminSidebarProps {
