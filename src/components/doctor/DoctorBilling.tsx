@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Save, Building2, User, Landmark, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, Building2, User, Landmark, ArrowRight, CheckCircle2, Crown, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { usePractice } from "@/hooks/usePractice";
 import type { User as SupaUser } from "@supabase/supabase-js";
@@ -26,6 +27,7 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
   const navigate = useNavigate();
   const { practice, loading: practiceLoading } = usePractice(user.id);
   const hasPractice = !!practice;
+  const [foundingInfo, setFoundingInfo] = useState<{ doctor: any; plan: any } | null>(null);
 
   const [billing, setBilling] = useState({
     billing_type: "individual",
