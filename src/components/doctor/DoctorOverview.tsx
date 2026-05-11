@@ -75,6 +75,18 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
       }
       setHasAvailability(!!availRes.data?.length);
       setHasPricing(!!(docRes.data as any)?.consultation_fee);
+
+      // Founding doctor extras
+      const doc: any = docRes.data;
+      if (doc?.is_founding_doctor && doc?.founding_pricing_plan_id) {
+        const { data: planRow } = await supabase.from("platform_fee_settings" as any)
+          .select("name, platform_fee_percent").eq("id", doc.founding_pricing_plan_id).maybeSingle();
+        setFoundingPlan(planRow);
+      }
+      const { data: appRow } = await supabase.from("founding_doctor_applications" as any)
+        .select("status, created_at").eq("doctor_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      setFoundingApp(appRow);
+
       setLoading(false);
     };
     load();
@@ -126,6 +138,42 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
 
   return (
     <div className="space-y-6">
+      {doctor?.is_founding_doctor && <FoundingBenefitsCard doctor={doctor} plan={foundingPlan} />}
+
+      {!doctor?.is_founding_doctor && slots && (
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/15 p-2"><Crown className="h-5 w-5 text-primary" /></div>
+              <div>
+                <p className="font-semibold">
+                  {foundingApp?.status === "pending" ? "Founding application under review" :
+                   foundingApp?.status === "waitlist" ? "You're on the founding waitlist" :
+                   foundingApp?.status === "rejected" ? "Founding 10 Doctors Program" :
+                   "Founding 10 Doctors Program"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {foundingApp?.status === "pending" ? "We'll notify you once a decision is made." :
+                   `${slots.remaining} of ${slots.max_slots} exclusive founding positions remaining — locked-in pricing & premium perks.`}
+                </p>
+              </div>
+            </div>
+            {(!foundingApp || foundingApp.status === "rejected") && (
+              <Button onClick={() => setApplyOpen(true)} disabled={!slots.applications_open && slots.remaining > 0}>
+                Apply now
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <FoundingApplicationDialog
+        open={applyOpen}
+        onOpenChange={setApplyOpen}
+        userId={user.id}
+        onSubmitted={() => { refreshSlots(); }}
+      />
+
       {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
