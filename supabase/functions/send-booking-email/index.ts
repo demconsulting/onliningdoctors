@@ -137,8 +137,17 @@ serve(async (req) => {
     const joinLink = `${SITE_URL}/call/${appt.id}`;
 
     const isReminder = kind === "reminder";
-    const patientTitle = isReminder ? "Reminder: Your appointment starts soon" : "Appointment Confirmed";
-    const doctorTitle = isReminder ? "Reminder: Upcoming appointment" : "New Appointment Booked";
+    const minLabel = minBefore != null
+      ? (minBefore >= 60 && minBefore % 60 === 0
+          ? `${minBefore / 60} hour${minBefore === 60 ? "" : "s"}`
+          : `${minBefore} minute${minBefore === 1 ? "" : "s"}`)
+      : null;
+    const patientTitle = isReminder
+      ? (minLabel ? `Reminder: Your appointment starts in ${minLabel}` : "Reminder: Your appointment starts soon")
+      : "Appointment Confirmed";
+    const doctorTitle = isReminder
+      ? (minLabel ? `Reminder: Appointment in ${minLabel}` : "Reminder: Upcoming appointment")
+      : "New Appointment Booked";
 
     const detailsRow = (label: string, value: string) =>
       `<tr><td style="padding:8px 0;color:#64748b;width:130px;">${esc(label)}</td><td style="padding:8px 0;font-weight:600;">${value}</td></tr>`;
