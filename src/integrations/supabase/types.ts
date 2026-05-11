@@ -862,9 +862,15 @@ export type Database = {
           education: string | null
           experience_years: number | null
           fee_settings_id: string | null
+          founding_doctor_since: string | null
+          founding_expiry: string | null
+          founding_locked: boolean
+          founding_pricing_plan_id: string | null
+          founding_status: string
           hospital_affiliation: string | null
           id: string
           is_available: boolean | null
+          is_founding_doctor: boolean
           is_suspended: boolean
           is_verified: boolean
           languages: string[] | null
@@ -892,9 +898,15 @@ export type Database = {
           education?: string | null
           experience_years?: number | null
           fee_settings_id?: string | null
+          founding_doctor_since?: string | null
+          founding_expiry?: string | null
+          founding_locked?: boolean
+          founding_pricing_plan_id?: string | null
+          founding_status?: string
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
+          is_founding_doctor?: boolean
           is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
@@ -922,9 +934,15 @@ export type Database = {
           education?: string | null
           experience_years?: number | null
           fee_settings_id?: string | null
+          founding_doctor_since?: string | null
+          founding_expiry?: string | null
+          founding_locked?: boolean
+          founding_pricing_plan_id?: string | null
+          founding_status?: string
           hospital_affiliation?: string | null
           id?: string
           is_available?: boolean | null
+          is_founding_doctor?: boolean
           is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
@@ -954,6 +972,13 @@ export type Database = {
           {
             foreignKeyName: "doctors_fee_settings_id_fkey"
             columns: ["fee_settings_id"]
+            isOneToOne: false
+            referencedRelation: "platform_fee_settings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctors_founding_pricing_plan_id_fkey"
+            columns: ["founding_pricing_plan_id"]
             isOneToOne: false
             referencedRelation: "platform_fee_settings"
             referencedColumns: ["id"]
@@ -1128,6 +1153,89 @@ export type Database = {
           sort_order?: number | null
         }
         Relationships: []
+      }
+      founding_doctor_applications: {
+        Row: {
+          availability: string | null
+          created_at: string
+          doctor_id: string
+          id: string
+          motivation: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          specialty: string | null
+          status: string
+          updated_at: string
+          years_experience: number | null
+        }
+        Insert: {
+          availability?: string | null
+          created_at?: string
+          doctor_id: string
+          id?: string
+          motivation?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialty?: string | null
+          status?: string
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Update: {
+          availability?: string | null
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          motivation?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialty?: string | null
+          status?: string
+          updated_at?: string
+          years_experience?: number | null
+        }
+        Relationships: []
+      }
+      founding_doctor_program: {
+        Row: {
+          applications_open: boolean
+          created_at: string
+          default_fee_settings_id: string | null
+          id: string
+          max_slots: number
+          program_label: string
+          updated_at: string
+        }
+        Insert: {
+          applications_open?: boolean
+          created_at?: string
+          default_fee_settings_id?: string | null
+          id?: string
+          max_slots?: number
+          program_label?: string
+          updated_at?: string
+        }
+        Update: {
+          applications_open?: boolean
+          created_at?: string
+          default_fee_settings_id?: string | null
+          id?: string
+          max_slots?: number
+          program_label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founding_doctor_program_default_fee_settings_id_fkey"
+            columns: ["default_fee_settings_id"]
+            isOneToOne: false
+            referencedRelation: "platform_fee_settings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hero_stats: {
         Row: {
@@ -1536,6 +1644,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_default: boolean
+          is_founding_plan: boolean
           minimum_payout: number
           name: string
           payout_schedule: string
@@ -1554,6 +1663,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_default?: boolean
+          is_founding_plan?: boolean
           minimum_payout?: number
           name: string
           payout_schedule?: string
@@ -1572,6 +1682,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_default?: boolean
+          is_founding_plan?: boolean
           minimum_payout?: number
           name?: string
           payout_schedule?: string
@@ -2114,6 +2225,7 @@ export type Database = {
         Returns: boolean
       }
       expire_stale_payments: { Args: never; Returns: undefined }
+      get_founding_slots: { Args: never; Returns: Json }
       get_public_reviews: {
         Args: { _doctor_id: string }
         Returns: {

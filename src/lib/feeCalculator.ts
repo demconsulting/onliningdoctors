@@ -31,15 +31,17 @@ export interface FeeBreakdown {
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
-/** Resolve the effective fee plan for a given doctor (override → default). */
+/** Resolve the effective fee plan for a given doctor (founding → override → default). */
 export async function resolveFeeSettings(doctorProfileId?: string | null): Promise<FeeSettings | null> {
   if (doctorProfileId) {
     const { data: doc } = await supabase
       .from("doctors")
-      .select("fee_settings_id")
+      .select("fee_settings_id, founding_pricing_plan_id, founding_locked, is_founding_doctor")
       .eq("profile_id", doctorProfileId)
       .maybeSingle();
-    const overrideId = doc?.fee_settings_id;
+    // Founding pricing wins when locked
+    const foundingId = (doc as any)?.is_founding_doctor && (doc as any)?.founding_locked ? (doc as any)?.founding_pricing_plan_id : null;
+    const overrideId = foundingId || doc?.fee_settings_id;
     if (overrideId) {
       const { data } = await supabase
         .from("platform_fee_settings")

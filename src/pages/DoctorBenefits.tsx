@@ -6,9 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Stethoscope, ArrowRight, Clock, Wallet, ShieldCheck,
-  Globe, BarChart3, CalendarCheck, Video, Users, Headphones,
+  Globe, BarChart3, CalendarCheck, Video, Users, Headphones, Crown, Lock, Sparkles,
 } from "lucide-react";
 import Seo from "@/components/seo/Seo";
+import { useFoundingSlots } from "@/hooks/useFoundingSlots";
 
 const benefits = [
   {
@@ -69,7 +70,7 @@ const fadeUp = {
 
 const DoctorBenefits = () => {
   const navigate = useNavigate();
-
+  const { slots } = useFoundingSlots();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Seo
@@ -120,6 +121,55 @@ const DoctorBenefits = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Founding 10 Doctors Program */}
+      {slots && (
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="relative overflow-hidden rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-background to-accent/15 p-8 md:p-12"
+            >
+              <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+              <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+                <div className="space-y-4">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-accent px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-foreground">
+                    <Crown className="h-3.5 w-3.5" /> Founding Doctor 2026
+                  </span>
+                  <h2 className="font-display text-3xl font-bold md:text-4xl">
+                    Be one of our first <span className="text-primary">10 founding doctors</span>
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Exclusive locked-in early-adopter pricing, premium features, and a direct partnership with our team — for life.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-3 text-sm">
+                    <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Reduced commission</div>
+                    <div className="flex items-center gap-2"><Lock className="h-4 w-4 text-primary" /> Locked-in pricing</div>
+                    <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /> Premium features</div>
+                  </div>
+                </div>
+                <div className="text-center space-y-3">
+                  <div className="rounded-xl border-2 border-primary/40 bg-card/80 p-6 backdrop-blur">
+                    <p className="text-5xl font-bold text-primary">{slots.remaining}</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground">of {slots.max_slots} positions left</p>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="w-full gradient-primary border-0 text-primary-foreground"
+                    onClick={() => navigate("/signup/doctor")}
+                    disabled={!slots.applications_open && slots.remaining <= 0}
+                  >
+                    {slots.remaining <= 0 ? "Join the waitlist" : !slots.applications_open ? "Applications closed" : "Apply now"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* Benefits Grid */}
       <section className="py-20">

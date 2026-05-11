@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Save, Building2, User, Landmark, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, Building2, User, Landmark, ArrowRight, CheckCircle2, Crown, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { usePractice } from "@/hooks/usePractice";
 import type { User as SupaUser } from "@supabase/supabase-js";
@@ -26,6 +27,7 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
   const navigate = useNavigate();
   const { practice, loading: practiceLoading } = usePractice(user.id);
   const hasPractice = !!practice;
+  const [foundingInfo, setFoundingInfo] = useState<{ doctor: any; plan: any } | null>(null);
 
   const [billing, setBilling] = useState({
     billing_type: "individual",
@@ -69,6 +71,18 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
           company_phone: d.company_phone || "",
           company_email: d.company_email || "",
         });
+      }
+
+      // Founding doctor pricing card
+      const { data: docRow } = await supabase.from("doctors")
+        .select("is_founding_doctor, founding_doctor_since, founding_expiry, founding_pricing_plan_id")
+        .eq("profile_id", user.id).maybeSingle();
+      if ((docRow as any)?.is_founding_doctor && (docRow as any)?.founding_pricing_plan_id) {
+        const { data: plan } = await supabase.from("platform_fee_settings" as any)
+          .select("name, platform_fee_percent").eq("id", (docRow as any).founding_pricing_plan_id).maybeSingle();
+        const { data: defPlan } = await supabase.from("platform_fee_settings" as any)
+          .select("platform_fee_percent").eq("is_default", true).eq("is_active", true).maybeSingle();
+        setFoundingInfo({ doctor: docRow, plan: { ...(plan as any), default_percent: (defPlan as any)?.platform_fee_percent ?? 15 } });
       }
       setLoading(false);
     };
@@ -115,6 +129,48 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
 
   return (
     <div className="space-y-6">
+      {foundingInfo && (
+        <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-background to-accent/10">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
+          <CardHeader className="relative">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-gradient-to-br from-primary to-accent p-2.5 text-primary-foreground"><Crown className="h-5 w-5" /></div>
+                <div>
+                  <CardTitle className="font-display text-lg">Founding Doctor Early-Adopter Plan</CardTitle>
+                  <p className="text-xs text-muted-foreground">{foundingInfo.plan?.name}</p>
+                </div>
+              </div>
+              <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground border-0">
+                <Lock className="mr-1 h-3 w-3" /> LOCKED-IN
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="relative grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border bg-card/60 p-3">
+              <p className="text-xs text-muted-foreground">Your platform fee</p>
+              <p className="text-2xl font-bold text-primary">{foundingInfo.plan?.platform_fee_percent}%</p>
+            </div>
+            <div className="rounded-lg border bg-card/60 p-3">
+              <p className="text-xs text-muted-foreground">Standard plan</p>
+              <p className="text-2xl font-bold line-through opacity-50">{foundingInfo.plan?.default_percent}%</p>
+              <p className="text-xs font-semibold text-primary">
+                You save {Math.max((foundingInfo.plan?.default_percent ?? 0) - (foundingInfo.plan?.platform_fee_percent ?? 0), 0)}% per consultation
+              </p>
+            </div>
+            <div className="rounded-lg border bg-card/60 p-3">
+              <p className="text-xs text-muted-foreground">Pricing protection</p>
+              <p className="text-base font-semibold">
+                {foundingInfo.doctor?.founding_expiry
+                  ? `Until ${new Date(foundingInfo.doctor.founding_expiry).toLocaleDateString()}`
+                  : "Lifetime"}
+              </p>
+              <p className="text-xs text-muted-foreground">Future fee increases never apply.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 font-display">
