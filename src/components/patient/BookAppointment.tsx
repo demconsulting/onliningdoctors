@@ -391,7 +391,14 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
           ? doctorCountry.toUpperCase()
           : countryNameToCode[doctorCountry] || null;
         const currency = (dCode && COUNTRY_CURRENCY[dCode]?.currency) || "NGN";
-        const callbackUrl = `${window.location.origin}/dashboard`;
+        // Use production URL for payment callback so Paystack never redirects
+        // back to a Capacitor/localhost origin (causes ERR_CONNECTION_REFUSED
+        // on Android WebView). Web users are redirected to production too —
+        // the dashboard reads the ?reference param and verifies the payment.
+        const origin = window.location.origin;
+        const isWebProd = /^https?:\/\//i.test(origin) && !/localhost|127\.0\.0\.1|capacitor:|file:/i.test(origin);
+        const callbackBase = isWebProd ? origin : "https://doctorsonlining.com";
+        const callbackUrl = `${callbackBase}/dashboard`;
 
         try {
           const { data: payData, error: payError } = await supabase.functions.invoke(
