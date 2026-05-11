@@ -14,6 +14,10 @@ import { format, isToday, addDays, startOfMonth } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
+import FoundingBenefitsCard from "@/components/doctor/FoundingBenefitsCard";
+import FoundingApplicationDialog from "@/components/doctor/FoundingApplicationDialog";
+import { useFoundingSlots } from "@/hooks/useFoundingSlots";
+import { Crown } from "lucide-react";
 
 interface Props {
   user: User;
@@ -31,6 +35,10 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
   const [doctor, setDoctor] = useState<any>(null);
   const [hasAvailability, setHasAvailability] = useState(false);
   const [hasPricing, setHasPricing] = useState(false);
+  const [foundingPlan, setFoundingPlan] = useState<any>(null);
+  const [foundingApp, setFoundingApp] = useState<any>(null);
+  const [applyOpen, setApplyOpen] = useState(false);
+  const { slots, refresh: refreshSlots } = useFoundingSlots();
 
   const symbol = getCurrencySymbol(doctorCountry || undefined);
 
