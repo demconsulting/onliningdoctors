@@ -66,7 +66,10 @@ serve(async (req) => {
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
     const body = await req.json().catch(() => ({}));
-    const { appointment_id, kind } = body as { appointment_id?: string; kind?: string };
+    const { appointment_id, kind, minutes_before } = body as { appointment_id?: string; kind?: string; minutes_before?: number };
+    const minBefore = kind === "reminder" && Number.isFinite(Number(minutes_before)) && Number(minutes_before) > 0
+      ? Math.round(Number(minutes_before))
+      : null;
     if (!appointment_id || !["booking_confirmation", "reminder"].includes(kind || "")) {
       return new Response(JSON.stringify({ error: "Missing appointment_id or invalid kind" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -102,8 +105,9 @@ serve(async (req) => {
       });
     }
 
-    const patientType = `${kind}_patient`;
-    const doctorType = `${kind}_doctor`;
+    const typeSuffix = kind === "reminder" && minBefore != null ? `reminder_${minBefore}` : kind;
+    const patientType = `${typeSuffix}_patient`;
+    const doctorType = `${typeSuffix}_doctor`;
 
     // Dedup check
     const { data: existing } = await service
@@ -133,8 +137,17 @@ serve(async (req) => {
     const joinLink = `${SITE_URL}/call/${appt.id}`;
 
     const isReminder = kind === "reminder";
-    const patientTitle = isReminder ? "Reminder: Your appointment starts soon" : "Appointment Confirmed";
-    const doctorTitle = isReminder ? "Reminder: Upcoming appointment" : "New Appointment Booked";
+    const minLabel = minBefore != null
+      ? (minBefore >= 60 && minBefore % 60 === 0
+          ? `${minBefore / 60} hour${minBefore === 60 ? "" : "s"}`
+          : `${minBefore} minute${minBefore === 1 ? "" : "s"}`)
+      : null;
+    const patientTitle = isReminder
+      ? (minLabel ? `Reminder: Your appointment starts in ${minLabel}` : "Reminder: Your appointment starts soon")
+      : "Appointment Confirmed";
+    const doctorTitle = isReminder
+      ? (minLabel ? `Reminder: Appointment in ${minLabel}` : "Reminder: Upcoming appointment")
+      : "New Appointment Booked";
 
     const detailsRow = (label: string, value: string) =>
       `<tr><td style="padding:8px 0;color:#64748b;width:130px;">${esc(label)}</td><td style="padding:8px 0;font-weight:600;">${value}</td></tr>`;
@@ -201,6 +214,16 @@ serve(async (req) => {
       results.doctor = r;
     } else {
       results.doctor = { skipped: !doctorEmail ? "no_email" : "already_sent" };
+    }
+
+    // In-app notifications for reminders (web + mobile push via realtime)
+    if (isReminder && minBefore != null) {
+      const notifMsg = `Your appointment ${minBefore === 1 ? "starts in 1 minute" : `starts in ${minLabel}`}`;
+      const doctorMsg = `Appointment with ${patientName} ${minBefore === 1 ? "starts in 1 minute" : `starts in ${minLabel}`}`;
+      await service.from("notifications").insert([
+        { user_id: appt.patient_id, title: patientTitle, message: notifMsg, type: "reminder", link: `/call/${appt.id}` },
+        { user_id: appt.doctor_id, title: doctorTitle, message: doctorMsg, type: "reminder", link: `/call/${appt.id}` },
+      ]);
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
