@@ -35,6 +35,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "consultation-categories": () => import("@/components/admin/AdminConsultationCategories"),
   "financial-settings": () => import("@/components/admin/AdminFinancialSettings"),
   "email-test": () => import("@/components/admin/AdminEmailTest"),
+  "founding-doctors": () => import("@/components/admin/AdminFoundingDoctors"),
 };
 
 export const prefetchAdminSection = (key: string) => { loaders[key]?.(); };
@@ -66,6 +67,7 @@ const AdminLegalDocuments = lazy(loaders["legal-documents"]);
 const AdminConsultationCategories = lazy(loaders["consultation-categories"]);
 const AdminFinancialSettings = lazy(loaders["financial-settings"]);
 const AdminEmailTest = lazy(loaders["email-test"]);
+const AdminFoundingDoctors = lazy(loaders["founding-doctors"]);
 
 const SectionFallback = () => (
   <div className="flex justify-center py-10" role="status" aria-label="Loading admin section">
@@ -138,6 +140,7 @@ const AdminDashboard = () => {
       case "doctor-verification": return <AdminDoctorVerification />;
       case "site-settings": return <AdminSiteSettings />;
       case "email-test": return <AdminEmailTest />;
+      case "founding-doctors": return <AdminFoundingDoctors />;
       default: return <AdminHero />;
     }
   };
