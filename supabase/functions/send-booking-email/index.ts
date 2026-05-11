@@ -216,6 +216,16 @@ serve(async (req) => {
       results.doctor = { skipped: !doctorEmail ? "no_email" : "already_sent" };
     }
 
+    // In-app notifications for reminders (web + mobile push via realtime)
+    if (isReminder && minBefore != null) {
+      const notifMsg = `Your appointment ${minBefore === 1 ? "starts in 1 minute" : `starts in ${minLabel}`}`;
+      const doctorMsg = `Appointment with ${patientName} ${minBefore === 1 ? "starts in 1 minute" : `starts in ${minLabel}`}`;
+      await service.from("notifications").insert([
+        { user_id: appt.patient_id, title: patientTitle, message: notifMsg, type: "reminder", link: `/call/${appt.id}` },
+        { user_id: appt.doctor_id, title: doctorTitle, message: doctorMsg, type: "reminder", link: `/call/${appt.id}` },
+      ]);
+    }
+
     return new Response(JSON.stringify({ success: true, results }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
