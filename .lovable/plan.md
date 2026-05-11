@@ -1,110 +1,102 @@
-## Practice Management Calendar Module
+# Founding 10 Doctors Program
 
-A unified calendar for doctors, practice admins, and receptionists to manage **online** and **offline/in-person** appointments in one place, with strict conflict prevention.
+A complete founding-doctor system layered on top of the existing pricing/fee architecture (`platform_fee_settings` + `doctors.fee_settings_id`) so founding pricing is *protected* and never affected by future global pricing changes.
 
----
+## 1. Database (one migration)
 
-### 1. Database changes (Supabase migration)
+**New table: `founding_doctor_program`** (singleton config row)
+- `max_slots` int default 10
+- `program_label` text default 'Founding Doctor 2026'
+- `applications_open` bool default true
+- `default_fee_settings_id` uuid → `platform_fee_settings.id` (the founding plan template)
 
-**`appointments` table — extend:**
-- `appointment_type` text: `'online' | 'offline'` (default `'online'`)
-- `patient_name` text (nullable, for offline walk-ins)
-- `patient_phone` text (nullable)
-- `patient_email` text (nullable)
-- `end_time` timestamptz (nullable — derived from `scheduled_at + duration_minutes` if absent)
-- `created_by` uuid (who recorded it — doctor, receptionist, or patient)
-- Make `patient_id` nullable for offline-only entries
-- Index on `(doctor_id, scheduled_at)` for conflict checks
+**New table: `founding_doctor_applications`**
+- `doctor_id` uuid (profile_id), `status` text ('pending'|'approved'|'rejected'|'inactive'|'waitlist')
+- `motivation` text, `years_experience` int, `specialty` text, `availability` text
+- `reviewed_by`, `reviewed_at`, `rejection_reason`
+- `created_at`, `updated_at`
 
-**New table `doctor_blocked_times`:**
-- `id`, `doctor_id`, `practice_id` (nullable), `reason` text, `block_type` text (`'break' | 'lunch' | 'leave' | 'unavailable' | 'other'`), `start_time` timestamptz, `end_time` timestamptz, `created_by`, `created_at`
-- RLS:
-  - Doctor manages own blocks
-  - Practice managers / receptionists manage blocks for doctors in their practice (via `is_practice_member` / `is_practice_manager`)
-  - Public `SELECT` so patient booking UI can hide blocked slots
+**Extend `doctors` table** with founding fields:
+- `is_founding_doctor` bool default false
+- `founding_status` text ('none'|'pending'|'approved'|'rejected'|'inactive')
+- `founding_doctor_since` timestamptz
+- `founding_expiry` timestamptz (nullable = lifetime)
+- `founding_pricing_plan_id` uuid → `platform_fee_settings.id` (per-doctor protected override)
+- `founding_locked` bool default true (protects from bulk pricing updates)
 
-**Conflict-check DB function** `check_appointment_conflict(_doctor_id, _start, _end, _exclude_appt_id)` (SECURITY DEFINER) — returns `boolean`. Used by:
-- Online booking edge function (`paystack-payment` already validates pricing — extend to also call this)
-- Offline appointment insert trigger (raises exception on overlap with confirmed/pending appointments OR active blocked times)
+**New `platform_fee_settings` flag**: `is_founding_plan` bool default false — marks plans as founding-only so they never appear in regular doctor plan pickers.
 
-**RLS additions on `appointments`:**
-- Practice receptionists/admins/doctors can `SELECT`, `INSERT`, `UPDATE` appointments where `doctor_id` belongs to their practice
-- Cannot access wallet/billing/payments tables (existing RLS already restricts these)
+**Seed**: one default founding plan (e.g. `platform_fee_percent = 5` vs default 15) marked `is_founding_plan = true`, plus singleton row in `founding_doctor_program`.
 
----
+**Trigger**: when `founding_doctor_applications.status` → 'approved':
+- Check approved count < `max_slots` (raise if full)
+- Set `doctors.is_founding_doctor = true`, `founding_status = 'approved'`, `founding_doctor_since = now()`, `founding_pricing_plan_id = program.default_fee_settings_id`, `fee_settings_id = founding_pricing_plan_id`
+- Send notification to doctor
+- When status → 'rejected' or 'inactive': revert `is_founding_doctor`, restore default `fee_settings_id`
 
-### 2. Frontend: Calendar module
+**RLS**:
+- `founding_doctor_program`: public SELECT (counter), admin ALL
+- `founding_doctor_applications`: doctor can INSERT/SELECT own; admin ALL
+- Doctor UPDATE policy on `doctors` already blocks changing protected fields via `prevent_doctor_suspension_self_update` — extend to also block `is_founding_doctor`, `founding_status`, `founding_pricing_plan_id`, `founding_locked`
 
-New folder `src/components/calendar/`:
+**RPC**: `get_founding_slots()` returns `{ approved_count, remaining, max_slots, applications_open }` (public).
 
-- `PracticeCalendar.tsx` — main component, day/week/month tabs, fetches appointments + blocks, realtime subscription
-- `CalendarDayView.tsx`, `CalendarWeekView.tsx`, `CalendarMonthView.tsx`
-- `AppointmentCard.tsx` — color-coded chip:
-  - Blue = online, Green = offline, Grey = blocked, Orange = medical-aid pending, Red = cancelled
-- `OfflineAppointmentDialog.tsx` — create/edit offline appointment form
-- `BlockTimeDialog.tsx` — create blocked period (break/lunch/leave)
-- `CalendarSummaryWidgets.tsx` — today's totals (online, offline, upcoming, missed, available slots)
-- `useCalendarConflicts.ts` — client-side helper that calls the DB function before insert
+**Pricing resolver**: extend `resolveFeeSettings()` in `src/lib/feeCalculator.ts` — if doctor has `founding_pricing_plan_id` and `founding_locked = true`, use it (overrides everything).
 
-**Library:** use lightweight custom grid (no heavy calendar lib) — Tailwind grid + date-fns. Keeps mobile bundle small.
+## 2. Admin: "Founding Doctors" section
 
-**Mobile:** stack list view on `<sm`, FAB for "+ Add appointment", swipe-between-days via simple touch handlers.
+New file: `src/components/admin/AdminFoundingDoctors.tsx` with three tabs:
+1. **Applications Queue** — list pending applications, approve/reject inline (with reason), shows motivation/experience
+2. **Active Founding Doctors** — table of approved doctors, change pricing plan dropdown (only `is_founding_plan` plans), deactivate, view billing
+3. **Program Settings** — edit `max_slots`, toggle `applications_open`, pick default founding plan, live counter "X / 10 slots used"
 
----
+Wire into `AdminSidebar` (new item "Founding Doctors", `Crown` icon) and `AdminDashboard` lazy loader.
 
-### 3. Integration points
+## 3. Doctor dashboard
 
-- **DoctorDashboard:** new "Calendar" tab (replaces or complements "Appointments")
-- **PracticeTeam page:** receptionists already supported via `practice_members.role = 'receptionist'` — wire them to calendar
-- **BookAppointment (patient):** before showing time slots, also subtract `doctor_blocked_times` overlapping the day; existing slot-availability already excludes confirmed appointments
-- **paystack-payment edge function:** call `check_appointment_conflict` server-side before creating the appointment to close race conditions
+**`FoundingBenefitsCard.tsx`** — shown in `DoctorOverview` when `is_founding_doctor = true`:
+- Gold/teal gradient card with "Founding Doctor 2026" badge
+- Lists: reduced platform fee (% shown), premium features included, early-adopter status, locked-in pricing, partnership status
+- "Member since {founding_doctor_since}" line
 
----
+**Apply CTA** for non-founders (in `DoctorOverview` or a new banner) — opens `FoundingApplicationDialog.tsx`:
+- Form: motivation, years experience, specialty (prefilled), availability
+- Submits to `founding_doctor_applications`
+- Shows live remaining-slots counter; disabled when closed/full (with "Join waitlist" fallback)
+- After submit: shows pending state
 
-### 4. Permissions matrix
+**Pricing card** in `DoctorBilling` — when founding, replace standard plan card with premium "Founding Doctor Early-Adopter Plan" card showing locked-in fee, savings vs standard, expiry (or "Lifetime").
 
-| Role | View calendar | Create offline | Edit/cancel | Block time | Wallet/billing |
-|---|---|---|---|---|---|
-| Doctor (owner of slot) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Practice owner / admin | ✓ | ✓ | ✓ | ✓ | ✓ (own) |
-| Receptionist | ✓ (practice doctors) | ✓ | ✓ | ✓ | ✗ |
-| Nurse | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Patient | own bookings only | ✗ | cancel own | ✗ | ✗ |
+## 4. Public-facing slot counter
 
----
+Tiny hook `useFoundingSlots()` calling the RPC; reuse on doctor signup page (`DoctorSignup.tsx` / `DoctorBenefits.tsx`) to display "3 Founding Positions Remaining" or "Applications Closed".
 
-### 5. Color tokens (added to `index.css`)
+## 5. Onboarding flow
 
-```
---cal-online, --cal-offline, --cal-blocked, --cal-pending, --cal-cancelled
-```
-HSL values matching existing teal/cyan medical theme.
+Add an opt-in checkbox + collapsible founding fields on `DoctorSignup.tsx` ("Apply for the Founding 10 Doctors Program"). On signup completion, if checked, create a `founding_doctor_applications` row.
 
----
+## 6. Files to create / edit
 
-### 6. Out of scope (future-ready hooks left in place)
+**Created**
+- `supabase/migrations/<ts>_founding_doctors.sql`
+- `src/components/admin/AdminFoundingDoctors.tsx`
+- `src/components/doctor/FoundingBenefitsCard.tsx`
+- `src/components/doctor/FoundingApplicationDialog.tsx`
+- `src/hooks/useFoundingSlots.ts`
 
-Queue management, invoicing, WhatsApp/SMS reminders, AI scheduling — schema fields and component slots reserved but not implemented.
+**Edited**
+- `src/components/admin/AdminSidebar.tsx`, `src/pages/AdminDashboard.tsx` (register section)
+- `src/components/doctor/DoctorOverview.tsx` (mount cards)
+- `src/components/doctor/DoctorBilling.tsx` (founding pricing card)
+- `src/lib/feeCalculator.ts` (founding override in resolver)
+- `src/pages/DoctorSignup.tsx` (founding opt-in)
+- `src/pages/DoctorBenefits.tsx` (slot counter + apply CTA)
 
----
+## Technical notes
 
-### Technical details
+- Founding pricing protection = doctor row carries its own `founding_pricing_plan_id`; resolver prefers it; trigger refuses to overwrite when `founding_locked = true`.
+- 10-slot enforcement is in the approval trigger (atomic) — UI counter is informational only.
+- Future tiers (Early Access, Premium Partner) reuse the same pattern: add `founding_status` enum values + new `is_*_plan` boolean on `platform_fee_settings`.
+- All new tables have RLS enabled; admin uses `has_role(auth.uid(),'admin')`.
 
-- Realtime: `supabase.channel('practice-calendar-' + doctorId)` subscribed to `appointments` and `doctor_blocked_times` filtered by `doctor_id`
-- All conflict checks server-side via `check_appointment_conflict` (single source of truth)
-- Offline appointments skip Paystack — `payment_method_type = 'offline'`, `status = 'confirmed'`
-- date-fns already in deps; no new heavy libs
-- Lazy-load the calendar module in `DoctorDashboard` to keep dashboard LCP intact
-
----
-
-### Delivery order
-
-1. Migration (table + function + RLS)
-2. Calendar components + dialogs
-3. Wire into DoctorDashboard as new "Calendar" tab
-4. Update `BookAppointment` slot filter to subtract blocked times
-5. Patch `paystack-payment` to call conflict check
-6. Mobile polish + summary widgets
-
-Approve to proceed — I'll start with the migration.
+Approve to proceed and I'll run the migration first, then ship the code.
