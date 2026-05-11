@@ -105,8 +105,9 @@ serve(async (req) => {
       });
     }
 
-    const patientType = `${kind}_patient`;
-    const doctorType = `${kind}_doctor`;
+    const typeSuffix = kind === "reminder" && minBefore != null ? `reminder_${minBefore}` : kind;
+    const patientType = `${typeSuffix}_patient`;
+    const doctorType = `${typeSuffix}_doctor`;
 
     // Dedup check
     const { data: existing } = await service
