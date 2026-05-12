@@ -3,6 +3,7 @@ import { useBranding } from "@/hooks/useBranding";
 import { Link } from "react-router-dom";
 import { Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import GooglePlayBadge from "@/components/shared/GooglePlayBadge";
 
 interface FooterContent {
   tagline: string;
