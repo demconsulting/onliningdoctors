@@ -212,10 +212,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
         .eq("doctor_id", selectedDoctor)
         .eq("is_available", true),
       supabase
-        .from("doctor_blocked_times")
-        .select("start_time, end_time")
-        .eq("doctor_id", selectedDoctor)
-        .gte("end_time", new Date().toISOString()),
+        .rpc("get_doctor_blocked_slots", { _doctor_id: selectedDoctor }),
     ]).then(([{ data: avail }, { data: blocks }]) => {
       setAvailability((avail as AvailabilitySlot[]) || []);
       setBlockedTimes(blocks || []);
