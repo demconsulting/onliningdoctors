@@ -94,6 +94,37 @@ serve(async (req) => {
       });
     }
 
+    // Authorization: allow service-role/cron secret OR an authenticated party (patient/doctor) on this appointment
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const cronSecret = Deno.env.get("CRON_SECRET") || "";
+    const isServiceCall = token.length > 0 && (token === serviceKey || (cronSecret && token === cronSecret));
+
+    if (!isServiceCall) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const anonClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+      );
+      const { data: claimsData, error: claimsErr } = await anonClient.auth.getClaims(token);
+      const callerId = claimsData?.claims?.sub;
+      if (claimsErr || !callerId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (callerId !== appt.patient_id && callerId !== appt.doctor_id) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     if (kind === "reminder" && appt.status !== "confirmed") {
       return new Response(JSON.stringify({ skipped: "not_confirmed" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
