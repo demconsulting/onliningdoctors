@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
+import GooglePlayBadge from "@/components/shared/GooglePlayBadge";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
