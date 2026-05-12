@@ -57,7 +57,7 @@ export type Database = {
           session_id: string
           status: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           channel?: string | null
@@ -66,7 +66,7 @@ export type Database = {
           session_id: string
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           channel?: string | null
@@ -75,7 +75,7 @@ export type Database = {
           session_id?: string
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -2225,6 +2225,13 @@ export type Database = {
         Returns: boolean
       }
       expire_stale_payments: { Args: never; Returns: undefined }
+      get_doctor_blocked_slots: {
+        Args: { _doctor_id: string }
+        Returns: {
+          end_time: string
+          start_time: string
+        }[]
+      }
       get_founding_slots: { Args: never; Returns: Json }
       get_public_reviews: {
         Args: { _doctor_id: string }
