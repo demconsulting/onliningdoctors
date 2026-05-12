@@ -81,6 +81,10 @@ const Footer = () => {
               <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link>
               <a href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground">How It Works</a>
             </div>
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Get the App</p>
+              <GooglePlayBadge size="sm" />
+            </div>
           </div>
 
           <div>
