@@ -170,6 +170,10 @@ const HeroSection = () => {
                 {hero.cta_secondary}
               </Button>
             </div>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span className="text-xs uppercase tracking-wider text-white/70">Now on Android</span>
+              <GooglePlayBadge size="md" />
+            </div>
           </div>
 
           {hero.features.length > 0 && (!isMobile || showMobileBadges) && (
