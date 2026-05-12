@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Shield, Video, Clock, Star, Heart, Activity } from "lucide-react";
+import GooglePlayBadge from "@/components/shared/GooglePlayBadge";
 
 const iconMap: Record<string, React.ElementType> = { Shield, Video, Clock, Star, Heart, Activity };
 
@@ -168,6 +169,10 @@ const HeroSection = () => {
               <Button size="lg" variant="outline" className="border-white/60 bg-white/10 text-white hover:bg-white/20" onClick={() => navigate("/signup")}>
                 {hero.cta_secondary}
               </Button>
+            </div>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <span className="text-xs uppercase tracking-wider text-white/70">Now on Android</span>
+              <GooglePlayBadge size="md" />
             </div>
           </div>
 

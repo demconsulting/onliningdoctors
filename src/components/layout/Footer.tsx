@@ -3,6 +3,7 @@ import { useBranding } from "@/hooks/useBranding";
 import { Link } from "react-router-dom";
 import { Shield, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import GooglePlayBadge from "@/components/shared/GooglePlayBadge";
 
 interface FooterContent {
   tagline: string;
@@ -79,6 +80,10 @@ const Footer = () => {
               <Link to="/doctors" className="text-sm text-muted-foreground hover:text-foreground">Find Doctors</Link>
               <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact Us</Link>
               <a href="/#how-it-works" className="text-sm text-muted-foreground hover:text-foreground">How It Works</a>
+            </div>
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Get the App</p>
+              <GooglePlayBadge size="sm" />
             </div>
           </div>
 
