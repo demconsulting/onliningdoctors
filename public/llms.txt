@@ -1,0 +1,20 @@
+# Doctors Onlining
+
+> Video consultation platform connecting patients in South Africa with verified, HPCSA-registered doctors for secure non-emergency care.
+
+Doctors Onlining lets patients browse verified doctors by specialty, book paid video consultations, share medical documents, receive digital prescriptions, and review their care. Doctors manage availability, run consultations, issue prescriptions, and track earnings. The platform follows HPCSA telemedicine and POPIA data-protection rules.
+
+## Pages
+
+- [Home](/): Browse the platform and find doctors.
+- [Doctors directory](/doctors): Search verified doctors by specialty, country, and availability.
+- [About](/about): Mission, team, and how the platform works.
+- [Contact](/contact): Get in touch with the support team.
+- [For doctors](/doctor-benefits): Benefits and onboarding for medical practitioners.
+- [Wellness Plus](/wellness-plus): Subscription wellness program for patients.
+
+## Optional
+
+- [Terms of Service](/terms)
+- [Privacy Policy](/privacy)
+- [Refund Policy](/refund-policy)
