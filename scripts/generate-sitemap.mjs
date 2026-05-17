@@ -13,6 +13,7 @@ const staticPages = [
   { path: "/terms", priority: "0.4", changefreq: "monthly", lastmod: today },
   { path: "/privacy", priority: "0.4", changefreq: "monthly", lastmod: today },
   { path: "/refund-policy", priority: "0.4", changefreq: "monthly", lastmod: today },
+  { path: "/sitemap.html", priority: "0.3", changefreq: "weekly", lastmod: today },
 ];
 
 const escapeXml = (value) =>
