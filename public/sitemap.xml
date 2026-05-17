@@ -49,6 +49,12 @@
     <priority>0.4</priority>
   </url>
   <url>
+    <loc>https://doctorsonlining.com/sitemap.html</loc>
+    <lastmod>2026-04-27T10:59:17.893Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://doctorsonlining.com/doctors/a43cd0eb-4977-48f1-a6ab-91801c1dedc9</loc>
     <lastmod>2026-04-13T12:23:56.522633+00:00</lastmod>
     <changefreq>daily</changefreq>

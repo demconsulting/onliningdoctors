@@ -103,6 +103,7 @@ const PracticeTeam = lazyWithRetry(() => import("./pages/PracticeTeam"));
 const PracticeSettings = lazyWithRetry(() => import("./pages/PracticeSettings"));
 const WellnessPlus = lazyWithRetry(() => import("./pages/WellnessPlus"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Sitemap = lazyWithRetry(() => import("./pages/Sitemap"));
 
 const queryClient = new QueryClient();
 
@@ -179,7 +180,10 @@ const App = () => (
               <Route path="/practice/team" element={<PracticeTeam />} />
               <Route path="/practice/settings" element={<PracticeSettings />} />
               <Route path="/wellness-plus" element={<WellnessPlus />} />
+              <Route path="/sitemap" element={<Sitemap />} />
+              <Route path="/sitemap.html" element={<Sitemap />} />
               <Route path="*" element={<NotFound />} />
+
             </Routes>
           </Suspense>
         </ChunkErrorBoundary>
