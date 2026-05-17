@@ -103,6 +103,7 @@ const PracticeTeam = lazyWithRetry(() => import("./pages/PracticeTeam"));
 const PracticeSettings = lazyWithRetry(() => import("./pages/PracticeSettings"));
 const WellnessPlus = lazyWithRetry(() => import("./pages/WellnessPlus"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Sitemap = lazyWithRetry(() => import("./pages/Sitemap"));
 
 const queryClient = new QueryClient();
 
