@@ -202,6 +202,20 @@ const AdminDoctorVerification = () => {
           <Badge variant="destructive" className="text-xs">Missing</Badge>
         )}
       </td>
+      <td className="py-3 pr-4">
+        <Select
+          value={d.accepted_payment_method || "both"}
+          onValueChange={(v) => updatePaymentMethod(d.id, v as any)}
+          disabled={updating === d.id}
+        >
+          <SelectTrigger className="h-7 w-[160px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="both">Both</SelectItem>
+            <SelectItem value="medical_aid_only">Medical Aid only</SelectItem>
+            <SelectItem value="card_only">Card only</SelectItem>
+          </SelectContent>
+        </Select>
+      </td>
       <td className="py-3">{actions}</td>
     </tr>
   );
