@@ -43,7 +43,10 @@ const AdminUsers = () => {
   const [suspendDialog, setSuspendDialog] = useState<{ userId: string; name: string; isDoctor: boolean } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
   const [suspending, setSuspending] = useState<string | null>(null);
+  const [currentUserRoles, setCurrentUserRoles] = useState<AppRole[]>([]);
+  const [impersonateTarget, setImpersonateTarget] = useState<{ userId: string; name: string } | null>(null);
   const { toast } = useToast();
+  const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
 
   const fetchData = async () => {
     setLoading(true);
