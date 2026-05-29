@@ -154,7 +154,7 @@ const DoctorBenefits = () => {
                 <div className="text-center space-y-3">
                   <div className="rounded-xl border-2 border-primary/40 bg-card/80 p-6 backdrop-blur">
                     <p className="text-sm font-medium text-foreground">
-                      10 of 10 exclusive founding positions remaining — locked-in pricing & premium perks.
+                      10 exclusive founding positions — locked-in pricing & premium perks.
                     </p>
                   </div>
                   <Button
