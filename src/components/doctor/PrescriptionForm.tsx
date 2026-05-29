@@ -12,9 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Medication {
   name: string;
+  strength: string;
   dosage: string;
   frequency: string;
   duration: string;
+  quantity: string;
+  repeats: string;
   instructions: string;
 }
 
@@ -26,7 +29,7 @@ interface PrescriptionFormProps {
   onSaved?: () => void;
 }
 
-const emptyMed: Medication = { name: "", dosage: "", frequency: "", duration: "", instructions: "" };
+const emptyMed: Medication = { name: "", strength: "", dosage: "", frequency: "", duration: "", quantity: "", repeats: "", instructions: "" };
 
 const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onSaved }: PrescriptionFormProps) => {
   const [open, setOpen] = useState(false);
@@ -40,6 +43,8 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
   const [followUpDate, setFollowUpDate] = useState("");
   const [warnings, setWarnings] = useState("");
   const [allergiesNoted, setAllergiesNoted] = useState("");
+  const [clinicalNotes, setClinicalNotes] = useState("");
+  const [followUpInstructions, setFollowUpInstructions] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [signatureUrl, setSignatureUrl] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -63,36 +68,25 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
         const d = data as any;
         setExistingId(d.id);
         setDiagnosis(d.diagnosis || "");
-        setMedications(d.medications?.length ? d.medications : [{ ...emptyMed }]);
+        setMedications(d.medications?.length ? d.medications.map((m: any) => ({ ...emptyMed, ...m })) : [{ ...emptyMed }]);
         setPharmacyNotes(d.pharmacy_notes || "");
         setRefillCount(d.refill_count || 0);
         setFollowUpDate(d.follow_up_date || "");
         setWarnings(d.warnings || "");
         setAllergiesNoted(d.allergies_noted || "");
+        setClinicalNotes(d.clinical_notes || "");
+        setFollowUpInstructions(d.follow_up_instructions || "");
         setLogoUrl(d.doctor_logo_url || "");
         setSignatureUrl(d.doctor_signature_url || "");
       } else {
-        // Load saved logo/sig from doctor record or most recent prescription
+        // Load saved logo/sig from doctor record (Prescription Settings)
         const { data: docRecord } = await supabase
           .from("doctors")
-          .select("practice_logo_url")
+          .select("practice_logo_url, practice_signature_url")
           .eq("profile_id", doctorId)
           .single();
-        if ((docRecord as any)?.practice_logo_url) {
-          setLogoUrl((docRecord as any).practice_logo_url);
-        }
-        // Load signature from most recent prescription
-        const { data: recent } = await supabase
-          .from("prescriptions" as any)
-          .select("doctor_signature_url")
-          .eq("doctor_id", doctorId)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (recent) {
-          if (!logoUrl) setLogoUrl((recent as any).doctor_logo_url || "");
-          setSignatureUrl((recent as any).doctor_signature_url || "");
-        }
+        if ((docRecord as any)?.practice_logo_url) setLogoUrl((docRecord as any).practice_logo_url);
+        if ((docRecord as any)?.practice_signature_url) setSignatureUrl((docRecord as any).practice_signature_url);
       }
       // Load templates
       const { data: tpls } = await supabase
@@ -187,6 +181,8 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
       follow_up_date: followUpDate || null,
       warnings: warnings || null,
       allergies_noted: allergiesNoted || null,
+      clinical_notes: clinicalNotes || null,
+      follow_up_instructions: followUpInstructions || null,
       doctor_logo_url: logoUrl || null,
       doctor_signature_url: signatureUrl || null,
     };
@@ -308,31 +304,52 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <div className="col-span-2 sm:col-span-2">
                         <Label className="text-xs">Medication Name *</Label>
                         <Input value={med.name} onChange={e => updateMed(idx, "name", e.target.value)} placeholder="e.g. Amoxicillin" />
                       </div>
                       <div>
-                        <Label className="text-xs">Dosage</Label>
-                        <Input value={med.dosage} onChange={e => updateMed(idx, "dosage", e.target.value)} placeholder="e.g. 500mg" />
+                        <Label className="text-xs">Strength</Label>
+                        <Input value={med.strength} onChange={e => updateMed(idx, "strength", e.target.value)} placeholder="e.g. 500mg" />
                       </div>
                       <div>
-                        <Label className="text-xs">Frequency</Label>
-                        <Input value={med.frequency} onChange={e => updateMed(idx, "frequency", e.target.value)} placeholder="e.g. 3 times daily" />
+                        <Label className="text-xs">Dosage / Frequency</Label>
+                        <Input value={med.frequency} onChange={e => updateMed(idx, "frequency", e.target.value)} placeholder="e.g. 1 tab 3x daily" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Quantity</Label>
+                        <Input value={med.quantity} onChange={e => updateMed(idx, "quantity", e.target.value)} placeholder="e.g. 21 tabs" />
                       </div>
                       <div>
                         <Label className="text-xs">Duration</Label>
                         <Input value={med.duration} onChange={e => updateMed(idx, "duration", e.target.value)} placeholder="e.g. 7 days" />
                       </div>
+                      <div>
+                        <Label className="text-xs">Repeats</Label>
+                        <Input type="number" min={0} value={med.repeats} onChange={e => updateMed(idx, "repeats", e.target.value)} placeholder="0" />
+                      </div>
                     </div>
                     <div>
-                      <Label className="text-xs">Special Instructions</Label>
+                      <Label className="text-xs">Additional Notes</Label>
                       <Input value={med.instructions} onChange={e => updateMed(idx, "instructions", e.target.value)} placeholder="e.g. Take with food" />
                     </div>
                   </CardContent>
                 </Card>
               ))}
+            </div>
+
+
+            {/* Clinical Notes */}
+            <div className="space-y-1.5">
+              <Label>Clinical Notes <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Textarea value={clinicalNotes} onChange={e => setClinicalNotes(e.target.value)} placeholder="Examination findings, history of presenting complaint..." rows={2} />
+            </div>
+
+            {/* Follow-up instructions */}
+            <div className="space-y-1.5">
+              <Label>Follow-up Instructions <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Textarea value={followUpInstructions} onChange={e => setFollowUpInstructions(e.target.value)} placeholder="When to return, what to monitor, when to seek urgent care..." rows={2} />
             </div>
 
             {/* Pharmacy Notes */}
