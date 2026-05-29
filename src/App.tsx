@@ -151,6 +151,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ImpersonationBanner />
       <BrowserRouter>
         <ChunkErrorBoundary>
           <Suspense fallback={<RouteFallback />}>
