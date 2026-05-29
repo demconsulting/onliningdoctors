@@ -74,6 +74,7 @@ class ChunkErrorBoundary extends Component<
 // interacts or the page has settled, so its framer-motion + realtime payload
 // never competes with homepage LCP.
 const ChatWidget = lazyWithRetry(() => import("./components/chat/ChatWidget"));
+import ImpersonationBanner from "./components/admin/ImpersonationBanner";
 import Index from "./pages/Index";
 
 // Code-split: load route bundles only when navigated to.
