@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog } from "lucide-react";
+import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye } from "lucide-react";
 import ImpersonateDialog from "@/components/admin/ImpersonateDialog";
+import UserActionDialog, { type UserAction } from "@/components/admin/UserActionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -45,8 +46,11 @@ const AdminUsers = () => {
   const [suspending, setSuspending] = useState<string | null>(null);
   const [currentUserRoles, setCurrentUserRoles] = useState<AppRole[]>([]);
   const [impersonateTarget, setImpersonateTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [actionTarget, setActionTarget] = useState<{ userId: string; name: string; action: UserAction } | null>(null);
+  const [viewTarget, setViewTarget] = useState<any | null>(null);
   const { toast } = useToast();
   const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
+  const canDestructive = canImpersonate; // platform_admin or super_admin
 
   const fetchData = async () => {
     setLoading(true);
@@ -310,7 +314,11 @@ const AdminUsers = () => {
                       <td className="py-2 pr-4 text-muted-foreground">{emailMap[p.id] || "—"}</td>
                       <td className="py-2 pr-4">{p.phone || "—"}</td>
                       <td className="py-2 pr-4">
-                        {suspended ? (
+                        {p.account_status && p.account_status !== "active" ? (
+                          <Badge variant="destructive" className="text-xs capitalize" title={reason || undefined}>
+                            {p.account_status}
+                          </Badge>
+                        ) : suspended ? (
                           <Badge variant="destructive" className="text-xs gap-1" title={reason || undefined}>
                             <ShieldBan className="h-3 w-3" /> Suspended
                           </Badge>
@@ -377,7 +385,11 @@ const AdminUsers = () => {
                       </td>
                       <td className="py-2 pr-4 text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</td>
                       <td className="py-2">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <Button variant="ghost" size="sm" title="View user details"
+                            onClick={() => setViewTarget({ ...p, email: emailMap[p.id], userRoles })}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -413,16 +425,31 @@ const AdminUsers = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setSuspendDialog({ userId: p.id, name: p.full_name || "User", isDoctor });
-                                setSuspendReason("");
-                              }}
-                              disabled={suspending === p.id}
+                              onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "suspend" })}
                               title="Suspend user"
-                              className="text-destructive hover:text-destructive"
+                              className="text-amber-600 hover:text-amber-700"
                             >
                               <ShieldBan className="h-4 w-4" />
                             </Button>
+                          )}
+                          {canDestructive && (
+                            <>
+                              <Button variant="ghost" size="sm" title="Deactivate (revoke login)"
+                                className="text-amber-600 hover:text-amber-700"
+                                onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "deactivate" })}>
+                                <PowerOff className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" title="Archive user (recommended)"
+                                className="text-blue-600 hover:text-blue-700"
+                                onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "archive" })}>
+                                <Archive className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" title="Permanently delete user"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "delete" })}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </td>
@@ -478,8 +505,45 @@ const AdminUsers = () => {
           targetName={impersonateTarget.name}
         />
       )}
+
+      {actionTarget && (
+        <UserActionDialog
+          open={!!actionTarget}
+          onOpenChange={(o) => { if (!o) setActionTarget(null); }}
+          action={actionTarget.action}
+          targetUserId={actionTarget.userId}
+          targetName={actionTarget.name}
+          onDone={fetchData}
+        />
+      )}
+
+      <Dialog open={!!viewTarget} onOpenChange={(o) => { if (!o) setViewTarget(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{viewTarget?.full_name || "User"}</DialogTitle>
+          </DialogHeader>
+          {viewTarget && (
+            <div className="space-y-2 text-sm">
+              <Row label="Email" value={viewTarget.email || "—"} />
+              <Row label="Phone" value={viewTarget.phone || "—"} />
+              <Row label="Country" value={viewTarget.country || "—"} />
+              <Row label="Status" value={viewTarget.account_status || "active"} />
+              <Row label="Roles" value={(viewTarget.userRoles || []).join(", ") || "—"} />
+              <Row label="Joined" value={new Date(viewTarget.created_at).toLocaleString()} />
+              {viewTarget.suspension_reason && <Row label="Suspension reason" value={viewTarget.suspension_reason} />}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
+
+const Row = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex justify-between gap-4 border-b border-border/50 py-1">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="font-medium text-right">{value}</span>
+  </div>
+);
 
 export default AdminUsers;
