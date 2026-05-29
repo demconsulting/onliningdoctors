@@ -21,6 +21,7 @@ interface DoctorRow {
   is_available: boolean | null;
   is_suspended: boolean;
   suspension_reason: string | null;
+  accepted_payment_method: "medical_aid_only" | "card_only" | "both" | null;
   created_at: string;
   profile: {
     full_name: string | null;
