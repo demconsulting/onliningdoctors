@@ -135,6 +135,25 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
 
   const handleSave = async () => {
+    // Required advanced details — admin verification requires these
+    const missing: string[] = [];
+    if (!profile.country) missing.push("Country");
+    if (!profile.city) missing.push("City");
+    if (!doctor.education?.trim()) missing.push("Education / Qualifications");
+    if (!doctor.languages || doctor.languages.length === 0) missing.push("Languages");
+    if (!doctor.bio?.trim()) missing.push("Bio");
+    if (!doctor.experience_years || doctor.experience_years <= 0) missing.push("Years of Experience");
+    if (!licenseDocPath) missing.push("HPCSA Document");
+    if (!idDocPath) missing.push("ID Copy");
+    if (missing.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Advanced details required",
+        description: `Please complete: ${missing.join(", ")}.`,
+      });
+      return;
+    }
+
     setSaving(true);
 
     const profilePayload = {
