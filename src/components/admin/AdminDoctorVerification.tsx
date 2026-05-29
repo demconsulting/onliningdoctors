@@ -142,6 +142,21 @@ const AdminDoctorVerification = () => {
     fetchDoctors();
   };
 
+  const updatePaymentMethod = async (doctorId: string, value: "medical_aid_only" | "card_only" | "both") => {
+    setUpdating(doctorId);
+    const { error } = await supabase
+      .from("doctors")
+      .update({ accepted_payment_method: value } as any)
+      .eq("id", doctorId);
+    if (error) {
+      toast({ variant: "destructive", title: "Update failed", description: error.message });
+    } else {
+      toast({ title: "Payment preference updated" });
+      setDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, accepted_payment_method: value } : d));
+    }
+    setUpdating(null);
+  };
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   const pending = doctors.filter(d => !d.is_verified && !d.is_suspended);
