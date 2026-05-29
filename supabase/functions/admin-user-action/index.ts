@@ -108,6 +108,18 @@ serve(async (req) => {
       // Only platform_admin/super_admin (already enforced above via destructive check? No — add explicit)
       if (!isElevated) return json({ error: "Only platform_admin or super_admin can perform this action" }, 403);
       if (!confirmed) return json({ error: "Confirmation checkbox required" }, 400);
+
+      // Platform setting gate: "Allow permanent deletion of test users"
+      const { data: setting } = await service
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "allow_permanent_test_user_deletion")
+        .maybeSingle();
+      const allowed = (setting as any)?.value === true || (setting as any)?.value === "true";
+      if (!allowed) {
+        return json({ error: "Permanent deletion of test users is disabled in platform settings." }, 403);
+      }
+
       if (body?.delete_confirmation !== "DELETE") {
         return json({ error: 'You must type DELETE to confirm.' }, 400);
       }
