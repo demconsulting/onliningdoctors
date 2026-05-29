@@ -304,26 +304,34 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
                         </Button>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      <div className="col-span-2 sm:col-span-2">
                         <Label className="text-xs">Medication Name *</Label>
                         <Input value={med.name} onChange={e => updateMed(idx, "name", e.target.value)} placeholder="e.g. Amoxicillin" />
                       </div>
                       <div>
-                        <Label className="text-xs">Dosage</Label>
-                        <Input value={med.dosage} onChange={e => updateMed(idx, "dosage", e.target.value)} placeholder="e.g. 500mg" />
+                        <Label className="text-xs">Strength</Label>
+                        <Input value={med.strength} onChange={e => updateMed(idx, "strength", e.target.value)} placeholder="e.g. 500mg" />
                       </div>
                       <div>
-                        <Label className="text-xs">Frequency</Label>
-                        <Input value={med.frequency} onChange={e => updateMed(idx, "frequency", e.target.value)} placeholder="e.g. 3 times daily" />
+                        <Label className="text-xs">Dosage / Frequency</Label>
+                        <Input value={med.frequency} onChange={e => updateMed(idx, "frequency", e.target.value)} placeholder="e.g. 1 tab 3x daily" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Quantity</Label>
+                        <Input value={med.quantity} onChange={e => updateMed(idx, "quantity", e.target.value)} placeholder="e.g. 21 tabs" />
                       </div>
                       <div>
                         <Label className="text-xs">Duration</Label>
                         <Input value={med.duration} onChange={e => updateMed(idx, "duration", e.target.value)} placeholder="e.g. 7 days" />
                       </div>
+                      <div>
+                        <Label className="text-xs">Repeats</Label>
+                        <Input type="number" min={0} value={med.repeats} onChange={e => updateMed(idx, "repeats", e.target.value)} placeholder="0" />
+                      </div>
                     </div>
                     <div>
-                      <Label className="text-xs">Special Instructions</Label>
+                      <Label className="text-xs">Additional Notes</Label>
                       <Input value={med.instructions} onChange={e => updateMed(idx, "instructions", e.target.value)} placeholder="e.g. Take with food" />
                     </div>
                   </CardContent>
