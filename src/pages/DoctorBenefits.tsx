@@ -153,8 +153,9 @@ const DoctorBenefits = () => {
                 </div>
                 <div className="text-center space-y-3">
                   <div className="rounded-xl border-2 border-primary/40 bg-card/80 p-6 backdrop-blur">
-                    <p className="text-5xl font-bold text-primary">{slots.remaining}</p>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">of {slots.max_slots} positions left</p>
+                    <p className="text-sm font-medium text-foreground">
+                      10 of 10 exclusive founding positions remaining — locked-in pricing & premium perks.
+                    </p>
                   </div>
                   <Button
                     size="lg"
