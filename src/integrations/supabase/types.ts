@@ -2009,6 +2009,8 @@ export type Database = {
           country: string | null
           created_at: string
           date_of_birth: string | null
+          demo_user: boolean
+          environment: string
           full_name: string | null
           gender: string | null
           id: string
@@ -2016,6 +2018,7 @@ export type Database = {
           phone: string | null
           state: string | null
           suspension_reason: string | null
+          test_user: boolean
           updated_at: string
         }
         Insert: {
@@ -2026,6 +2029,8 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          demo_user?: boolean
+          environment?: string
           full_name?: string | null
           gender?: string | null
           id: string
@@ -2033,6 +2038,7 @@ export type Database = {
           phone?: string | null
           state?: string | null
           suspension_reason?: string | null
+          test_user?: boolean
           updated_at?: string
         }
         Update: {
@@ -2043,6 +2049,8 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          demo_user?: boolean
+          environment?: string
           full_name?: string | null
           gender?: string | null
           id?: string
@@ -2050,6 +2058,7 @@ export type Database = {
           phone?: string | null
           state?: string | null
           suspension_reason?: string | null
+          test_user?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -2343,6 +2352,7 @@ export type Database = {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
       }
+      is_test_or_demo_user: { Args: { _user_id: string }; Returns: boolean }
       user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {

@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye } from "lucide-react";
+import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye, FlaskConical } from "lucide-react";
 import ImpersonateDialog from "@/components/admin/ImpersonateDialog";
 import UserActionDialog, { type UserAction } from "@/components/admin/UserActionDialog";
+import TestDeleteDialog from "@/components/admin/TestDeleteDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ const AdminUsers = () => {
   const [impersonateTarget, setImpersonateTarget] = useState<{ userId: string; name: string } | null>(null);
   const [actionTarget, setActionTarget] = useState<{ userId: string; name: string; action: UserAction } | null>(null);
   const [viewTarget, setViewTarget] = useState<any | null>(null);
+  const [testDeleteTarget, setTestDeleteTarget] = useState<{ userId: string; name: string; isTestUser: boolean } | null>(null);
   const { toast } = useToast();
   const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
   const canDestructive = canImpersonate; // platform_admin or super_admin
@@ -310,7 +312,16 @@ const AdminUsers = () => {
 
                   return (
                     <tr key={p.id} className={`text-foreground ${suspended ? "opacity-60" : ""}`}>
-                      <td className="py-2 pr-4 font-medium">{p.full_name || "—"}</td>
+                      <td className="py-2 pr-4 font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{p.full_name || "—"}</span>
+                          {p.test_user && <Badge variant="outline" className="text-amber-600 border-amber-600">TEST</Badge>}
+                          {p.demo_user && <Badge variant="outline" className="text-blue-600 border-blue-600">DEMO</Badge>}
+                          {p.environment && p.environment !== "production" && (
+                            <Badge variant="outline" className="text-muted-foreground">{p.environment}</Badge>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-2 pr-4 text-muted-foreground">{emailMap[p.id] || "—"}</td>
                       <td className="py-2 pr-4">{p.phone || "—"}</td>
                       <td className="py-2 pr-4">
@@ -449,6 +460,17 @@ const AdminUsers = () => {
                                 onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "delete" })}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
+                              {(p.test_user || p.demo_user || p.environment === "test") && (
+                                <Button variant="ghost" size="sm" title="Delete Test User Permanently"
+                                  className="text-destructive hover:text-destructive bg-destructive/5"
+                                  onClick={() => setTestDeleteTarget({
+                                    userId: p.id,
+                                    name: p.full_name || "User",
+                                    isTestUser: !!(p.test_user || p.demo_user || p.environment === "test"),
+                                  })}>
+                                  <FlaskConical className="h-4 w-4" />
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>
@@ -513,6 +535,17 @@ const AdminUsers = () => {
           action={actionTarget.action}
           targetUserId={actionTarget.userId}
           targetName={actionTarget.name}
+          onDone={fetchData}
+        />
+      )}
+
+      {testDeleteTarget && (
+        <TestDeleteDialog
+          open={!!testDeleteTarget}
+          onOpenChange={(o) => { if (!o) setTestDeleteTarget(null); }}
+          targetUserId={testDeleteTarget.userId}
+          targetName={testDeleteTarget.name}
+          isTestUser={testDeleteTarget.isTestUser}
           onDone={fetchData}
         />
       )}
