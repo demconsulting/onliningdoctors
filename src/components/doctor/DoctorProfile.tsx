@@ -16,6 +16,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { usePractice } from "@/hooks/usePractice";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import PrescriptionSettings from "@/components/doctor/PrescriptionSettings";
 
 interface DoctorProfileProps {
   user: User;
