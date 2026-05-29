@@ -68,9 +68,12 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     practice_logo_url: "",
   });
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
+  const [idDocPath, setIdDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
+  const [uploadingId, setUploadingId] = useState(false);
   const [uploadingPracticeLogo, setUploadingPracticeLogo] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
+  const idInputRef = useRef<HTMLInputElement>(null);
   const practiceLogoRef = useRef<HTMLInputElement>(null);
   const [practiceLogoSignedUrl, setPracticeLogoSignedUrl] = useState<string | null>(null);
 
@@ -115,6 +118,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           practice_logo_url: d.practice_logo_url || "",
         });
         setLicenseDocPath(d.license_document_path || null);
+        setIdDocPath((d as any).id_document_path || null);
         // Load signed URL for practice logo
         if (d.practice_logo_url) {
           const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(d.practice_logo_url, 3600);
@@ -131,6 +135,25 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
 
   const handleSave = async () => {
+    // Required advanced details — admin verification requires these
+    const missing: string[] = [];
+    if (!profile.country) missing.push("Country");
+    if (!profile.city) missing.push("City");
+    if (!doctor.education?.trim()) missing.push("Education / Qualifications");
+    if (!doctor.languages || doctor.languages.length === 0) missing.push("Languages");
+    if (!doctor.bio?.trim()) missing.push("Bio");
+    if (!doctor.experience_years || doctor.experience_years <= 0) missing.push("Years of Experience");
+    if (!licenseDocPath) missing.push("HPCSA Document");
+    if (!idDocPath) missing.push("ID Copy");
+    if (missing.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Advanced details required",
+        description: `Please complete: ${missing.join(", ")}.`,
+      });
+      return;
+    }
+
     setSaving(true);
 
     const profilePayload = {
@@ -224,14 +247,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         </CardContent>
       </Card>
 
-      {/* Advanced details — optional, collapsed by default */}
-      <Collapsible>
+      {/* Advanced details — REQUIRED for verification */}
+      <Collapsible defaultOpen>
         <Card>
           <CollapsibleTrigger asChild>
             <button className="flex w-full items-center justify-between p-6 text-left">
               <div>
-                <h3 className="font-display text-lg font-semibold">Advanced details (optional)</h3>
-                <p className="text-sm text-muted-foreground">Bio, qualifications, languages, hospital, location, license document.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Advanced details <span className="ml-2 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">Required</span>
+                </h3>
+                <p className="text-sm text-muted-foreground">Bio, qualifications, languages, location, ID copy and HPCSA document. All required for verification.</p>
               </div>
               <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
             </button>
@@ -292,7 +317,44 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                 <Textarea value={doctor.bio} onChange={(e) => setDoctor({ ...doctor, bio: e.target.value })} rows={3} placeholder="Brief professional bio highlighting your experience and areas of focus..." />
               </div>
               <div className="space-y-2">
-                <Label>HPCSA Document (PDF/Image)</Label>
+                <Label>ID Copy (PDF/Image) <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Upload a clear copy of your national ID or passport for identity verification.</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={idInputRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                        return;
+                      }
+                      setUploadingId(true);
+                      const ext = file.name.split(".").pop();
+                      const path = `${user.id}/id.${ext}`;
+                      const { error } = await supabase.storage.from("doctor-licenses").upload(path, file, { upsert: true });
+                      if (error) {
+                        toast({ variant: "destructive", title: "Upload failed", description: error.message });
+                      } else {
+                        await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
+                        setIdDocPath(path);
+                        toast({ title: "ID copy uploaded" });
+                      }
+                      setUploadingId(false);
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => idInputRef.current?.click()} disabled={uploadingId}>
+                    {uploadingId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {idDocPath ? "Replace" : "Upload"}
+                  </Button>
+                  {idDocPath && <span className="flex items-center gap-1 text-sm text-green-600"><FileCheck className="h-4 w-4" /> Uploaded</span>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>HPCSA Document (PDF/Image) <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-3">
                   <input
                     ref={licenseInputRef}

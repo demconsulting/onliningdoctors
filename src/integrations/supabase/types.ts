@@ -947,6 +947,7 @@ export type Database = {
           founding_status: string
           hospital_affiliation: string | null
           id: string
+          id_document_path: string | null
           is_available: boolean | null
           is_founding_doctor: boolean
           is_suspended: boolean
@@ -983,6 +984,7 @@ export type Database = {
           founding_status?: string
           hospital_affiliation?: string | null
           id?: string
+          id_document_path?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
           is_suspended?: boolean
@@ -1019,6 +1021,7 @@ export type Database = {
           founding_status?: string
           hospital_affiliation?: string | null
           id?: string
+          id_document_path?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
           is_suspended?: boolean

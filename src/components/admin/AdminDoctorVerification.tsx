@@ -14,6 +14,7 @@ interface DoctorRow {
   profile_id: string;
   license_number: string | null;
   license_document_path: string | null;
+  id_document_path: string | null;
   title: string | null;
   is_verified: boolean;
   is_available: boolean | null;
@@ -35,16 +36,16 @@ const AdminDoctorVerification = () => {
   const [suspendReason, setSuspendReason] = useState("");
   const { toast } = useToast();
 
-  const viewLicenseDoc = async (path: string) => {
+  const viewDoc = async (path: string) => {
     const { data } = await supabase.storage.from("doctor-licenses").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else toast({ variant: "destructive", title: "Could not load license document" });
+    else toast({ variant: "destructive", title: "Could not load document" });
   };
 
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, title, is_verified, is_available, is_suspended, suspension_reason, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, is_verified, is_available, is_suspended, suspension_reason, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
       .order("created_at", { ascending: false });
 
     if (data) setDoctors(data as unknown as DoctorRow[]);
@@ -165,8 +166,8 @@ const AdminDoctorVerification = () => {
             <>
               <span className="flex items-center gap-1"><FileText className="h-3 w-3 text-muted-foreground" />{d.license_number}</span>
               {d.license_document_path && (
-                <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewLicenseDoc(d.license_document_path!)}>
-                  <Eye className="h-3 w-3" /> View
+                <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.license_document_path!)}>
+                  <Eye className="h-3 w-3" /> HPCSA
                 </Button>
               )}
             </>
@@ -174,6 +175,15 @@ const AdminDoctorVerification = () => {
             <Badge variant="destructive" className="text-xs">Missing</Badge>
           )}
         </div>
+      </td>
+      <td className="py-3 pr-4">
+        {d.id_document_path ? (
+          <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.id_document_path!)}>
+            <Eye className="h-3 w-3" /> ID Copy
+          </Button>
+        ) : (
+          <Badge variant="destructive" className="text-xs">Missing</Badge>
+        )}
       </td>
       <td className="py-3">{actions}</td>
     </tr>
@@ -201,22 +211,29 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">Title</th>
                     <th className="pb-2 pr-4">Country</th>
                     <th className="pb-2 pr-4">License #</th>
+                    <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {pending.map((d) =>
-                    renderDoctorRow(d, (
+                  {pending.map((d) => {
+                    const missing: string[] = [];
+                    if (!d.profile?.country) missing.push("country");
+                    if (!d.license_number) missing.push("license #");
+                    if (!d.license_document_path) missing.push("HPCSA document");
+                    if (!d.id_document_path) missing.push("ID copy");
+                    const blocked = missing.length > 0;
+                    return renderDoctorRow(d, (
                       <Button
                         size="sm"
                         onClick={() => handleVerify(d.id, d.profile_id, true)}
-                        disabled={updating === d.id || !d.profile?.country}
-                        title={!d.profile?.country ? "Country is required before approval" : "Approve doctor"}
+                        disabled={updating === d.id || blocked}
+                        title={blocked ? `Missing: ${missing.join(", ")}` : "Approve doctor"}
                       >
                         {updating === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Approve"}
                       </Button>
-                    ))
-                  )}
+                    ));
+                  })}
                 </tbody>
               </table>
             </div>
@@ -244,6 +261,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">Title</th>
                     <th className="pb-2 pr-4">Country</th>
                     <th className="pb-2 pr-4">License #</th>
+                    <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
