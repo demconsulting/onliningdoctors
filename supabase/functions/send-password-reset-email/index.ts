@@ -63,6 +63,22 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const rateWindow = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { count: recentCount, error: rateError } = await serviceClient
+      .from("booking_email_log")
+      .select("id", { count: "exact", head: true })
+      .eq("email_type", "password_reset")
+      .eq("recipient", normalizedEmail)
+      .eq("status", "sent")
+      .gte("created_at", rateWindow);
+    if (rateError) console.error("Password reset rate check failed:", rateError.message);
+    if ((recentCount || 0) >= 3) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data, error } = await serviceClient.auth.admin.generateLink({
       type: "recovery",
       email: normalizedEmail,
