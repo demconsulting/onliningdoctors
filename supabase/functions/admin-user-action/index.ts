@@ -99,7 +99,12 @@ serve(async (req) => {
           dependencies: deps,
         }, 409);
       }
-      // Hard delete: auth.users + roles + profile (cascade where present)
+      // Hard delete: auth.users + roles + profile. Audit logs are preserved.
+      try {
+        await service.from("audit_logs")
+          .update({ details: { deleted_user: true, deletion_reason: String(reason).trim(), deleted_at: new Date().toISOString() } as any })
+          .eq("user_id", target_user_id);
+      } catch (e) { console.error("audit_logs annotate failed", e); }
       await service.from("user_roles").delete().eq("user_id", target_user_id);
       await service.from("profiles").delete().eq("id", target_user_id);
       await service.auth.admin.deleteUser(target_user_id);
