@@ -420,6 +420,10 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         </Card>
       </Collapsible>
 
+      {/* Prescription Settings */}
+      <PrescriptionSettings user={user} />
+
+
       {/* Practice — optional, for clinics or multi-doctor practices */}
       <Card>
         <CardHeader>
