@@ -66,6 +66,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     practice_email: "",
     practice_phone: "",
     practice_logo_url: "",
+    accepted_payment_method: "both" as "medical_aid_only" | "card_only" | "both",
   });
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [idDocPath, setIdDocPath] = useState<string | null>(null);
@@ -116,6 +117,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           practice_email: d.practice_email || "",
           practice_phone: d.practice_phone || "",
           practice_logo_url: d.practice_logo_url || "",
+          accepted_payment_method: (d.accepted_payment_method as any) || "both",
         });
         setLicenseDocPath(d.license_document_path || null);
         setIdDocPath((d as any).id_document_path || null);
@@ -239,6 +241,25 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               </p>
             </div>
           </div>
+
+          <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+            <Label>Accepted Payment Methods</Label>
+            <Select
+              value={doctor.accepted_payment_method}
+              onValueChange={(v) => setDoctor({ ...doctor, accepted_payment_method: v as any })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Both — Medical Aid & Card Payments</SelectItem>
+                <SelectItem value="medical_aid_only">Medical Aid only</SelectItem>
+                <SelectItem value="card_only">Card Payments only</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Patients will only see the payment options you accept when booking with you.
+            </p>
+          </div>
+
 
           <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

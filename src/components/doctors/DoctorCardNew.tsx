@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Clock, Video, User, ShieldCheck, MessageSquare } from "lucide-react";
+import { Star, Clock, Video, User, ShieldCheck, MessageSquare, CreditCard, HeartPulse } from "lucide-react";
 import { getCurrencySymbol } from "@/lib/currency";
 
 interface Doctor {
@@ -18,6 +18,7 @@ interface Doctor {
   languages: string[] | null;
   hospital_affiliation: string | null;
   license_number?: string | null;
+  accepted_payment_method?: "medical_aid_only" | "card_only" | "both" | null;
   profile: { full_name: string | null; avatar_url: string | null; city: string | null; country: string | null } | null;
   specialty: { name: string; icon: string | null } | null;
 }
@@ -114,6 +115,24 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
           <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground border-border/60">
             <ShieldCheck className="h-3 w-3" /> POPIA Compliant
           </Badge>
+          {(() => {
+            const apm = doctor.accepted_payment_method || "both";
+            if (apm === "both") return (
+              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                <CreditCard className="h-3 w-3" /> Medical Aid & Card Payments
+              </Badge>
+            );
+            if (apm === "card_only") return (
+              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                <CreditCard className="h-3 w-3" /> Card Payments Accepted
+              </Badge>
+            );
+            return (
+              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                <HeartPulse className="h-3 w-3" /> Medical Aid Accepted
+              </Badge>
+            );
+          })()}
         </div>
 
         {/* Action Buttons */}

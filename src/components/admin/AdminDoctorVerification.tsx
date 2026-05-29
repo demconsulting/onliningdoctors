@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +21,7 @@ interface DoctorRow {
   is_available: boolean | null;
   is_suspended: boolean;
   suspension_reason: string | null;
+  accepted_payment_method: "medical_aid_only" | "card_only" | "both" | null;
   created_at: string;
   profile: {
     full_name: string | null;
@@ -45,7 +47,7 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, id_document_path, title, is_verified, is_available, is_suspended, suspension_reason, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, is_verified, is_available, is_suspended, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
       .order("created_at", { ascending: false });
 
     if (data) setDoctors(data as unknown as DoctorRow[]);
@@ -140,6 +142,21 @@ const AdminDoctorVerification = () => {
     fetchDoctors();
   };
 
+  const updatePaymentMethod = async (doctorId: string, value: "medical_aid_only" | "card_only" | "both") => {
+    setUpdating(doctorId);
+    const { error } = await supabase
+      .from("doctors")
+      .update({ accepted_payment_method: value } as any)
+      .eq("id", doctorId);
+    if (error) {
+      toast({ variant: "destructive", title: "Update failed", description: error.message });
+    } else {
+      toast({ title: "Payment preference updated" });
+      setDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, accepted_payment_method: value } : d));
+    }
+    setUpdating(null);
+  };
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   const pending = doctors.filter(d => !d.is_verified && !d.is_suspended);
@@ -185,6 +202,20 @@ const AdminDoctorVerification = () => {
           <Badge variant="destructive" className="text-xs">Missing</Badge>
         )}
       </td>
+      <td className="py-3 pr-4">
+        <Select
+          value={d.accepted_payment_method || "both"}
+          onValueChange={(v) => updatePaymentMethod(d.id, v as any)}
+          disabled={updating === d.id}
+        >
+          <SelectTrigger className="h-7 w-[160px] text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="both">Both</SelectItem>
+            <SelectItem value="medical_aid_only">Medical Aid only</SelectItem>
+            <SelectItem value="card_only">Card only</SelectItem>
+          </SelectContent>
+        </Select>
+      </td>
       <td className="py-3">{actions}</td>
     </tr>
   );
@@ -212,6 +243,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">Country</th>
                     <th className="pb-2 pr-4">License #</th>
                     <th className="pb-2 pr-4">ID Copy</th>
+                    <th className="pb-2 pr-4">Payment</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
@@ -262,6 +294,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">Country</th>
                     <th className="pb-2 pr-4">License #</th>
                     <th className="pb-2 pr-4">ID Copy</th>
+                    <th className="pb-2 pr-4">Payment</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>

@@ -225,8 +225,10 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     if (!selectedDoctor) { setDoctorTiers([]); return; }
     supabase.from("doctor_pricing_tiers").select("*").eq("doctor_id", selectedDoctor).eq("is_active", true)
       .then(({ data }) => setDoctorTiers(data || []));
-    setPaymentMethodType("card");
-  }, [selectedDoctor]);
+    const doc = doctors.find(d => d.profile_id === selectedDoctor);
+    const accepted = (doc as any)?.accepted_payment_method || "both";
+    setPaymentMethodType(accepted === "medical_aid_only" ? "medical_aid" : "card");
+  }, [selectedDoctor, doctors]);
 
   const [activeMedicalAid, setActiveMedicalAid] = useState<ActiveMedicalAidRequest | null>(null);
   // Reset medical-aid state when doctor or method changes
@@ -314,6 +316,18 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     e.preventDefault();
     if (!selectedDoctor || !selectedDate || !time || !consentGranted) {
       toast({ variant: "destructive", title: "Please fill all required fields and provide consent" });
+      return;
+    }
+
+    // Enforce the doctor's accepted payment methods
+    const selectedDocCheck = doctors.find(d => d.profile_id === selectedDoctor);
+    const accepted = (selectedDocCheck as any)?.accepted_payment_method || "both";
+    if (paymentMethodType === "card" && accepted === "medical_aid_only") {
+      toast({ variant: "destructive", title: "Card payments not accepted", description: "This doctor only accepts Medical Aid." });
+      return;
+    }
+    if (paymentMethodType === "medical_aid" && accepted === "card_only") {
+      toast({ variant: "destructive", title: "Medical Aid not accepted", description: "This doctor only accepts Card payments." });
       return;
     }
 
@@ -709,21 +723,31 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                   ?? 0;
                 const maidFee = activeMedicalAid?.approved_rate ?? null;
                 const maidCopay = activeMedicalAid?.copayment_amount ?? null;
+                const accepted = (selectedDoc as any)?.accepted_payment_method || "both";
+                const allowCard = accepted === "card_only" || accepted === "both";
+                const allowMedicalAid = accepted === "medical_aid_only" || accepted === "both";
                 return (
                   <div className="space-y-3">
                     <Label>Payment Method *</Label>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <button type="button" onClick={() => setPaymentMethodType("card")}
-                        className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "card" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
-                        <p className="font-semibold text-sm">Card Payment</p>
-                        <p className="text-xs text-muted-foreground">Pay now with card. Instant confirmation.</p>
-                      </button>
-                      <button type="button" onClick={() => setPaymentMethodType("medical_aid")}
-                        className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "medical_aid" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
-                        <p className="font-semibold text-sm">Medical Aid</p>
-                        <p className="text-xs text-muted-foreground">Submit your medical aid details for approval and scheduling.</p>
-                      </button>
+                    <div className={cn("grid gap-2", allowCard && allowMedicalAid ? "sm:grid-cols-2" : "sm:grid-cols-1")}>
+                      {allowCard && (
+                        <button type="button" onClick={() => setPaymentMethodType("card")}
+                          className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "card" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
+                          <p className="font-semibold text-sm">Card Payment</p>
+                          <p className="text-xs text-muted-foreground">Pay now with card. Instant confirmation.</p>
+                        </button>
+                      )}
+                      {allowMedicalAid && (
+                        <button type="button" onClick={() => setPaymentMethodType("medical_aid")}
+                          className={cn("text-left rounded-lg border p-3 transition-colors", paymentMethodType === "medical_aid" ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-primary/40")}>
+                          <p className="font-semibold text-sm">Medical Aid</p>
+                          <p className="text-xs text-muted-foreground">Submit your medical aid details for approval and scheduling.</p>
+                        </button>
+                      )}
                     </div>
+                    {!allowCard && !allowMedicalAid && (
+                      <p className="text-xs text-destructive">This doctor has not configured any payment methods.</p>
+                    )}
 
                     {paymentMethodType === "card" && Number(cardFee) > 0 && (
                       <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm flex items-center justify-between">
