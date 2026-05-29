@@ -90,7 +90,7 @@ serve(async (req) => {
     });
     const resendData = await resendResponse.json().catch(() => ({}));
 
-    await serviceClient.from("booking_email_log").insert({
+    const { error: logError } = await serviceClient.from("booking_email_log").insert({
       appointment_id: "00000000-0000-0000-0000-000000000000",
       email_type: "password_reset",
       recipient: normalizedEmail,
@@ -98,6 +98,7 @@ serve(async (req) => {
       status: resendResponse.ok ? "sent" : "failed",
       error: resendResponse.ok ? null : `[${resendResponse.status}] ${JSON.stringify(resendData)}`,
     });
+    if (logError) console.error("Password reset email log failed:", logError.message);
 
     if (!resendResponse.ok) {
       console.error("Password reset email failed:", resendData);
