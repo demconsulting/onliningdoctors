@@ -181,6 +181,8 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
       follow_up_date: followUpDate || null,
       warnings: warnings || null,
       allergies_noted: allergiesNoted || null,
+      clinical_notes: clinicalNotes || null,
+      follow_up_instructions: followUpInstructions || null,
       doctor_logo_url: logoUrl || null,
       doctor_signature_url: signatureUrl || null,
     };
