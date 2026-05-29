@@ -90,7 +90,7 @@ const AdminDashboard = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
-        .eq("role", "admin");
+        .in("role", ["admin", "super_admin", "platform_admin"]);
 
       if (!roles || roles.length === 0) {
         navigate("/"); // Not admin

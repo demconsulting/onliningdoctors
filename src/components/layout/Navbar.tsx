@@ -36,7 +36,7 @@ const Navbar = () => {
       .eq("user_id", userId);
     if (data) {
       setIsDoctor(data.some(r => r.role === "doctor"));
-      setIsAdmin(data.some(r => r.role === "admin"));
+      setIsAdmin(data.some(r => ["admin", "super_admin", "platform_admin"].includes(r.role as string)));
     }
   };
 

@@ -30,11 +30,9 @@ const Login = () => {
 
   const routeAfterLogin = async (userId: string) => {
     if (redirectTo) { navigate(redirectTo); return; }
-    const [{ data: roles }, { data: adminRoles }] = await Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", userId),
-      supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin"),
-    ]);
-    if (adminRoles && adminRoles.length > 0) { navigate("/admin"); return; }
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isAdmin = roles?.some(r => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
+    if (isAdmin) { navigate("/admin"); return; }
     const isDoctor = roles?.some(r => r.role === "doctor");
     navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
   };
