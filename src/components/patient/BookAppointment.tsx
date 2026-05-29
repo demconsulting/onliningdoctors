@@ -319,6 +319,18 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
       return;
     }
 
+    // Enforce the doctor's accepted payment methods
+    const selectedDocCheck = doctors.find(d => d.profile_id === selectedDoctor);
+    const accepted = (selectedDocCheck as any)?.accepted_payment_method || "both";
+    if (paymentMethodType === "card" && accepted === "medical_aid_only") {
+      toast({ variant: "destructive", title: "Card payments not accepted", description: "This doctor only accepts Medical Aid." });
+      return;
+    }
+    if (paymentMethodType === "medical_aid" && accepted === "card_only") {
+      toast({ variant: "destructive", title: "Medical Aid not accepted", description: "This doctor only accepts Card payments." });
+      return;
+    }
+
     // Store consent if needed
     if ((window as any).__storePatientConsent) {
       await (window as any).__storePatientConsent();
