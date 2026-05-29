@@ -68,9 +68,12 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     practice_logo_url: "",
   });
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
+  const [idDocPath, setIdDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
+  const [uploadingId, setUploadingId] = useState(false);
   const [uploadingPracticeLogo, setUploadingPracticeLogo] = useState(false);
   const licenseInputRef = useRef<HTMLInputElement>(null);
+  const idInputRef = useRef<HTMLInputElement>(null);
   const practiceLogoRef = useRef<HTMLInputElement>(null);
   const [practiceLogoSignedUrl, setPracticeLogoSignedUrl] = useState<string | null>(null);
 
