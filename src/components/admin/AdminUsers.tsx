@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog } from "lucide-react";
+import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye } from "lucide-react";
 import ImpersonateDialog from "@/components/admin/ImpersonateDialog";
+import UserActionDialog, { type UserAction } from "@/components/admin/UserActionDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -45,8 +46,11 @@ const AdminUsers = () => {
   const [suspending, setSuspending] = useState<string | null>(null);
   const [currentUserRoles, setCurrentUserRoles] = useState<AppRole[]>([]);
   const [impersonateTarget, setImpersonateTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [actionTarget, setActionTarget] = useState<{ userId: string; name: string; action: UserAction } | null>(null);
+  const [viewTarget, setViewTarget] = useState<any | null>(null);
   const { toast } = useToast();
   const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
+  const canDestructive = canImpersonate; // platform_admin or super_admin
 
   const fetchData = async () => {
     setLoading(true);
