@@ -9,7 +9,8 @@ const corsHeaders = {
 const ELEVATED = new Set(["platform_admin", "super_admin"]);
 const ALLOWED_ACTIONS = new Set([
   "view", "suspend", "unsuspend", "deactivate", "reactivate",
-  "archive", "delete", // delete = permanent
+  "archive", "delete", // delete = permanent (only if no dependencies)
+  "permanent_test_delete", // hard delete for test/demo users only
 ]);
 
 serve(async (req) => {
