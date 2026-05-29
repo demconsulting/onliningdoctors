@@ -339,11 +339,6 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
               ))}
             </div>
 
-            {/* Pharmacy Notes */}
-            <div className="space-y-1.5">
-              <Label>Pharmacy Notes</Label>
-              <Textarea value={pharmacyNotes} onChange={e => setPharmacyNotes(e.target.value)} placeholder="Notes for the pharmacist..." rows={2} />
-            </div>
 
             {/* Clinical Notes */}
             <div className="space-y-1.5">
