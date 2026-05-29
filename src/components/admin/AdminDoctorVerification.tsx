@@ -216,18 +216,24 @@ const AdminDoctorVerification = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {pending.map((d) =>
-                    renderDoctorRow(d, (
+                  {pending.map((d) => {
+                    const missing: string[] = [];
+                    if (!d.profile?.country) missing.push("country");
+                    if (!d.license_number) missing.push("license #");
+                    if (!d.license_document_path) missing.push("HPCSA document");
+                    if (!d.id_document_path) missing.push("ID copy");
+                    const blocked = missing.length > 0;
+                    return renderDoctorRow(d, (
                       <Button
                         size="sm"
                         onClick={() => handleVerify(d.id, d.profile_id, true)}
-                        disabled={updating === d.id || !d.profile?.country}
-                        title={!d.profile?.country ? "Country is required before approval" : "Approve doctor"}
+                        disabled={updating === d.id || blocked}
+                        title={blocked ? `Missing: ${missing.join(", ")}` : "Approve doctor"}
                       >
                         {updating === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "Approve"}
                       </Button>
-                    ))
-                  )}
+                    ));
+                  })}
                 </tbody>
               </table>
             </div>
