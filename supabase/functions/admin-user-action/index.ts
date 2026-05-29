@@ -99,7 +99,12 @@ serve(async (req) => {
           dependencies: deps,
         }, 409);
       }
-      // Hard delete: auth.users + roles + profile (cascade where present)
+      // Hard delete: auth.users + roles + profile. Audit logs are preserved.
+      try {
+        await service.from("audit_logs")
+          .update({ details: { deleted_user: true, deletion_reason: String(reason).trim(), deleted_at: new Date().toISOString() } as any })
+          .eq("user_id", target_user_id);
+      } catch (e) { console.error("audit_logs annotate failed", e); }
       await service.from("user_roles").delete().eq("user_id", target_user_id);
       await service.from("profiles").delete().eq("id", target_user_id);
       await service.auth.admin.deleteUser(target_user_id);
@@ -108,6 +113,18 @@ serve(async (req) => {
       // Only platform_admin/super_admin (already enforced above via destructive check? No — add explicit)
       if (!isElevated) return json({ error: "Only platform_admin or super_admin can perform this action" }, 403);
       if (!confirmed) return json({ error: "Confirmation checkbox required" }, 400);
+
+      // Platform setting gate: "Allow permanent deletion of test users"
+      const { data: setting } = await service
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "allow_permanent_test_user_deletion")
+        .maybeSingle();
+      const allowed = (setting as any)?.value === true || (setting as any)?.value === "true";
+      if (!allowed) {
+        return json({ error: "Permanent deletion of test users is disabled in platform settings." }, 403);
+      }
+
       if (body?.delete_confirmation !== "DELETE") {
         return json({ error: 'You must type DELETE to confirm.' }, 400);
       }
@@ -161,7 +178,9 @@ serve(async (req) => {
         { t: "dependents", cols: ["guardian_id", "linked_user_id"] },
         { t: "dependent_consents", cols: ["user_id"] },
         { t: "doctors", cols: ["profile_id"] },
-        { t: "audit_logs", cols: ["user_id"] },
+        // NOTE: audit_logs are intentionally NOT deleted. They are preserved for
+        // compliance; the user_id is left in place and the UI shows "Deleted User"
+        // when the profile no longer exists.
         { t: "user_roles", cols: ["user_id"] },
       ];
       for (const { t, cols } of tables) {
@@ -170,6 +189,14 @@ serve(async (req) => {
           catch (e) { console.error(`delete ${t}.${c} failed`, e); }
         }
       }
+
+      // Annotate audit logs so they read as "Deleted User" downstream.
+      try {
+        await service.from("audit_logs")
+          .update({ details: { deleted_user: true, deletion_reason: String(reason).trim(), deleted_at: new Date().toISOString() } as any })
+          .eq("user_id", target_user_id);
+      } catch (e) { console.error("audit_logs annotate failed", e); }
+
       // Profile + auth user last
       try { await service.from("profiles").delete().eq("id", target_user_id); } catch (e) { console.error(e); }
       try { await service.auth.admin.deleteUser(target_user_id); } catch (e) { console.error(e); }
