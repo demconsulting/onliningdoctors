@@ -77,6 +77,19 @@ const AdminUsers = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+      if (data) setCurrentUserRoles(data.map((r) => r.role as AppRole));
+    })();
+  }, []);
+
+
   const getUserRoles = (userId: string) =>
     roles.filter((r) => r.user_id === userId).map((r) => r.role as AppRole);
 
