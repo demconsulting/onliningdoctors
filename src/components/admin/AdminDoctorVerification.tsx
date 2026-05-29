@@ -45,7 +45,7 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, title, is_verified, is_available, is_suspended, suspension_reason, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, is_verified, is_available, is_suspended, suspension_reason, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
       .order("created_at", { ascending: false });
 
     if (data) setDoctors(data as unknown as DoctorRow[]);
