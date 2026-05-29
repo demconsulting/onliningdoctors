@@ -314,7 +314,11 @@ const AdminUsers = () => {
                       <td className="py-2 pr-4 text-muted-foreground">{emailMap[p.id] || "—"}</td>
                       <td className="py-2 pr-4">{p.phone || "—"}</td>
                       <td className="py-2 pr-4">
-                        {suspended ? (
+                        {p.account_status && p.account_status !== "active" ? (
+                          <Badge variant="destructive" className="text-xs capitalize" title={reason || undefined}>
+                            {p.account_status}
+                          </Badge>
+                        ) : suspended ? (
                           <Badge variant="destructive" className="text-xs gap-1" title={reason || undefined}>
                             <ShieldBan className="h-3 w-3" /> Suspended
                           </Badge>
@@ -501,8 +505,45 @@ const AdminUsers = () => {
           targetName={impersonateTarget.name}
         />
       )}
+
+      {actionTarget && (
+        <UserActionDialog
+          open={!!actionTarget}
+          onOpenChange={(o) => { if (!o) setActionTarget(null); }}
+          action={actionTarget.action}
+          targetUserId={actionTarget.userId}
+          targetName={actionTarget.name}
+          onDone={fetchData}
+        />
+      )}
+
+      <Dialog open={!!viewTarget} onOpenChange={(o) => { if (!o) setViewTarget(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{viewTarget?.full_name || "User"}</DialogTitle>
+          </DialogHeader>
+          {viewTarget && (
+            <div className="space-y-2 text-sm">
+              <Row label="Email" value={viewTarget.email || "—"} />
+              <Row label="Phone" value={viewTarget.phone || "—"} />
+              <Row label="Country" value={viewTarget.country || "—"} />
+              <Row label="Status" value={viewTarget.account_status || "active"} />
+              <Row label="Roles" value={(viewTarget.userRoles || []).join(", ") || "—"} />
+              <Row label="Joined" value={new Date(viewTarget.created_at).toLocaleString()} />
+              {viewTarget.suspension_reason && <Row label="Suspension reason" value={viewTarget.suspension_reason} />}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
+
+const Row = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex justify-between gap-4 border-b border-border/50 py-1">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="font-medium text-right">{value}</span>
+  </div>
+);
 
 export default AdminUsers;
