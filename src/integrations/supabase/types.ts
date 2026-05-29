@@ -956,11 +956,14 @@ export type Database = {
           languages: string[] | null
           license_document_path: string | null
           license_number: string | null
+          practice_address: string | null
           practice_email: string | null
           practice_id: string | null
           practice_logo_url: string | null
           practice_name: string | null
           practice_phone: string | null
+          practice_signature_url: string | null
+          practice_website: string | null
           profile_id: string
           rating: number | null
           specialty_id: string | null
@@ -994,11 +997,14 @@ export type Database = {
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
+          practice_address?: string | null
           practice_email?: string | null
           practice_id?: string | null
           practice_logo_url?: string | null
           practice_name?: string | null
           practice_phone?: string | null
+          practice_signature_url?: string | null
+          practice_website?: string | null
           profile_id: string
           rating?: number | null
           specialty_id?: string | null
@@ -1032,11 +1038,14 @@ export type Database = {
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
+          practice_address?: string | null
           practice_email?: string | null
           practice_id?: string | null
           practice_logo_url?: string | null
           practice_name?: string | null
           practice_phone?: string | null
+          practice_signature_url?: string | null
+          practice_website?: string | null
           profile_id?: string
           rating?: number | null
           specialty_id?: string | null
@@ -1955,55 +1964,82 @@ export type Database = {
         Row: {
           allergies_noted: string | null
           appointment_id: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          clinical_notes: string | null
           created_at: string
           dependent_id: string | null
           diagnosis: string | null
           doctor_id: string
           doctor_logo_url: string | null
           doctor_signature_url: string | null
+          document_type: string
           follow_up_date: string | null
+          follow_up_instructions: string | null
           id: string
           medications: Json
           patient_id: string
           pharmacy_notes: string | null
+          prescription_number: string | null
           refill_count: number | null
+          status: string
           updated_at: string
+          verification_token: string
           warnings: string | null
         }
         Insert: {
           allergies_noted?: string | null
           appointment_id: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          clinical_notes?: string | null
           created_at?: string
           dependent_id?: string | null
           diagnosis?: string | null
           doctor_id: string
           doctor_logo_url?: string | null
           doctor_signature_url?: string | null
+          document_type?: string
           follow_up_date?: string | null
+          follow_up_instructions?: string | null
           id?: string
           medications?: Json
           patient_id: string
           pharmacy_notes?: string | null
+          prescription_number?: string | null
           refill_count?: number | null
+          status?: string
           updated_at?: string
+          verification_token?: string
           warnings?: string | null
         }
         Update: {
           allergies_noted?: string | null
           appointment_id?: string
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          clinical_notes?: string | null
           created_at?: string
           dependent_id?: string | null
           diagnosis?: string | null
           doctor_id?: string
           doctor_logo_url?: string | null
           doctor_signature_url?: string | null
+          document_type?: string
           follow_up_date?: string | null
+          follow_up_instructions?: string | null
           id?: string
           medications?: Json
           patient_id?: string
           pharmacy_notes?: string | null
+          prescription_number?: string | null
           refill_count?: number | null
+          status?: string
           updated_at?: string
+          verification_token?: string
           warnings?: string | null
         }
         Relationships: [
@@ -2384,6 +2420,17 @@ export type Database = {
       }
       is_test_or_demo_user: { Args: { _user_id: string }; Returns: boolean }
       user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
+      verify_prescription: {
+        Args: { _token: string }
+        Returns: {
+          doctor_name: string
+          document_type: string
+          issued_at: string
+          patient_name: string
+          prescription_number: string
+          status: string
+        }[]
+      }
     }
     Enums: {
       accepted_payment_method_enum: "medical_aid_only" | "card_only" | "both"
