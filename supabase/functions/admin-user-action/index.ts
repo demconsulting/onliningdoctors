@@ -104,6 +104,77 @@ serve(async (req) => {
       await service.from("profiles").delete().eq("id", target_user_id);
       await service.auth.admin.deleteUser(target_user_id);
       new_status = "deleted";
+    } else if (action === "permanent_test_delete") {
+      // Only platform_admin/super_admin (already enforced above via destructive check? No — add explicit)
+      if (!isElevated) return json({ error: "Only platform_admin or super_admin can perform this action" }, 403);
+      if (!confirmed) return json({ error: "Confirmation checkbox required" }, 400);
+      if (body?.delete_confirmation !== "DELETE") {
+        return json({ error: 'You must type DELETE to confirm.' }, 400);
+      }
+
+      // Verify target is a test/demo user
+      const isTest = !!(profileBefore as any) && (
+        (profileBefore as any).test_user === true ||
+        (profileBefore as any).demo_user === true ||
+        (profileBefore as any).environment === "test"
+      );
+      if (!isTest) {
+        return json({
+          error: "Production users with healthcare or payment history must be archived, not permanently deleted.",
+        }, 403);
+      }
+
+      // Log BEFORE executing the destructive action
+      await service.from("admin_user_action_logs").insert({
+        admin_user_id: user.id,
+        target_user_id,
+        action_type: "permanent_test_delete",
+        reason: String(reason).trim(),
+        notes: notes ? String(notes).trim() : null,
+        previous_status,
+        new_status: "deleted",
+        ip_address: ip,
+        user_agent: ua,
+      });
+
+      // Cascade delete related test records (best-effort, ignore individual table errors)
+      const tables: Array<{ t: string; cols: string[] }> = [
+        { t: "notifications", cols: ["user_id"] },
+        { t: "ai_messages", cols: [] }, // deleted via conversation cascade below
+        { t: "ai_handoffs", cols: [] },
+        { t: "ai_audit_logs", cols: ["user_id"] },
+        { t: "ai_conversations", cols: ["user_id"] },
+        { t: "consultation_notes", cols: ["doctor_id"] },
+        { t: "consultation_outcomes", cols: ["doctor_id"] },
+        { t: "prescriptions", cols: ["patient_id", "doctor_id"] },
+        { t: "payments", cols: ["patient_id", "doctor_id"] },
+        { t: "medical_aid_requests", cols: ["patient_id", "doctor_id"] },
+        { t: "document_sharing", cols: ["patient_id", "doctor_id"] },
+        { t: "booking_email_log", cols: [] },
+        { t: "appointments", cols: ["patient_id", "doctor_id", "created_by"] },
+        { t: "doctor_blocked_times", cols: ["doctor_id", "created_by"] },
+        { t: "doctor_availability", cols: ["doctor_id"] },
+        { t: "doctor_pricing_tiers", cols: ["doctor_id"] },
+        { t: "doctor_medical_aids", cols: ["doctor_id"] },
+        { t: "doctor_billing", cols: ["doctor_id"] },
+        { t: "founding_doctor_applications", cols: ["doctor_id"] },
+        { t: "dependents", cols: ["guardian_id", "linked_user_id"] },
+        { t: "dependent_consents", cols: ["user_id"] },
+        { t: "doctors", cols: ["profile_id"] },
+        { t: "audit_logs", cols: ["user_id"] },
+        { t: "user_roles", cols: ["user_id"] },
+      ];
+      for (const { t, cols } of tables) {
+        for (const c of cols) {
+          try { await (service.from(t) as any).delete().eq(c, target_user_id); }
+          catch (e) { console.error(`delete ${t}.${c} failed`, e); }
+        }
+      }
+      // Profile + auth user last
+      try { await service.from("profiles").delete().eq("id", target_user_id); } catch (e) { console.error(e); }
+      try { await service.auth.admin.deleteUser(target_user_id); } catch (e) { console.error(e); }
+
+      return json({ success: true, new_status: "deleted", permanent_test_delete: true });
     } else if (action === "suspend") {
       await service.from("profiles")
         .update({ account_status: "suspended", is_suspended: true, suspension_reason: reason })
