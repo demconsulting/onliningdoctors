@@ -469,6 +469,15 @@ const AdminUsers = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {impersonateTarget && (
+        <ImpersonateDialog
+          open={!!impersonateTarget}
+          onOpenChange={(o) => { if (!o) setImpersonateTarget(null); }}
+          targetUserId={impersonateTarget.userId}
+          targetName={impersonateTarget.name}
+        />
+      )}
     </>
   );
 };
