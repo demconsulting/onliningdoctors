@@ -20,14 +20,16 @@ const ForgotPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+    const normalizedEmail = email.trim().toLowerCase();
+    const { error } = await supabase.functions.invoke("send-password-reset-email", {
+      body: { email: normalizedEmail },
     });
     setLoading(false);
     if (error) {
       toast({ variant: "destructive", title: "Couldn't send reset link", description: friendlyAuthError(error.message) });
       return;
     }
+    setEmail(normalizedEmail);
     setSent(true);
   };
 
