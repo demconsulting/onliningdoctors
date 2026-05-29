@@ -317,7 +317,44 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                 <Textarea value={doctor.bio} onChange={(e) => setDoctor({ ...doctor, bio: e.target.value })} rows={3} placeholder="Brief professional bio highlighting your experience and areas of focus..." />
               </div>
               <div className="space-y-2">
-                <Label>HPCSA Document (PDF/Image)</Label>
+                <Label>ID Copy (PDF/Image) <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Upload a clear copy of your national ID or passport for identity verification.</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    ref={idInputRef}
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                        return;
+                      }
+                      setUploadingId(true);
+                      const ext = file.name.split(".").pop();
+                      const path = `${user.id}/id.${ext}`;
+                      const { error } = await supabase.storage.from("doctor-licenses").upload(path, file, { upsert: true });
+                      if (error) {
+                        toast({ variant: "destructive", title: "Upload failed", description: error.message });
+                      } else {
+                        await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
+                        setIdDocPath(path);
+                        toast({ title: "ID copy uploaded" });
+                      }
+                      setUploadingId(false);
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => idInputRef.current?.click()} disabled={uploadingId}>
+                    {uploadingId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {idDocPath ? "Replace" : "Upload"}
+                  </Button>
+                  {idDocPath && <span className="flex items-center gap-1 text-sm text-green-600"><FileCheck className="h-4 w-4" /> Uploaded</span>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>HPCSA Document (PDF/Image) <span className="text-destructive">*</span></Label>
                 <div className="flex items-center gap-3">
                   <input
                     ref={licenseInputRef}
