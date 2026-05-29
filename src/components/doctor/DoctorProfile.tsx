@@ -66,6 +66,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     practice_email: "",
     practice_phone: "",
     practice_logo_url: "",
+    accepted_payment_method: "both" as "medical_aid_only" | "card_only" | "both",
   });
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [idDocPath, setIdDocPath] = useState<string | null>(null);
