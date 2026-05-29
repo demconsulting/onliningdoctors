@@ -242,6 +242,25 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
             </div>
           </div>
 
+          <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+            <Label>Accepted Payment Methods</Label>
+            <Select
+              value={doctor.accepted_payment_method}
+              onValueChange={(v) => setDoctor({ ...doctor, accepted_payment_method: v as any })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Both — Medical Aid & Card Payments</SelectItem>
+                <SelectItem value="medical_aid_only">Medical Aid only</SelectItem>
+                <SelectItem value="card_only">Card Payments only</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Patients will only see the payment options you accept when booking with you.
+            </p>
+          </div>
+
+
           <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save Profile
