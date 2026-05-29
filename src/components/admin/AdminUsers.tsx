@@ -381,7 +381,11 @@ const AdminUsers = () => {
                       </td>
                       <td className="py-2 pr-4 text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</td>
                       <td className="py-2">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <Button variant="ghost" size="sm" title="View user details"
+                            onClick={() => setViewTarget({ ...p, email: emailMap[p.id], userRoles })}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -417,16 +421,31 @@ const AdminUsers = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setSuspendDialog({ userId: p.id, name: p.full_name || "User", isDoctor });
-                                setSuspendReason("");
-                              }}
-                              disabled={suspending === p.id}
+                              onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "suspend" })}
                               title="Suspend user"
-                              className="text-destructive hover:text-destructive"
+                              className="text-amber-600 hover:text-amber-700"
                             >
                               <ShieldBan className="h-4 w-4" />
                             </Button>
+                          )}
+                          {canDestructive && (
+                            <>
+                              <Button variant="ghost" size="sm" title="Deactivate (revoke login)"
+                                className="text-amber-600 hover:text-amber-700"
+                                onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "deactivate" })}>
+                                <PowerOff className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" title="Archive user (recommended)"
+                                className="text-blue-600 hover:text-blue-700"
+                                onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "archive" })}>
+                                <Archive className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" title="Permanently delete user"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "delete" })}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
                           )}
                         </div>
                       </td>
