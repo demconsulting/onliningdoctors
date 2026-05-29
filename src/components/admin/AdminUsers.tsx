@@ -28,8 +28,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const ROLES = ["admin", "patient", "doctor"] as const;
+const ROLES = ["admin", "patient", "doctor", "platform_admin", "super_admin", "receptionist", "hospital_admin", "department_admin"] as const;
 type AppRole = (typeof ROLES)[number];
+const IMPERSONATOR_ROLES = new Set<AppRole>(["platform_admin", "super_admin"]);
 
 const AdminUsers = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
