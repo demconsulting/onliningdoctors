@@ -387,6 +387,17 @@ const AdminUsers = () => {
                           >
                             {resettingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                           </Button>
+                          {canImpersonate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setImpersonateTarget({ userId: p.id, name: p.full_name || emailMap[p.id] || "User" })}
+                              title="Impersonate this user"
+                              className="text-primary hover:text-primary"
+                            >
+                              <UserCog className="h-4 w-4" />
+                            </Button>
+                          )}
                           {suspended ? (
                             <Button
                               variant="ghost"
