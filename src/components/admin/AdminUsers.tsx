@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck } from "lucide-react";
+import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog } from "lucide-react";
+import ImpersonateDialog from "@/components/admin/ImpersonateDialog";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -27,8 +28,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const ROLES = ["admin", "patient", "doctor"] as const;
+const ROLES = ["admin", "patient", "doctor", "platform_admin", "super_admin", "receptionist", "hospital_admin", "department_admin"] as const;
 type AppRole = (typeof ROLES)[number];
+const IMPERSONATOR_ROLES = new Set<AppRole>(["platform_admin", "super_admin"]);
 
 const AdminUsers = () => {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -41,7 +43,10 @@ const AdminUsers = () => {
   const [suspendDialog, setSuspendDialog] = useState<{ userId: string; name: string; isDoctor: boolean } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
   const [suspending, setSuspending] = useState<string | null>(null);
+  const [currentUserRoles, setCurrentUserRoles] = useState<AppRole[]>([]);
+  const [impersonateTarget, setImpersonateTarget] = useState<{ userId: string; name: string } | null>(null);
   const { toast } = useToast();
+  const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
 
   const fetchData = async () => {
     setLoading(true);
@@ -71,6 +76,19 @@ const AdminUsers = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+      if (data) setCurrentUserRoles(data.map((r) => r.role as AppRole));
+    })();
+  }, []);
+
 
   const getUserRoles = (userId: string) =>
     roles.filter((r) => r.user_id === userId).map((r) => r.role as AppRole);
@@ -369,6 +387,17 @@ const AdminUsers = () => {
                           >
                             {resettingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                           </Button>
+                          {canImpersonate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setImpersonateTarget({ userId: p.id, name: p.full_name || emailMap[p.id] || "User" })}
+                              title="Impersonate this user"
+                              className="text-primary hover:text-primary"
+                            >
+                              <UserCog className="h-4 w-4" />
+                            </Button>
+                          )}
                           {suspended ? (
                             <Button
                               variant="ghost"
@@ -440,6 +469,15 @@ const AdminUsers = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {impersonateTarget && (
+        <ImpersonateDialog
+          open={!!impersonateTarget}
+          onOpenChange={(o) => { if (!o) setImpersonateTarget(null); }}
+          targetUserId={impersonateTarget.userId}
+          targetName={impersonateTarget.name}
+        />
+      )}
     </>
   );
 };
