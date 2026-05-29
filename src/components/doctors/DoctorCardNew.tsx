@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Clock, Video, User, ShieldCheck, MessageSquare } from "lucide-react";
+import { Star, Clock, Video, User, ShieldCheck, MessageSquare, CreditCard, HeartPulse } from "lucide-react";
 import { getCurrencySymbol } from "@/lib/currency";
 
 interface Doctor {
@@ -18,6 +18,7 @@ interface Doctor {
   languages: string[] | null;
   hospital_affiliation: string | null;
   license_number?: string | null;
+  accepted_payment_method?: "medical_aid_only" | "card_only" | "both" | null;
   profile: { full_name: string | null; avatar_url: string | null; city: string | null; country: string | null } | null;
   specialty: { name: string; icon: string | null } | null;
 }
