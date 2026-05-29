@@ -14,6 +14,7 @@ interface DoctorRow {
   profile_id: string;
   license_number: string | null;
   license_document_path: string | null;
+  id_document_path: string | null;
   title: string | null;
   is_verified: boolean;
   is_available: boolean | null;
@@ -35,10 +36,10 @@ const AdminDoctorVerification = () => {
   const [suspendReason, setSuspendReason] = useState("");
   const { toast } = useToast();
 
-  const viewLicenseDoc = async (path: string) => {
+  const viewDoc = async (path: string) => {
     const { data } = await supabase.storage.from("doctor-licenses").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else toast({ variant: "destructive", title: "Could not load license document" });
+    else toast({ variant: "destructive", title: "Could not load document" });
   };
 
   const fetchDoctors = async () => {
