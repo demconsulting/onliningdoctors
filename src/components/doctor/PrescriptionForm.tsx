@@ -345,6 +345,24 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
               <Textarea value={pharmacyNotes} onChange={e => setPharmacyNotes(e.target.value)} placeholder="Notes for the pharmacist..." rows={2} />
             </div>
 
+            {/* Clinical Notes */}
+            <div className="space-y-1.5">
+              <Label>Clinical Notes <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Textarea value={clinicalNotes} onChange={e => setClinicalNotes(e.target.value)} placeholder="Examination findings, history of presenting complaint..." rows={2} />
+            </div>
+
+            {/* Follow-up instructions */}
+            <div className="space-y-1.5">
+              <Label>Follow-up Instructions <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Textarea value={followUpInstructions} onChange={e => setFollowUpInstructions(e.target.value)} placeholder="When to return, what to monitor, when to seek urgent care..." rows={2} />
+            </div>
+
+            {/* Pharmacy Notes */}
+            <div className="space-y-1.5">
+              <Label>Pharmacy Notes</Label>
+              <Textarea value={pharmacyNotes} onChange={e => setPharmacyNotes(e.target.value)} placeholder="Notes for the pharmacist..." rows={2} />
+            </div>
+
             {/* Warnings */}
             <div className="space-y-1.5">
               <Label>Warnings / Side Effects</Label>
