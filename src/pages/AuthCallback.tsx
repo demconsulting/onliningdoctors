@@ -47,7 +47,7 @@ const AuthCallback = () => {
         .select("role")
         .eq("user_id", user.id);
       const isDoctor = roles?.some((r) => r.role === "doctor");
-      const isAdmin = roles?.some((r) => r.role === "admin");
+      const isAdmin = roles?.some((r) => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
       navigate(isAdmin ? "/admin" : isDoctor ? "/doctor-dashboard" : "/dashboard", { replace: true });
     };
     run();
