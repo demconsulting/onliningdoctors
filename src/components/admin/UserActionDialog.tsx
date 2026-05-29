@@ -124,7 +124,7 @@ const UserActionDialog = ({ open, onOpenChange, action, targetUserId, targetName
               <ul className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-muted-foreground">
                 {Object.entries(dependencies).map(([k, v]) => (
                   <li key={k} className="flex justify-between">
-                    <span className="capitalize">{k.replaceAll("_", " ")}</span>
+                    <span className="capitalize">{k.replace(/_/g, " ")}</span>
                     <span className={Number(v) > 0 ? "text-destructive font-semibold" : ""}>{v}</span>
                   </li>
                 ))}
