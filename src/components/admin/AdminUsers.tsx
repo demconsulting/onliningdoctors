@@ -312,7 +312,16 @@ const AdminUsers = () => {
 
                   return (
                     <tr key={p.id} className={`text-foreground ${suspended ? "opacity-60" : ""}`}>
-                      <td className="py-2 pr-4 font-medium">{p.full_name || "—"}</td>
+                      <td className="py-2 pr-4 font-medium">
+                        <div className="flex items-center gap-2">
+                          <span>{p.full_name || "—"}</span>
+                          {p.test_user && <Badge variant="outline" className="text-amber-600 border-amber-600">TEST</Badge>}
+                          {p.demo_user && <Badge variant="outline" className="text-blue-600 border-blue-600">DEMO</Badge>}
+                          {p.environment && p.environment !== "production" && (
+                            <Badge variant="outline" className="text-muted-foreground">{p.environment}</Badge>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-2 pr-4 text-muted-foreground">{emailMap[p.id] || "—"}</td>
                       <td className="py-2 pr-4">{p.phone || "—"}</td>
                       <td className="py-2 pr-4">
