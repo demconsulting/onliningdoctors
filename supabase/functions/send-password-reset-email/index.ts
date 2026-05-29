@@ -65,11 +65,10 @@ serve(async (req) => {
 
     const rateWindow = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const { count: recentCount, error: rateError } = await serviceClient
-      .from("booking_email_log")
+      .from("email_events")
       .select("id", { count: "exact", head: true })
-      .eq("email_type", "password_reset")
-      .eq("recipient", normalizedEmail)
-      .eq("status", "sent")
+      .eq("event_type", "password_reset_sent")
+      .eq("email", normalizedEmail)
       .gte("created_at", rateWindow);
     if (rateError) console.error("Password reset rate check failed:", rateError.message);
     if ((recentCount || 0) >= 3) {
@@ -106,13 +105,11 @@ serve(async (req) => {
     });
     const resendData = await resendResponse.json().catch(() => ({}));
 
-    const { error: logError } = await serviceClient.from("booking_email_log").insert({
-      appointment_id: "00000000-0000-0000-0000-000000000000",
-      email_type: "password_reset",
-      recipient: normalizedEmail,
-      resend_id: resendData?.id || null,
-      status: resendResponse.ok ? "sent" : "failed",
-      error: resendResponse.ok ? null : `[${resendResponse.status}] ${JSON.stringify(resendData)}`,
+    const { error: logError } = await serviceClient.from("email_events").insert({
+      email: normalizedEmail,
+      event_type: resendResponse.ok ? "password_reset_sent" : "password_reset_failed",
+      message_id: resendData?.id || null,
+      metadata: resendResponse.ok ? null : { status: resendResponse.status, error: resendData },
     });
     if (logError) console.error("Password reset email log failed:", logError.message);
 
