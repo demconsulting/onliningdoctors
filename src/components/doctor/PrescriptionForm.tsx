@@ -12,9 +12,12 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Medication {
   name: string;
+  strength: string;
   dosage: string;
   frequency: string;
   duration: string;
+  quantity: string;
+  repeats: string;
   instructions: string;
 }
 
@@ -26,7 +29,7 @@ interface PrescriptionFormProps {
   onSaved?: () => void;
 }
 
-const emptyMed: Medication = { name: "", dosage: "", frequency: "", duration: "", instructions: "" };
+const emptyMed: Medication = { name: "", strength: "", dosage: "", frequency: "", duration: "", quantity: "", repeats: "", instructions: "" };
 
 const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onSaved }: PrescriptionFormProps) => {
   const [open, setOpen] = useState(false);
