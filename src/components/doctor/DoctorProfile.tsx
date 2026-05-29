@@ -117,6 +117,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           practice_email: d.practice_email || "",
           practice_phone: d.practice_phone || "",
           practice_logo_url: d.practice_logo_url || "",
+          accepted_payment_method: (d.accepted_payment_method as any) || "both",
         });
         setLicenseDocPath(d.license_document_path || null);
         setIdDocPath((d as any).id_document_path || null);
