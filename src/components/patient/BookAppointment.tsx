@@ -225,8 +225,10 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     if (!selectedDoctor) { setDoctorTiers([]); return; }
     supabase.from("doctor_pricing_tiers").select("*").eq("doctor_id", selectedDoctor).eq("is_active", true)
       .then(({ data }) => setDoctorTiers(data || []));
-    setPaymentMethodType("card");
-  }, [selectedDoctor]);
+    const doc = doctors.find(d => d.profile_id === selectedDoctor);
+    const accepted = (doc as any)?.accepted_payment_method || "both";
+    setPaymentMethodType(accepted === "medical_aid_only" ? "medical_aid" : "card");
+  }, [selectedDoctor, doctors]);
 
   const [activeMedicalAid, setActiveMedicalAid] = useState<ActiveMedicalAidRequest | null>(null);
   // Reset medical-aid state when doctor or method changes
