@@ -115,6 +115,24 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
           <Badge variant="outline" className="text-[10px] gap-1 text-muted-foreground border-border/60">
             <ShieldCheck className="h-3 w-3" /> POPIA Compliant
           </Badge>
+          {(() => {
+            const apm = doctor.accepted_payment_method || "both";
+            if (apm === "both") return (
+              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                <CreditCard className="h-3 w-3" /> Medical Aid & Card Payments
+              </Badge>
+            );
+            if (apm === "card_only") return (
+              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                <CreditCard className="h-3 w-3" /> Card Payments Accepted
+              </Badge>
+            );
+            return (
+              <Badge variant="outline" className="text-[10px] gap-1 border-primary/40 text-primary">
+                <HeartPulse className="h-3 w-3" /> Medical Aid Accepted
+              </Badge>
+            );
+          })()}
         </div>
 
         {/* Action Buttons */}
