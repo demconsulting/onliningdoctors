@@ -539,6 +539,17 @@ const AdminUsers = () => {
         />
       )}
 
+      {testDeleteTarget && (
+        <TestDeleteDialog
+          open={!!testDeleteTarget}
+          onOpenChange={(o) => { if (!o) setTestDeleteTarget(null); }}
+          targetUserId={testDeleteTarget.userId}
+          targetName={testDeleteTarget.name}
+          isTestUser={testDeleteTarget.isTestUser}
+          onDone={fetchData}
+        />
+      )}
+
       <Dialog open={!!viewTarget} onOpenChange={(o) => { if (!o) setViewTarget(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
