@@ -247,14 +247,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         </CardContent>
       </Card>
 
-      {/* Advanced details — optional, collapsed by default */}
-      <Collapsible>
+      {/* Advanced details — REQUIRED for verification */}
+      <Collapsible defaultOpen>
         <Card>
           <CollapsibleTrigger asChild>
             <button className="flex w-full items-center justify-between p-6 text-left">
               <div>
-                <h3 className="font-display text-lg font-semibold">Advanced details (optional)</h3>
-                <p className="text-sm text-muted-foreground">Bio, qualifications, languages, hospital, location, license document.</p>
+                <h3 className="font-display text-lg font-semibold">
+                  Advanced details <span className="ml-2 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">Required</span>
+                </h3>
+                <p className="text-sm text-muted-foreground">Bio, qualifications, languages, location, ID copy and HPCSA document. All required for verification.</p>
               </div>
               <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
             </button>
