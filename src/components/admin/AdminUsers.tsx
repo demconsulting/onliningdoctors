@@ -460,6 +460,17 @@ const AdminUsers = () => {
                                 onClick={() => setActionTarget({ userId: p.id, name: p.full_name || "User", action: "delete" })}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
+                              {(p.test_user || p.demo_user || p.environment === "test") && (
+                                <Button variant="ghost" size="sm" title="Delete Test User Permanently"
+                                  className="text-destructive hover:text-destructive bg-destructive/5"
+                                  onClick={() => setTestDeleteTarget({
+                                    userId: p.id,
+                                    name: p.full_name || "User",
+                                    isTestUser: !!(p.test_user || p.demo_user || p.environment === "test"),
+                                  })}>
+                                  <FlaskConical className="h-4 w-4" />
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>
