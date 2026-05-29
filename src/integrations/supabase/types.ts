@@ -932,6 +932,7 @@ export type Database = {
       }
       doctors: {
         Row: {
+          accepted_payment_method: Database["public"]["Enums"]["accepted_payment_method_enum"]
           auto_weekly_payout: boolean
           bio: string | null
           consultation_category_id: string | null
@@ -969,6 +970,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
           auto_weekly_payout?: boolean
           bio?: string | null
           consultation_category_id?: string | null
@@ -1006,6 +1008,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
           auto_weekly_payout?: boolean
           bio?: string | null
           consultation_category_id?: string | null
@@ -2383,6 +2386,7 @@ export type Database = {
       user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
+      accepted_payment_method_enum: "medical_aid_only" | "card_only" | "both"
       app_role:
         | "admin"
         | "patient"
@@ -2527,6 +2531,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      accepted_payment_method_enum: ["medical_aid_only", "card_only", "both"],
       app_role: [
         "admin",
         "patient",
