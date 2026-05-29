@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_impersonation_logs: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          ip_address: string | null
+          reason: string
+          started_at: string
+          target_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          ip_address?: string | null
+          reason: string
+          started_at?: string
+          target_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          ip_address?: string | null
+          reason?: string
+          started_at?: string
+          target_user_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       ai_audit_logs: {
         Row: {
           action: string
@@ -2215,6 +2251,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_impersonate: { Args: { _user_id: string }; Returns: boolean }
       check_appointment_conflict: {
         Args: {
           _doctor_id: string
@@ -2263,7 +2300,15 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "patient" | "doctor"
+      app_role:
+        | "admin"
+        | "patient"
+        | "doctor"
+        | "platform_admin"
+        | "super_admin"
+        | "receptionist"
+        | "hospital_admin"
+        | "department_admin"
       practice_member_status: "invited" | "active" | "suspended"
       practice_role:
         | "owner"
@@ -2399,7 +2444,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "patient", "doctor"],
+      app_role: [
+        "admin",
+        "patient",
+        "doctor",
+        "platform_admin",
+        "super_admin",
+        "receptionist",
+        "hospital_admin",
+        "department_admin",
+      ],
       practice_member_status: ["invited", "active", "suspended"],
       practice_role: [
         "owner",
