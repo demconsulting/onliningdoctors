@@ -118,6 +118,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           practice_logo_url: d.practice_logo_url || "",
         });
         setLicenseDocPath(d.license_document_path || null);
+        setIdDocPath((d as any).id_document_path || null);
         // Load signed URL for practice logo
         if (d.practice_logo_url) {
           const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(d.practice_logo_url, 3600);
