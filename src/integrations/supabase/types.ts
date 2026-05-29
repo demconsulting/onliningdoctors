@@ -50,6 +50,48 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_user_action_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_status: string | null
+          notes: string | null
+          previous_status: string | null
+          reason: string
+          target_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_status?: string | null
+          notes?: string | null
+          previous_status?: string | null
+          reason: string
+          target_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_status?: string | null
+          notes?: string | null
+          previous_status?: string | null
+          reason?: string
+          target_user_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       ai_audit_logs: {
         Row: {
           action: string
@@ -1960,6 +2002,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
           address: string | null
           avatar_url: string | null
           city: string | null
@@ -1976,6 +2019,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_status?: string
           address?: string | null
           avatar_url?: string | null
           city?: string | null
@@ -1992,6 +2036,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_status?: string
           address?: string | null
           avatar_url?: string | null
           city?: string | null
@@ -2298,6 +2343,7 @@ export type Database = {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
       }
+      user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       app_role:
