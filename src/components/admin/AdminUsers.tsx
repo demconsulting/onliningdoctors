@@ -49,6 +49,7 @@ const AdminUsers = () => {
   const [impersonateTarget, setImpersonateTarget] = useState<{ userId: string; name: string } | null>(null);
   const [actionTarget, setActionTarget] = useState<{ userId: string; name: string; action: UserAction } | null>(null);
   const [viewTarget, setViewTarget] = useState<any | null>(null);
+  const [testDeleteTarget, setTestDeleteTarget] = useState<{ userId: string; name: string; isTestUser: boolean } | null>(null);
   const { toast } = useToast();
   const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
   const canDestructive = canImpersonate; // platform_admin or super_admin
