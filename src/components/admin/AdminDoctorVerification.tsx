@@ -255,6 +255,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">Title</th>
                     <th className="pb-2 pr-4">Country</th>
                     <th className="pb-2 pr-4">License #</th>
+                    <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
