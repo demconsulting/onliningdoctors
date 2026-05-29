@@ -68,14 +68,26 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
         const d = data as any;
         setExistingId(d.id);
         setDiagnosis(d.diagnosis || "");
-        setMedications(d.medications?.length ? d.medications : [{ ...emptyMed }]);
+        setMedications(d.medications?.length ? d.medications.map((m: any) => ({ ...emptyMed, ...m })) : [{ ...emptyMed }]);
         setPharmacyNotes(d.pharmacy_notes || "");
         setRefillCount(d.refill_count || 0);
         setFollowUpDate(d.follow_up_date || "");
         setWarnings(d.warnings || "");
         setAllergiesNoted(d.allergies_noted || "");
+        setClinicalNotes(d.clinical_notes || "");
+        setFollowUpInstructions(d.follow_up_instructions || "");
         setLogoUrl(d.doctor_logo_url || "");
         setSignatureUrl(d.doctor_signature_url || "");
+      } else {
+        // Load saved logo/sig from doctor record (Prescription Settings)
+        const { data: docRecord } = await supabase
+          .from("doctors")
+          .select("practice_logo_url, practice_signature_url")
+          .eq("profile_id", doctorId)
+          .single();
+        if ((docRecord as any)?.practice_logo_url) setLogoUrl((docRecord as any).practice_logo_url);
+        if ((docRecord as any)?.practice_signature_url) setSignatureUrl((docRecord as any).practice_signature_url);
+      }
       } else {
         // Load saved logo/sig from doctor record or most recent prescription
         const { data: docRecord } = await supabase
