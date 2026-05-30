@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DoctorRow {
@@ -17,6 +17,8 @@ interface DoctorRow {
   license_document_path: string | null;
   id_document_path: string | null;
   title: string | null;
+  consultation_fee: number | null;
+  welcome_email_sent_at: string | null;
   is_verified: boolean;
   is_available: boolean | null;
   is_suspended: boolean;
@@ -27,7 +29,11 @@ interface DoctorRow {
     full_name: string | null;
     country: string | null;
     phone: string | null;
+    avatar_url: string | null;
   } | null;
+  has_availability?: boolean;
+  reminders_sent?: number;
+  last_email_at?: string | null;
 }
 
 const AdminDoctorVerification = () => {
@@ -47,11 +53,35 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, id_document_path, title, is_verified, is_available, is_suspended, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
       .order("created_at", { ascending: false });
 
-    if (data) setDoctors(data as unknown as DoctorRow[]);
     if (error) console.error(error);
+    const rows = (data ?? []) as unknown as DoctorRow[];
+
+    if (rows.length) {
+      const ids = rows.map(r => r.profile_id);
+      const [{ data: avail }, { data: emailLogs }] = await Promise.all([
+        supabase.from("doctor_availability").select("doctor_id").in("doctor_id", ids),
+        supabase.from("doctor_onboarding_email_log").select("doctor_profile_id, email_type, sent_at, status").in("doctor_profile_id", ids).eq("status", "sent").order("sent_at", { ascending: false }),
+      ]);
+      const availSet = new Set((avail ?? []).map((a: any) => a.doctor_id));
+      const emailMap = new Map<string, { reminders: number; last: string | null }>();
+      for (const log of (emailLogs ?? []) as any[]) {
+        const cur = emailMap.get(log.doctor_profile_id) ?? { reminders: 0, last: null };
+        if (log.email_type === "reminder") cur.reminders += 1;
+        if (!cur.last || log.sent_at > cur.last) cur.last = log.sent_at;
+        emailMap.set(log.doctor_profile_id, cur);
+      }
+      for (const r of rows) {
+        r.has_availability = availSet.has(r.profile_id);
+        const e = emailMap.get(r.profile_id);
+        r.reminders_sent = e?.reminders ?? 0;
+        r.last_email_at = e?.last ?? null;
+      }
+    }
+
+    setDoctors(rows);
     setLoading(false);
   };
 
@@ -220,8 +250,61 @@ const AdminDoctorVerification = () => {
     </tr>
   );
 
+  const StatusIcon = ({ ok }: { ok: boolean }) =>
+    ok ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-destructive" />;
+
   return (
     <div className="space-y-6">
+      {/* Onboarding Progress for Unverified Doctors */}
+      {pending.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-display">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Onboarding Status ({pending.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-2 pr-4">Doctor</th>
+                    <th className="pb-2 pr-2 text-center">ID</th>
+                    <th className="pb-2 pr-2 text-center">HPCSA</th>
+                    <th className="pb-2 pr-2 text-center">Photo</th>
+                    <th className="pb-2 pr-2 text-center">Fee</th>
+                    <th className="pb-2 pr-2 text-center">Schedule</th>
+                    <th className="pb-2 pr-4 text-center">Welcome Email</th>
+                    <th className="pb-2 pr-4 text-center">Reminders</th>
+                    <th className="pb-2">Last Email</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {pending.map((d) => (
+                    <tr key={`progress-${d.id}`}>
+                      <td className="py-2 pr-4 font-medium">{d.profile?.full_name || "—"}</td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.id_document_path} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.license_document_path} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.profile?.avatar_url} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.consultation_fee && Number(d.consultation_fee) > 0} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.has_availability} /></div></td>
+                      <td className="py-2 pr-4 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.welcome_email_sent_at} /></div></td>
+                      <td className="py-2 pr-4 text-center">
+                        <Badge variant={d.reminders_sent ? "secondary" : "outline"}>{d.reminders_sent ?? 0}</Badge>
+                      </td>
+                      <td className="py-2 text-xs text-muted-foreground whitespace-nowrap">
+                        {d.last_email_at ? new Date(d.last_email_at).toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pending Verification */}
       <Card>
         <CardHeader>
