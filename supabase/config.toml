@@ -1,31 +1,7 @@
 project_id = "ufgbavxidpmikiwicifv"
 
-[functions.detect-country]
+[functions.send-doctor-welcome-email]
 verify_jwt = false
 
-[functions.send-doctor-email]
-verify_jwt = false
-
-[functions.license-renewal-reminder]
-verify_jwt = false
-
-[functions.paystack-payment]
-verify_jwt = false
-
-[functions.summarize-consultation]
-verify_jwt = false
-
-[functions.chat-assistant]
-verify_jwt = false
-
-[functions.resend-webhook]
-verify_jwt = false
-
-[functions.send-appointment-reminders]
-verify_jwt = false
-
-[functions.send-booking-email]
-verify_jwt = false
-
-[functions.send-password-reset-email]
+[functions.process-doctor-onboarding-reminders]
 verify_jwt = false
