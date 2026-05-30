@@ -250,8 +250,61 @@ const AdminDoctorVerification = () => {
     </tr>
   );
 
+  const StatusIcon = ({ ok }: { ok: boolean }) =>
+    ok ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-destructive" />;
+
   return (
     <div className="space-y-6">
+      {/* Onboarding Progress for Unverified Doctors */}
+      {pending.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-display">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              Onboarding Status ({pending.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-2 pr-4">Doctor</th>
+                    <th className="pb-2 pr-2 text-center">ID</th>
+                    <th className="pb-2 pr-2 text-center">HPCSA</th>
+                    <th className="pb-2 pr-2 text-center">Photo</th>
+                    <th className="pb-2 pr-2 text-center">Fee</th>
+                    <th className="pb-2 pr-2 text-center">Schedule</th>
+                    <th className="pb-2 pr-4 text-center">Welcome Email</th>
+                    <th className="pb-2 pr-4 text-center">Reminders</th>
+                    <th className="pb-2">Last Email</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {pending.map((d) => (
+                    <tr key={`progress-${d.id}`}>
+                      <td className="py-2 pr-4 font-medium">{d.profile?.full_name || "—"}</td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.id_document_path} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.license_document_path} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.profile?.avatar_url} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.consultation_fee && Number(d.consultation_fee) > 0} /></div></td>
+                      <td className="py-2 pr-2 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.has_availability} /></div></td>
+                      <td className="py-2 pr-4 text-center"><div className="flex justify-center"><StatusIcon ok={!!d.welcome_email_sent_at} /></div></td>
+                      <td className="py-2 pr-4 text-center">
+                        <Badge variant={d.reminders_sent ? "secondary" : "outline"}>{d.reminders_sent ?? 0}</Badge>
+                      </td>
+                      <td className="py-2 text-xs text-muted-foreground whitespace-nowrap">
+                        {d.last_email_at ? new Date(d.last_email_at).toLocaleString() : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pending Verification */}
       <Card>
         <CardHeader>
