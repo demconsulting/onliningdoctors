@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface DoctorRow {
@@ -17,6 +17,8 @@ interface DoctorRow {
   license_document_path: string | null;
   id_document_path: string | null;
   title: string | null;
+  consultation_fee: number | null;
+  welcome_email_sent_at: string | null;
   is_verified: boolean;
   is_available: boolean | null;
   is_suspended: boolean;
@@ -27,7 +29,11 @@ interface DoctorRow {
     full_name: string | null;
     country: string | null;
     phone: string | null;
+    avatar_url: string | null;
   } | null;
+  has_availability?: boolean;
+  reminders_sent?: number;
+  last_email_at?: string | null;
 }
 
 const AdminDoctorVerification = () => {
@@ -47,11 +53,35 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, id_document_path, title, is_verified, is_available, is_suspended, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
       .order("created_at", { ascending: false });
 
-    if (data) setDoctors(data as unknown as DoctorRow[]);
     if (error) console.error(error);
+    const rows = (data ?? []) as unknown as DoctorRow[];
+
+    if (rows.length) {
+      const ids = rows.map(r => r.profile_id);
+      const [{ data: avail }, { data: emailLogs }] = await Promise.all([
+        supabase.from("doctor_availability").select("doctor_id").in("doctor_id", ids),
+        supabase.from("doctor_onboarding_email_log").select("doctor_profile_id, email_type, sent_at, status").in("doctor_profile_id", ids).eq("status", "sent").order("sent_at", { ascending: false }),
+      ]);
+      const availSet = new Set((avail ?? []).map((a: any) => a.doctor_id));
+      const emailMap = new Map<string, { reminders: number; last: string | null }>();
+      for (const log of (emailLogs ?? []) as any[]) {
+        const cur = emailMap.get(log.doctor_profile_id) ?? { reminders: 0, last: null };
+        if (log.email_type === "reminder") cur.reminders += 1;
+        if (!cur.last || log.sent_at > cur.last) cur.last = log.sent_at;
+        emailMap.set(log.doctor_profile_id, cur);
+      }
+      for (const r of rows) {
+        r.has_availability = availSet.has(r.profile_id);
+        const e = emailMap.get(r.profile_id);
+        r.reminders_sent = e?.reminders ?? 0;
+        r.last_email_at = e?.last ?? null;
+      }
+    }
+
+    setDoctors(rows);
     setLoading(false);
   };
 
