@@ -36,7 +36,7 @@ const DoctorSignup = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -54,6 +54,12 @@ const DoctorSignup = () => {
     if (error) {
       toast({ variant: "destructive", title: "Sign up failed", description: error.message });
     } else {
+      const newUserId = data.user?.id;
+      if (newUserId) {
+        supabase.functions
+          .invoke("send-doctor-welcome-email", { body: { doctorProfileId: newUserId } })
+          .catch((err) => console.error("welcome email failed", err));
+      }
       toast({
         title: "Application submitted!",
         description: "Check your email to confirm, then an admin will verify your account.",
