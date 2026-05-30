@@ -886,6 +886,89 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_onboarding_email_log: {
+        Row: {
+          doctor_profile_id: string
+          email_type: string
+          error: string | null
+          id: string
+          recipient: string
+          reminder_id: string | null
+          resend_id: string | null
+          sent_at: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          doctor_profile_id: string
+          email_type: string
+          error?: string | null
+          id?: string
+          recipient: string
+          reminder_id?: string | null
+          resend_id?: string | null
+          sent_at?: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          doctor_profile_id?: string
+          email_type?: string
+          error?: string | null
+          id?: string
+          recipient?: string
+          reminder_id?: string | null
+          resend_id?: string | null
+          sent_at?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_onboarding_email_log_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_onboarding_reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctor_onboarding_reminders: {
+        Row: {
+          body: string
+          created_at: string
+          delay_minutes: number
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          delay_minutes: number
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_pricing_tiers: {
         Row: {
           created_at: string
@@ -971,6 +1054,7 @@ export type Database = {
           title: string | null
           total_reviews: number | null
           updated_at: string
+          welcome_email_sent_at: string | null
         }
         Insert: {
           accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
@@ -1012,6 +1096,7 @@ export type Database = {
           title?: string | null
           total_reviews?: number | null
           updated_at?: string
+          welcome_email_sent_at?: string | null
         }
         Update: {
           accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
@@ -1053,6 +1138,7 @@ export type Database = {
           title?: string | null
           total_reviews?: number | null
           updated_at?: string
+          welcome_email_sent_at?: string | null
         }
         Relationships: [
           {
