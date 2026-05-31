@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
+
 
 interface DoctorRow {
   id: string;
@@ -42,13 +44,13 @@ const AdminDoctorVerification = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const [suspendDialog, setSuspendDialog] = useState<{ doctor: DoctorRow } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
+  const [viewer, setViewer] = useState<{ path: string; title: string } | null>(null);
   const { toast } = useToast();
 
-  const viewDoc = async (path: string) => {
-    const { data } = await supabase.storage.from("doctor-licenses").createSignedUrl(path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else toast({ variant: "destructive", title: "Could not load document" });
+  const viewDoc = (path: string, title: string) => {
+    setViewer({ path, title });
   };
+
 
   const fetchDoctors = async () => {
     const { data, error } = await supabase
