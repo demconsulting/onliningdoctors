@@ -8,17 +8,19 @@ import { FileText, Upload, Trash2, Loader2, Download, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { User } from "@supabase/supabase-js";
+import { uploadFile, type UploadProfileKey, UPLOAD_PROFILES } from "@/lib/fileUpload";
+import FilePreview from "@/components/shared/FilePreview";
 
 interface DocumentUploadProps {
   user: User;
 }
 
-const DOCUMENT_TYPES = [
-  { value: "id_copy", label: "ID Copy" },
-  { value: "medical_record", label: "Medical Record" },
-  { value: "prescription", label: "Prescription" },
-  { value: "test_result", label: "Test Result" },
-  { value: "other", label: "Other" },
+const DOCUMENT_TYPES: Array<{ value: string; label: string; profile: UploadProfileKey }> = [
+  { value: "id_copy", label: "ID Copy", profile: "doctor_id" },
+  { value: "medical_record", label: "Medical Record", profile: "medical_report" },
+  { value: "prescription", label: "Prescription", profile: "prescription" },
+  { value: "test_result", label: "Test Result", profile: "medical_report" },
+  { value: "other", label: "Other", profile: "patient_doc" },
 ];
 
 const DocumentUpload = ({ user }: DocumentUploadProps) => {
@@ -26,8 +28,12 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedType, setSelectedType] = useState("other");
+  const [pending, setPending] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const selectedConfig = DOCUMENT_TYPES.find((t) => t.value === selectedType) ?? DOCUMENT_TYPES[4];
+  const profileCfg = UPLOAD_PROFILES[selectedConfig.profile];
 
   const fetchDocs = async () => {
     const { data } = await supabase
@@ -41,43 +47,45 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
 
   useEffect(() => { fetchDocs(); }, [user.id]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "File too large", description: "Max 10MB" });
-      return;
-    }
+    setPending(file);
+  };
 
+  const handleConfirmUpload = async () => {
+    if (!pending) return;
     setUploading(true);
-    const filePath = `${user.id}/${Date.now()}_${file.name}`;
+    try {
+      const safeName = pending.name.replace(/[^\w.\-]/g, "_");
+      const { path, size, mimeType, fileName } = await uploadFile({
+        bucket: "patient-documents",
+        path: `${user.id}/${Date.now()}_${safeName}`,
+        file: pending,
+        profile: selectedConfig.profile,
+        onOptimizing: () => toast({ title: "Optimising image before upload..." }),
+      });
 
-    const { error: uploadError } = await supabase.storage
-      .from("patient-documents")
-      .upload(filePath, file);
+      const { error: dbError } = await supabase.from("patient_documents").insert({
+        patient_id: user.id,
+        file_name: fileName,
+        file_path: path,
+        mime_type: mimeType,
+        file_size: size,
+        document_type: selectedType,
+      });
 
-    if (uploadError) {
-      toast({ variant: "destructive", title: "Upload failed", description: uploadError.message });
-      setUploading(false);
-      return;
+      if (dbError) {
+        toast({ variant: "destructive", title: "Error saving record", description: dbError.message });
+      } else {
+        toast({ title: "Document uploaded" });
+        setPending(null);
+        fetchDocs();
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload failed", description: err.message });
     }
-
-    const { error: dbError } = await supabase.from("patient_documents").insert({
-      patient_id: user.id,
-      file_name: file.name,
-      file_path: filePath,
-      mime_type: file.type,
-      file_size: file.size,
-      document_type: selectedType,
-    });
-
     setUploading(false);
-    if (dbError) {
-      toast({ variant: "destructive", title: "Error saving record", description: dbError.message });
-    } else {
-      toast({ title: "Document uploaded" });
-      fetchDocs();
-    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -110,6 +118,8 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const acceptAttr = profileCfg.extensions.map((e) => "." + e).join(",");
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
@@ -119,7 +129,7 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
           <FileText className="h-5 w-5 text-primary" /> Documents
         </CardTitle>
         <div className="flex items-center gap-2">
-          <Select value={selectedType} onValueChange={setSelectedType}>
+          <Select value={selectedType} onValueChange={(v) => { setSelectedType(v); setPending(null); }}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
@@ -133,8 +143,8 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
             ref={fileRef}
             type="file"
             className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp,.heic,.bmp"
-            onChange={handleUpload}
+            accept={acceptAttr}
+            onChange={handleFilePick}
           />
           <Button
             size="sm"
@@ -143,12 +153,25 @@ const DocumentUpload = ({ user }: DocumentUploadProps) => {
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
           >
-            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            Upload
+            <Upload className="h-4 w-4" /> Choose
           </Button>
         </div>
       </CardHeader>
       <CardContent>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Allowed: {profileCfg.extensions.join(", ").toUpperCase()} · Max {(profileCfg.maxBytes / 1024 / 1024).toFixed(0)}MB
+        </p>
+
+        {pending && (
+          <div className="mb-4 space-y-2">
+            <FilePreview file={pending} onClear={() => setPending(null)} />
+            <Button size="sm" className="gap-2" onClick={handleConfirmUpload} disabled={uploading}>
+              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Upload Document
+            </Button>
+          </div>
+        )}
+
         {documents.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <FileText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
