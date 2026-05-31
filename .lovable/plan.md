@@ -1,129 +1,86 @@
-# Secure Admin Impersonation
+## Secure File Upload Management & Storage Optimisation
 
-## Approach
+Build a centralized upload utility + apply it across all existing upload points, plus an admin storage dashboard. Reuse existing buckets — do NOT create new ones (would orphan existing files).
 
-Supabase has no native "impersonate" API. The safe, password-less pattern is:
+### 1. Shared upload utility — `src/lib/fileUpload.ts`
 
-1. Admin clicks **Impersonate** on a user, supplies a **reason**.
-2. An Edge Function (running with the service role) verifies the caller is `platform_admin` or `super_admin`, inserts a row in `admin_impersonation_logs`, then calls `supabase.auth.admin.generateLink({ type: 'magiclink', email: targetEmail })` and uses `verifyOtp` server-side to mint a real `{ access_token, refresh_token }` pair for the target user.
-3. Frontend stashes the **current admin session** (access + refresh tokens, user id, name) in `sessionStorage` under `lovable.adminImpersonation.backup`, then calls `supabase.auth.setSession()` with the target's tokens. A separate `sessionStorage` flag `lovable.adminImpersonation.active` carries `{ log_id, target_user_id, target_name, started_at }`.
-4. A global `<ImpersonationBanner />` reads the flag and renders a sticky top banner: *"You are impersonating **{User Name}**"* with a **Return to Admin** button.
-5. **Return to Admin** calls an `end-impersonation` Edge Function (stamps `end_time` on the log row), then `supabase.auth.setSession()` with the saved admin tokens and clears the flags.
+Single source of truth for all uploads:
+- `UPLOAD_PROFILES` config map: `avatar` (2MB, img), `doctor_id` (5MB, pdf+img), `hpcsa` (5MB), `patient_doc` (10MB), `prescription` (5MB pdf), `referral` (5MB pdf), `medical_report` (10MB pdf+img), `practice_logo` (3MB img), `practice_signature` (2MB img).
+- `validateFile(file, profile)` — checks size, extension, MIME; blocks exe/zip/rar/bat/apk/dmg/js/html/php/py/sh and any unknown.
+- `optimizeImage(file, {maxWidth, maxBytes, quality})` — uses HTMLCanvasElement + `canvas.toBlob('image/webp')` to resize (max 1600px long edge for documents, 512px for avatars), strip metadata, target 50–80% reduction. Skip for PDFs. Skip for ID/HPCSA if quality drop would harm verification — use lossless-ish (q=0.92) and larger max dimension (2000px).
+- `uploadFile({ bucket, path, file, profile, onProgress })` — validate → optimize if image → upload to Supabase Storage → return `{ path, size, mimeType }`.
+- Friendly toast helpers: "File exceeds maximum size limit", "Unsupported file type", "Optimising image before upload…".
 
-Because Supabase refresh tokens are rotated, the saved admin refresh token must be used exactly once — we capture it right before swapping, and the admin client picks up from there. If rotation has already invalidated it (rare, only if the user manually refreshed during impersonation), the banner falls back to forcing an admin re-login.
+### 2. Reusable preview component — `src/components/shared/FilePreview.tsx`
 
-All authorization for impersonation is enforced **server-side in the Edge Function** plus an RLS-friendly DB function. RLS for the target user remains fully intact during the impersonated session — that's the whole point.
+Renders selected file before upload: image thumbnail (object URL) or PDF icon + filename + size. Used in avatar upload, ID/HPCSA upload, document uploads.
 
-## Database (migration)
+### 3. Wire into existing components
 
-```sql
--- Extend role enum
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'platform_admin';
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'super_admin';
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'receptionist';
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'hospital_admin';
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'department_admin';
+Replace ad-hoc validation/upload code in:
+- `src/components/shared/AvatarUpload.tsx` — 2MB → use avatar profile, auto-WEBP @ 512px.
+- `src/pages/DoctorSignup.tsx` — ID copy + HPCSA inputs (5MB, pdf/img).
+- `src/components/doctor/DoctorProfile.tsx` — same.
+- `src/components/doctor/PrescriptionSettings.tsx` — logo (3MB img → webp), signature (2MB png preserving transparency).
+- `src/components/patient/DocumentUpload.tsx` — 10MB, type-aware (prescriptions/referrals = pdf only).
+- `src/components/doctor/PatientDocuments.tsx` — same patient-doc rules.
 
--- Authoritative check
-CREATE OR REPLACE FUNCTION public.can_impersonate(_user_id uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = _user_id
-      AND role IN ('platform_admin','super_admin')
-  );
-$$;
+All show pre-upload preview where the user picks a file.
 
-CREATE TABLE public.admin_impersonation_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  admin_user_id uuid NOT NULL,
-  target_user_id uuid NOT NULL,
-  reason text NOT NULL CHECK (length(trim(reason)) >= 5),
-  ip_address text,
-  user_agent text,
-  started_at timestamptz NOT NULL DEFAULT now(),
-  ended_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
+### 4. Admin Document Viewer — `src/components/admin/DocumentViewerModal.tsx`
 
-GRANT SELECT ON public.admin_impersonation_logs TO authenticated;
-GRANT ALL ON public.admin_impersonation_logs TO service_role;
+In-app modal (Dialog) that fetches a signed URL and renders:
+- Images → `<img>` inside the modal.
+- PDFs → `<iframe>` of the signed URL.
+- Buttons: Download, Approve, Reject (callbacks passed in).
 
-ALTER TABLE public.admin_impersonation_logs ENABLE ROW LEVEL SECURITY;
+Wire into `AdminDoctorVerification.tsx` to replace `window.open` flow for ID + HPCSA docs.
 
-CREATE POLICY "Admins view impersonation logs"
-  ON public.admin_impersonation_logs FOR SELECT TO authenticated
-  USING (public.can_impersonate(auth.uid()) OR public.has_role(auth.uid(),'admin'));
+### 5. Admin Storage Dashboard — `src/components/admin/AdminStorageUsage.tsx`
 
--- INSERT/UPDATE only via service_role (edge functions); no client policies.
+New admin sidebar entry "Storage". Calls a new edge function `admin-storage-stats` (service role) that iterates each bucket via `supabase.storage.from(b).list('', {limit, recursive})` and aggregates:
+- Total bytes used, per-bucket bytes + file count.
+- Top 10 largest files (name, bucket, size, created_at).
+- Recent uploads (last 7 days) chart.
 
-CREATE INDEX idx_impersonation_admin ON public.admin_impersonation_logs(admin_user_id, started_at DESC);
-CREATE INDEX idx_impersonation_target ON public.admin_impersonation_logs(target_user_id, started_at DESC);
-CREATE INDEX idx_impersonation_open ON public.admin_impersonation_logs(admin_user_id) WHERE ended_at IS NULL;
-```
+Renders summary cards + table + Recharts AreaChart (matches existing earnings pattern). Admin-only via `has_role` check in edge function.
 
-## Edge Functions
+### 6. Storage architecture (no new buckets)
 
-### `supabase/functions/impersonate-user/index.ts`
-- Auth: validates the caller's JWT, looks up roles, requires `platform_admin` or `super_admin`.
-- Body (Zod): `{ target_user_id: uuid, reason: string (min 5, max 500) }`.
-- Resolves target email from `auth.admin.getUserById`.
-- Inserts log row with admin_user_id, target_user_id, reason, ip_address (from `x-forwarded-for`), user_agent.
-- Calls `auth.admin.generateLink({ type:'magiclink', email: target.email })`, then `auth.verifyOtp({ token_hash, type:'magiclink' })` with a fresh anon client to obtain a real session.
-- Returns `{ log_id, access_token, refresh_token, target: { id, full_name, email } }`.
+Keep existing buckets — they already cover the use cases:
+- `avatars` → profile photos (public).
+- `doctor-licenses` → ID + HPCSA (private).
+- `patient-documents` → patient uploads, prescriptions, referrals, medical reports (private). Use `document_type` column to segregate logically — already supported.
+- `prescription-assets` → practice logo + signature (private).
+- `branding` → site branding (public).
 
-### `supabase/functions/end-impersonation/index.ts`
-- Body: `{ log_id: uuid }`.
-- Verifies the caller token belongs to the impersonated user (so a hijacked token can't close someone else's session) OR caller is platform_admin/super_admin restoring.
-- Updates `ended_at = now()` where `id = log_id AND ended_at IS NULL`.
-- Returns `{ ok: true }`.
+This preserves all existing files and signed-URL flows.
 
-Both functions reuse `corsHeaders` from `npm:@supabase/supabase-js@2/cors`.
+### Files
 
-## Frontend
+**New**
+- `src/lib/fileUpload.ts`
+- `src/components/shared/FilePreview.tsx`
+- `src/components/admin/DocumentViewerModal.tsx`
+- `src/components/admin/AdminStorageUsage.tsx`
+- `supabase/functions/admin-storage-stats/index.ts`
 
-### `src/lib/impersonation.ts`
-Pure helpers: `getBackup()`, `setBackup()`, `clearBackup()`, `getActive()`, `setActive()`, `clearActive()` over `sessionStorage` with typed shapes.
+**Edited**
+- `src/components/shared/AvatarUpload.tsx`
+- `src/components/doctor/PrescriptionSettings.tsx`
+- `src/components/patient/DocumentUpload.tsx`
+- `src/components/doctor/PatientDocuments.tsx`
+- `src/components/admin/AdminDoctorVerification.tsx`
+- `src/components/admin/AdminSidebar.tsx`
+- `src/pages/AdminDashboard.tsx`
+- `src/pages/DoctorSignup.tsx`
+- `src/components/doctor/DoctorProfile.tsx`
+- `supabase/config.toml` (register new function)
 
-### `src/hooks/useImpersonation.ts`
-- `startImpersonation({ targetUserId, reason })`: gets current session → stores backup → invokes `impersonate-user` → calls `supabase.auth.setSession({ access_token, refresh_token })` → sets active flag → `window.location.assign('/')`.
-- `endImpersonation()`: invokes `end-impersonation` → restores backup via `setSession` → clears flags → `window.location.assign('/admin')`.
-- Exposes `isImpersonating`, `target`, loading state.
+### Technical notes
 
-### `src/components/admin/ImpersonationBanner.tsx`
-Fixed top banner (above navbar), warning palette using design tokens (`bg-destructive text-destructive-foreground`), shows target name + **Return to Admin** button. Rendered in `App.tsx` above `<BrowserRouter>` content. Pushes page content down with a body class when active.
-
-### `src/components/admin/ImpersonateDialog.tsx`
-Dialog with required `reason` textarea (min 5 chars), confirm button. Triggered from a new "Impersonate" action in `AdminUsers` rows. Only renders the trigger if the current admin has `platform_admin` or `super_admin` role (checked via `user_roles`).
-
-### `src/App.tsx`
-Mount `<ImpersonationBanner />` once at top level.
-
-## Security notes
-
-- Service-role key stays in the Edge Function only.
-- Role check is **server-side**; client gating is UX only.
-- Reason is required at DB level (CHECK constraint) and at the function level.
-- `ended_at` only writable by `service_role` via Edge Function.
-- IP captured from `x-forwarded-for` header in the edge function.
-- During impersonation, all RLS evaluates as the target user — no privilege bleed.
-
-## Files to create / edit
-
-**Create**
-- `supabase/migrations/<ts>_admin_impersonation.sql`
-- `supabase/functions/impersonate-user/index.ts`
-- `supabase/functions/end-impersonation/index.ts`
-- `src/lib/impersonation.ts`
-- `src/hooks/useImpersonation.ts`
-- `src/components/admin/ImpersonationBanner.tsx`
-- `src/components/admin/ImpersonateDialog.tsx`
-
-**Edit**
-- `src/App.tsx` — mount banner
-- `src/components/admin/AdminUsers.tsx` — add "Impersonate" action
-
-## Out of scope (call out to user)
-
-- Assigning `platform_admin` / `super_admin` to existing users — they can promote via the existing admin UI after the migration runs, or I can seed the current admin to `super_admin` if they confirm.
-- Email notifications to impersonated users (can add later).
+- Client-side image optimisation via Canvas → WEBP keeps cost at zero (no edge processing).
+- PNG signatures with transparency stay PNG (no WEBP conversion) to preserve alpha for prescriptions.
+- ID/HPCSA images compressed lightly (q=0.92, max 2000px) to keep text legible for verification.
+- File type security uses an extension allowlist + MIME prefix check; everything else rejected with "Unsupported file type."
+- No new tables. No new buckets. No DB migration needed.
