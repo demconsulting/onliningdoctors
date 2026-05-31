@@ -74,28 +74,37 @@ const PrescriptionSettings = ({ user }: Props) => {
   }, [user.id]);
 
   const upload = async (file: File, kind: "logo" | "signature") => {
-    if (file.size > 3 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "File too large", description: "Max 3MB" });
+    const profileKey = kind === "logo" ? "practice_logo" : "practice_signature";
+    const { validateFile, uploadFile } = await import("@/lib/fileUpload");
+    const v = validateFile(file, profileKey);
+    if (!v.ok) {
+      toast({ variant: "destructive", title: "Invalid file", description: v.message });
       return;
     }
     const setter = kind === "logo" ? setUploadingLogo : setUploadingSig;
     setter(true);
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/${kind}_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("prescription-assets").upload(path, file, { upsert: true });
-    if (error) {
-      toast({ variant: "destructive", title: "Upload failed", description: error.message });
-      setter(false);
-      return;
+    try {
+      const ext = file.name.split(".").pop();
+      const initialPath = `${user.id}/${kind}_${Date.now()}.${ext}`;
+      const { path } = await uploadFile({
+        bucket: "prescription-assets",
+        path: initialPath,
+        file,
+        profile: profileKey,
+        onOptimizing: () => toast({ title: "Optimising image before upload..." }),
+      });
+      const field = kind === "logo" ? "practice_logo_url" : "practice_signature_url";
+      await supabase.from("doctors").update({ [field]: path } as any).eq("profile_id", user.id);
+      const next = { ...data, [field]: path };
+      setData(next);
+      await refreshSigned(next.practice_logo_url, next.practice_signature_url);
+      toast({ title: `${kind === "logo" ? "Logo" : "Signature"} uploaded` });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload failed", description: err.message });
     }
-    const field = kind === "logo" ? "practice_logo_url" : "practice_signature_url";
-    await supabase.from("doctors").update({ [field]: path } as any).eq("profile_id", user.id);
-    const next = { ...data, [field]: path };
-    setData(next);
-    await refreshSigned(next.practice_logo_url, next.practice_signature_url);
     setter(false);
-    toast({ title: `${kind === "logo" ? "Logo" : "Signature"} uploaded` });
   };
+
 
   const save = async () => {
     setSaving(true);
