@@ -215,7 +215,7 @@ const AdminDoctorVerification = () => {
             <>
               <span className="flex items-center gap-1"><FileText className="h-3 w-3 text-muted-foreground" />{d.license_number}</span>
               {d.license_document_path && (
-                <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.license_document_path!)}>
+                <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.license_document_path!, `HPCSA Document — ${d.profile?.full_name || "Doctor"}`)}>
                   <Eye className="h-3 w-3" /> HPCSA
                 </Button>
               )}
@@ -227,13 +227,14 @@ const AdminDoctorVerification = () => {
       </td>
       <td className="py-3 pr-4">
         {d.id_document_path ? (
-          <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.id_document_path!)}>
+          <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.id_document_path!, `ID Copy — ${d.profile?.full_name || "Doctor"}`)}>
             <Eye className="h-3 w-3" /> ID Copy
           </Button>
         ) : (
           <Badge variant="destructive" className="text-xs">Missing</Badge>
         )}
       </td>
+
       <td className="py-3 pr-4">
         <Select
           value={d.accepted_payment_method || "both"}
@@ -502,8 +503,17 @@ const AdminDoctorVerification = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <DocumentViewerModal
+        open={!!viewer}
+        onOpenChange={(o) => { if (!o) setViewer(null); }}
+        bucket="doctor-licenses"
+        filePath={viewer?.path ?? null}
+        title={viewer?.title}
+      />
     </div>
   );
 };
+
 
 export default AdminDoctorVerification;
