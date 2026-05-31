@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
+
 
 interface DoctorRow {
   id: string;
@@ -42,13 +44,13 @@ const AdminDoctorVerification = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const [suspendDialog, setSuspendDialog] = useState<{ doctor: DoctorRow } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
+  const [viewer, setViewer] = useState<{ path: string; title: string } | null>(null);
   const { toast } = useToast();
 
-  const viewDoc = async (path: string) => {
-    const { data } = await supabase.storage.from("doctor-licenses").createSignedUrl(path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else toast({ variant: "destructive", title: "Could not load document" });
+  const viewDoc = (path: string, title: string) => {
+    setViewer({ path, title });
   };
+
 
   const fetchDoctors = async () => {
     const { data, error } = await supabase
@@ -213,7 +215,7 @@ const AdminDoctorVerification = () => {
             <>
               <span className="flex items-center gap-1"><FileText className="h-3 w-3 text-muted-foreground" />{d.license_number}</span>
               {d.license_document_path && (
-                <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.license_document_path!)}>
+                <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.license_document_path!, `HPCSA Document — ${d.profile?.full_name || "Doctor"}`)}>
                   <Eye className="h-3 w-3" /> HPCSA
                 </Button>
               )}
@@ -225,13 +227,14 @@ const AdminDoctorVerification = () => {
       </td>
       <td className="py-3 pr-4">
         {d.id_document_path ? (
-          <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.id_document_path!)}>
+          <Button size="sm" variant="ghost" className="h-6 px-2 gap-1 text-xs" onClick={() => viewDoc(d.id_document_path!, `ID Copy — ${d.profile?.full_name || "Doctor"}`)}>
             <Eye className="h-3 w-3" /> ID Copy
           </Button>
         ) : (
           <Badge variant="destructive" className="text-xs">Missing</Badge>
         )}
       </td>
+
       <td className="py-3 pr-4">
         <Select
           value={d.accepted_payment_method || "both"}
@@ -500,8 +503,17 @@ const AdminDoctorVerification = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <DocumentViewerModal
+        open={!!viewer}
+        onOpenChange={(o) => { if (!o) setViewer(null); }}
+        bucket="doctor-licenses"
+        filePath={viewer?.path ?? null}
+        title={viewer?.title}
+      />
     </div>
   );
 };
+
 
 export default AdminDoctorVerification;

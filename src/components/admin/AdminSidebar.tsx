@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { prefetchAdminSection } from "@/pages/AdminDashboard";
 import {
@@ -42,7 +42,9 @@ const items = [
   { title: "AI Assistant", key: "ai-assistant", icon: Bot },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
+  { title: "Storage Usage", key: "storage-usage", icon: HardDrive },
   { title: "Email Test & Logs", key: "email-test", icon: Mail },
+
 ];
 
 interface AdminSidebarProps {

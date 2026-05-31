@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { uploadFile, validateFile } from "@/lib/fileUpload";
 
 interface AvatarUploadProps {
   userId: string;
@@ -28,44 +29,41 @@ const AvatarUpload = ({ userId, currentUrl, fullName, onUploaded }: AvatarUpload
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast({ variant: "destructive", title: "Invalid file", description: "Please select an image file." });
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ variant: "destructive", title: "File too large", description: "Max 2MB." });
+    const v = validateFile(file, "avatar");
+    if (!v.ok) {
+      toast({ variant: "destructive", title: "Invalid file", description: v.message });
       return;
     }
 
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${userId}/avatar.${ext}`;
+    try {
+      const { path } = await uploadFile({
+        bucket: "avatars",
+        path: `${userId}/avatar.${file.name.split(".").pop()}`,
+        file,
+        profile: "avatar",
+        onOptimizing: () => toast({ title: "Optimising image before upload..." }),
+      });
 
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, file, { upsert: true });
+      const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
 
-    if (uploadError) {
-      toast({ variant: "destructive", title: "Upload failed", description: uploadError.message });
-      setUploading(false);
-      return;
-    }
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: urlWithCacheBust })
+        .eq("id", userId);
 
-    const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-    const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ avatar_url: urlWithCacheBust })
-      .eq("id", userId);
-
-    if (updateError) {
-      toast({ variant: "destructive", title: "Failed to save", description: updateError.message });
-    } else {
-      onUploaded(urlWithCacheBust);
-      toast({ title: "Profile picture updated" });
+      if (updateError) {
+        toast({ variant: "destructive", title: "Failed to save", description: updateError.message });
+      } else {
+        onUploaded(urlWithCacheBust);
+        toast({ title: "Profile picture updated" });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload failed", description: err.message });
     }
     setUploading(false);
+    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -93,7 +91,7 @@ const AvatarUpload = ({ userId, currentUrl, fullName, onUploaded }: AvatarUpload
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="hidden"
         onChange={handleUpload}
       />
@@ -107,6 +105,7 @@ const AvatarUpload = ({ userId, currentUrl, fullName, onUploaded }: AvatarUpload
       >
         {uploading ? "Uploading..." : "Change photo"}
       </Button>
+      <p className="text-[10px] text-muted-foreground">JPG, PNG or WEBP · Max 2MB</p>
     </div>
   );
 };

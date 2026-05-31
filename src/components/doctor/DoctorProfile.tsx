@@ -340,30 +340,37 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               </div>
               <div className="space-y-2">
                 <Label>ID Copy (PDF/Image) <span className="text-destructive">*</span></Label>
-                <p className="text-xs text-muted-foreground">Upload a clear copy of your national ID or passport for identity verification.</p>
+                <p className="text-xs text-muted-foreground">PDF, JPG or PNG · Max 5MB. Clear copy of your national ID or passport.</p>
                 <div className="flex items-center gap-3">
                   <input
                     ref={idInputRef}
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    accept=".pdf,.jpg,.jpeg,.png"
                     className="hidden"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (file.size > 5 * 1024 * 1024) {
-                        toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                      const { validateFile, uploadFile } = await import("@/lib/fileUpload");
+                      const v = validateFile(file, "doctor_id");
+                      if (!v.ok) {
+                        toast({ variant: "destructive", title: "Invalid file", description: v.message });
                         return;
                       }
                       setUploadingId(true);
-                      const ext = file.name.split(".").pop();
-                      const path = `${user.id}/id.${ext}`;
-                      const { error } = await supabase.storage.from("doctor-licenses").upload(path, file, { upsert: true });
-                      if (error) {
-                        toast({ variant: "destructive", title: "Upload failed", description: error.message });
-                      } else {
+                      try {
+                        const ext = file.name.split(".").pop();
+                        const { path } = await uploadFile({
+                          bucket: "doctor-licenses",
+                          path: `${user.id}/id.${ext}`,
+                          file,
+                          profile: "doctor_id",
+                          onOptimizing: () => toast({ title: "Optimising image before upload..." }),
+                        });
                         await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
                         setIdDocPath(path);
                         toast({ title: "ID copy uploaded" });
+                      } catch (err: any) {
+                        toast({ variant: "destructive", title: "Upload failed", description: err.message });
                       }
                       setUploadingId(false);
                     }}
@@ -377,29 +384,37 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               </div>
               <div className="space-y-2">
                 <Label>HPCSA Document (PDF/Image) <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">PDF, JPG or PNG · Max 5MB.</p>
                 <div className="flex items-center gap-3">
                   <input
                     ref={licenseInputRef}
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    accept=".pdf,.jpg,.jpeg,.png"
                     className="hidden"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      if (file.size > 5 * 1024 * 1024) {
-                        toast({ variant: "destructive", title: "File too large", description: "Max 5MB" });
+                      const { validateFile, uploadFile } = await import("@/lib/fileUpload");
+                      const v = validateFile(file, "hpcsa");
+                      if (!v.ok) {
+                        toast({ variant: "destructive", title: "Invalid file", description: v.message });
                         return;
                       }
                       setUploadingLicense(true);
-                      const ext = file.name.split(".").pop();
-                      const path = `${user.id}/license.${ext}`;
-                      const { error } = await supabase.storage.from("doctor-licenses").upload(path, file, { upsert: true });
-                      if (error) {
-                        toast({ variant: "destructive", title: "Upload failed", description: error.message });
-                      } else {
+                      try {
+                        const ext = file.name.split(".").pop();
+                        const { path } = await uploadFile({
+                          bucket: "doctor-licenses",
+                          path: `${user.id}/license.${ext}`,
+                          file,
+                          profile: "hpcsa",
+                          onOptimizing: () => toast({ title: "Optimising image before upload..." }),
+                        });
                         await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
                         setLicenseDocPath(path);
                         toast({ title: "Document uploaded" });
+                      } catch (err: any) {
+                        toast({ variant: "destructive", title: "Upload failed", description: err.message });
                       }
                       setUploadingLicense(false);
                     }}
@@ -411,6 +426,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                   {licenseDocPath && <span className="flex items-center gap-1 text-sm text-green-600"><FileCheck className="h-4 w-4" /> Uploaded</span>}
                 </div>
               </div>
+
               <Button onClick={handleSave} disabled={saving} variant="outline" className="gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Save Advanced Details
