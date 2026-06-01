@@ -95,7 +95,7 @@ const Login = () => {
             </form>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link to="/signup" className="font-medium text-primary hover:underline">Sign up</Link>
+              <Link to={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"} className="font-medium text-primary hover:underline">Sign up</Link>
             </p>
           </CardContent>
         </Card>
