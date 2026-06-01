@@ -78,6 +78,25 @@ const AssetCard = ({ asset }: { asset: AssetDef }) => {
     toast({ title: "Copied", description: url });
   };
 
+  const download = async () => {
+    try {
+      const res = await fetch(asset.path, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = asset.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      toast({ title: "Downloaded", description: asset.name });
+    } catch (e) {
+      toast({ title: "Download failed", description: (e as Error).message, variant: "destructive" });
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
