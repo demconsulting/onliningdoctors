@@ -127,6 +127,7 @@ const AssetCard = ({ asset }: { asset: AssetDef }) => {
         </dl>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={copy}><Copy className="h-3.5 w-3.5 mr-1" />Copy URL</Button>
+          <Button size="sm" variant="outline" onClick={download}><Download className="h-3.5 w-3.5 mr-1" />Download</Button>
           <Button size="sm" variant="outline" asChild><a href={asset.path} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-1" />Open</a></Button>
           <Button size="sm" variant="ghost" onClick={check}><RefreshCw className="h-3.5 w-3.5 mr-1" />Re-check</Button>
         </div>
