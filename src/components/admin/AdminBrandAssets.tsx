@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Copy, ExternalLink, RefreshCw, CheckCircle2, XCircle, Loader2, FileJson } from "lucide-react";
+import { Copy, ExternalLink, RefreshCw, CheckCircle2, XCircle, Loader2, FileJson, Download } from "lucide-react";
 
 interface AssetDef {
   name: string;
@@ -78,6 +78,25 @@ const AssetCard = ({ asset }: { asset: AssetDef }) => {
     toast({ title: "Copied", description: url });
   };
 
+  const download = async () => {
+    try {
+      const res = await fetch(asset.path, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = asset.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+      toast({ title: "Downloaded", description: asset.name });
+    } catch (e) {
+      toast({ title: "Download failed", description: (e as Error).message, variant: "destructive" });
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -108,6 +127,7 @@ const AssetCard = ({ asset }: { asset: AssetDef }) => {
         </dl>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={copy}><Copy className="h-3.5 w-3.5 mr-1" />Copy URL</Button>
+          <Button size="sm" variant="outline" onClick={download}><Download className="h-3.5 w-3.5 mr-1" />Download</Button>
           <Button size="sm" variant="outline" asChild><a href={asset.path} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5 mr-1" />Open</a></Button>
           <Button size="sm" variant="ghost" onClick={check}><RefreshCw className="h-3.5 w-3.5 mr-1" />Re-check</Button>
         </div>
