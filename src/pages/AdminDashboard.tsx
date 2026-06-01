@@ -151,6 +151,7 @@ const AdminDashboard = () => {
       case "founding-doctors": return <AdminFoundingDoctors />;
       case "doctor-onboarding": return <AdminDoctorOnboarding />;
       case "storage-usage": return <AdminStorageUsage />;
+      case "brand-assets": return <AdminBrandAssets />;
       default: return <AdminHero />;
 
     }
