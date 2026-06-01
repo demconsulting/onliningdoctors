@@ -60,18 +60,22 @@ const Dashboard = () => {
   }, [searchParams, setSearchParams, toast]);
 
   useEffect(() => {
+    const loginRedirect = () => {
+      const here = `${location.pathname}${location.search}`;
+      navigate(`/login?redirect=${encodeURIComponent(here)}`, { replace: true });
+    };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) navigate("/login");
+      if (!session) loginRedirect();
       else setUser(session.user);
       setLoading(false);
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate("/login");
+      if (!session) loginRedirect();
       else setUser(session.user);
       setLoading(false);
     });
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname, location.search]);
 
   // Verify payment after auth is ready
   useEffect(() => {
