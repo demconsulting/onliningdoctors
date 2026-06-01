@@ -16,6 +16,7 @@ import {
 const items = [
   { title: "Section Order", key: "section-order", icon: Layers },
   { title: "Branding & Logo", key: "branding", icon: ImageIcon },
+  { title: "Brand Assets", key: "brand-assets", icon: ImageIcon },
   { title: "Hero Section", key: "hero", icon: Layout },
   { title: "Stats", key: "stats", icon: BarChart3 },
   { title: "Why Choose", key: "why-choose", icon: Sparkles },
