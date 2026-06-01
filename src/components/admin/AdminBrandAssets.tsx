@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Copy, ExternalLink, RefreshCw, CheckCircle2, XCircle, Loader2, FileJson } from "lucide-react";
+import { Copy, ExternalLink, RefreshCw, CheckCircle2, XCircle, Loader2, FileJson, Download } from "lucide-react";
 
 interface AssetDef {
   name: string;
