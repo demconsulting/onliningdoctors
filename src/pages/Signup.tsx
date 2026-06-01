@@ -19,7 +19,10 @@ const Signup = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { toast } = useToast();
+  const loginHref = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login";
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
