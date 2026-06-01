@@ -74,6 +74,7 @@ const AdminEmailTest = lazy(loaders["email-test"]);
 const AdminFoundingDoctors = lazy(loaders["founding-doctors"]);
 const AdminDoctorOnboarding = lazy(loaders["doctor-onboarding"]);
 const AdminStorageUsage = lazy(loaders["storage-usage"]);
+const AdminBrandAssets = lazy(loaders["brand-assets"]);
 
 
 const SectionFallback = () => (
