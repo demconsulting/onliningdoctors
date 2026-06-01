@@ -41,6 +41,10 @@ const AuthCallback = () => {
         return;
       }
 
+      // If a redirect target was preserved through email confirmation, honor it for patients
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirect");
+
       // Authenticated — route to the right dashboard
       const { data: roles } = await supabase
         .from("user_roles")
@@ -48,6 +52,10 @@ const AuthCallback = () => {
         .eq("user_id", user.id);
       const isDoctor = roles?.some((r) => r.role === "doctor");
       const isAdmin = roles?.some((r) => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
+      if (redirectTo && !isAdmin && !isDoctor) {
+        navigate(redirectTo, { replace: true });
+        return;
+      }
       navigate(isAdmin ? "/admin" : isDoctor ? "/doctor-dashboard" : "/dashboard", { replace: true });
     };
     run();
