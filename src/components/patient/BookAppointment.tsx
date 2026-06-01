@@ -170,8 +170,14 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     if (!preselectDoctorId || doctors.length === 0) return;
     if (doctors.some(d => d.profile_id === preselectDoctorId)) {
       setSelectedDoctor(preselectDoctorId);
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Doctor unavailable",
+        description: "This doctor is no longer available for booking. Please choose another doctor.",
+      });
     }
-  }, [preselectDoctorId, doctors]);
+  }, [preselectDoctorId, doctors, toast]);
 
   useEffect(() => {
     if (!selectedSpecialty) {

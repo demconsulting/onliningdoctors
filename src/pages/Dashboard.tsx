@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -26,6 +26,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<SupaUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselectDoctorId = searchParams.get("doctor");
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "appointments");
@@ -59,18 +60,22 @@ const Dashboard = () => {
   }, [searchParams, setSearchParams, toast]);
 
   useEffect(() => {
+    const loginRedirect = () => {
+      const here = `${location.pathname}${location.search}`;
+      navigate(`/login?redirect=${encodeURIComponent(here)}`, { replace: true });
+    };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) navigate("/login");
+      if (!session) loginRedirect();
       else setUser(session.user);
       setLoading(false);
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) navigate("/login");
+      if (!session) loginRedirect();
       else setUser(session.user);
       setLoading(false);
     });
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, location.pathname, location.search]);
 
   // Verify payment after auth is ready
   useEffect(() => {

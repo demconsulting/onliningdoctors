@@ -1,6 +1,6 @@
 import { useState } from "react";
 import logoSrc from "@/assets/logo.png";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { friendlyAuthError } from "@/lib/authErrors";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,10 @@ const Signup = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { toast } = useToast();
+  const loginHref = redirectTo ? `/login?redirect=${encodeURIComponent(redirectTo)}` : "/login";
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +32,7 @@ const Signup = () => {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`,
       },
     });
     setLoading(false);
@@ -37,7 +40,7 @@ const Signup = () => {
       toast({ variant: "destructive", title: "Sign up failed", description: friendlyAuthError(error.message) });
     } else {
       toast({ title: "Check your email", description: "We sent you a confirmation link." });
-      navigate("/signin");
+      navigate(loginHref);
     }
   };
 
@@ -84,7 +87,7 @@ const Signup = () => {
             </p>
             <p className="mt-2 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/login" className="font-medium text-primary hover:underline">Log in</Link>
+              <Link to={loginHref} className="font-medium text-primary hover:underline">Log in</Link>
             </p>
           </CardContent>
         </Card>
