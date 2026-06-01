@@ -40,7 +40,7 @@ const Signup = () => {
       toast({ variant: "destructive", title: "Sign up failed", description: friendlyAuthError(error.message) });
     } else {
       toast({ title: "Check your email", description: "We sent you a confirmation link." });
-      navigate("/signin");
+      navigate(loginHref);
     }
   };
 
