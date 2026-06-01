@@ -26,6 +26,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<SupaUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const preselectDoctorId = searchParams.get("doctor");
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "appointments");
