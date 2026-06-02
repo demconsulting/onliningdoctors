@@ -98,18 +98,29 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         supabase.from("specialties").select("*"),
       ]);
 
+      const [profileRes, doctorRes, specRes, pendingRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("doctors").select("*").eq("profile_id", user.id).single(),
+        supabase.from("specialties").select("*"),
+        supabase.from("doctor_profile_changes" as any).select("field_name").eq("doctor_id", user.id).eq("status", "pending"),
+      ]);
+
+      const origReview: Record<string, any> = {};
+
       if (profileRes.data) {
         setAvatarUrl(profileRes.data.avatar_url || null);
+        const p = profileRes.data;
         setProfile({
-          full_name: profileRes.data.full_name || "",
-          phone: profileRes.data.phone || "",
-          date_of_birth: profileRes.data.date_of_birth || "",
-          gender: profileRes.data.gender || "",
-          address: profileRes.data.address || "",
-          city: profileRes.data.city || "",
-          state: (profileRes.data as any).state || "",
-          country: profileRes.data.country || "",
+          full_name: p.full_name || "",
+          phone: p.phone || "",
+          date_of_birth: p.date_of_birth || "",
+          gender: p.gender || "",
+          address: p.address || "",
+          city: p.city || "",
+          state: (p as any).state || "",
+          country: p.country || "",
         });
+        origReview.full_name = p.full_name || "";
       }
 
       if (doctorRes.data) {
@@ -133,12 +144,19 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         });
         setLicenseDocPath(d.license_document_path || null);
         setIdDocPath((d as any).id_document_path || null);
-        // Load signed URL for practice logo
+        origReview.license_number = d.license_number || "";
+        origReview.specialty_id = d.specialty_id || "";
+        origReview.education = d.education || "";
+        origReview.license_document_path = d.license_document_path || "";
+        origReview.id_document_path = (d as any).id_document_path || "";
         if (d.practice_logo_url) {
           const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(d.practice_logo_url, 3600);
           if (url) setPracticeLogoSignedUrl(url.signedUrl);
         }
       }
+
+      setOriginalReview(origReview);
+      setPendingReviewFields(new Set(((pendingRes.data as any) || []).map((r: any) => r.field_name)));
 
       if (specRes.data) setSpecialties(specRes.data);
       setLoading(false);
@@ -148,7 +166,106 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
   }, [user.id]);
 
 
+  // Submit a single field as a pending change (review-required fields)
+  const submitReviewChange = async (field: string, oldValue: any, newValue: any) => {
+    // Delete any existing pending request for this field then insert fresh
+    await supabase
+      .from("doctor_profile_changes" as any)
+      .delete()
+      .eq("doctor_id", user.id)
+      .eq("field_name", field)
+      .eq("status", "pending");
+    const { error } = await supabase.from("doctor_profile_changes" as any).insert({
+      doctor_id: user.id,
+      field_name: field,
+      old_value: oldValue ?? null,
+      new_value: newValue ?? null,
+    });
+    return error;
+  };
+
   const handleSave = async () => {
+    // Required advanced details — admin verification requires these
+    const missing: string[] = [];
+    if (!profile.country) missing.push("Country");
+    if (!profile.city) missing.push("City");
+    if (!doctor.education?.trim()) missing.push("Education / Qualifications");
+    if (!doctor.languages || doctor.languages.length === 0) missing.push("Languages");
+    if (!doctor.bio?.trim()) missing.push("Bio");
+    if (!doctor.experience_years || doctor.experience_years <= 0) missing.push("Years of Experience");
+    if (!licenseDocPath) missing.push("HPCSA Document");
+    if (!idDocPath) missing.push("ID Copy");
+    if (missing.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Advanced details required",
+        description: `Please complete: ${missing.join(", ")}.`,
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    // Build review-field changes (only when changed vs original)
+    const reviewChanges: Array<{ field: string; oldV: any; newV: any }> = [];
+    const newReviewSnapshot: Record<string, any> = {
+      full_name: profile.full_name || "",
+      license_number: doctor.license_number || "",
+      specialty_id: doctor.specialty_id || "",
+      education: doctor.education || "",
+    };
+    for (const f of Object.keys(newReviewSnapshot)) {
+      if ((newReviewSnapshot[f] || "") !== (originalReview[f] || "")) {
+        reviewChanges.push({ field: f, oldV: originalReview[f] ?? "", newV: newReviewSnapshot[f] });
+      }
+    }
+
+    // Auto-approved payloads (strip review fields and consultation_fee)
+    const { full_name: _fn, ...autoProfile } = profile;
+    const profilePayload = { ...autoProfile, date_of_birth: profile.date_of_birth || null };
+    const {
+      consultation_fee: _fee,
+      license_number: _ln,
+      specialty_id: _sid,
+      education: _edu,
+      ...autoDoctor
+    } = doctor;
+
+    const [profileRes, doctorRes] = await Promise.all([
+      supabase.from("profiles").update(profilePayload).eq("id", user.id),
+      supabase.from("doctors").update(autoDoctor as any).eq("profile_id", user.id),
+    ]);
+
+    let reviewError: any = null;
+    for (const c of reviewChanges) {
+      const err = await submitReviewChange(c.field, c.oldV, c.newV);
+      if (err) reviewError = err;
+    }
+
+    setSaving(false);
+    if (profileRes.error || doctorRes.error || reviewError) {
+      toast({
+        variant: "destructive",
+        title: "Error saving",
+        description: (profileRes.error || doctorRes.error || reviewError)?.message,
+      });
+      return;
+    }
+
+    if (reviewChanges.length > 0) {
+      setPendingReviewFields(prev => {
+        const next = new Set(prev);
+        reviewChanges.forEach(c => next.add(c.field));
+        return next;
+      });
+      toast({
+        title: "Profile updated",
+        description: `${reviewChanges.length} regulated change(s) submitted for admin review.`,
+      });
+    } else {
+      toast({ title: "Profile updated successfully" });
+    }
+  };
     // Required advanced details — admin verification requires these
     const missing: string[] = [];
     if (!profile.country) missing.push("Country");
