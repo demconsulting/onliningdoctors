@@ -266,46 +266,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
       toast({ title: "Profile updated successfully" });
     }
   };
-    // Required advanced details — admin verification requires these
-    const missing: string[] = [];
-    if (!profile.country) missing.push("Country");
-    if (!profile.city) missing.push("City");
-    if (!doctor.education?.trim()) missing.push("Education / Qualifications");
-    if (!doctor.languages || doctor.languages.length === 0) missing.push("Languages");
-    if (!doctor.bio?.trim()) missing.push("Bio");
-    if (!doctor.experience_years || doctor.experience_years <= 0) missing.push("Years of Experience");
-    if (!licenseDocPath) missing.push("HPCSA Document");
-    if (!idDocPath) missing.push("ID Copy");
-    if (missing.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Advanced details required",
-        description: `Please complete: ${missing.join(", ")}.`,
-      });
-      return;
-    }
 
-    setSaving(true);
-
-    const profilePayload = {
-      ...profile,
-      date_of_birth: profile.date_of_birth || null,
-    };
-    // Exclude consultation_fee — it's managed in the Pricing tab and would
-    // otherwise be overwritten with the stale value loaded at mount.
-    const { consultation_fee: _ignoredFee, ...doctorPayload } = doctor;
-    const [profileRes, doctorRes] = await Promise.all([
-      supabase.from("profiles").update(profilePayload).eq("id", user.id),
-      supabase.from("doctors").update(doctorPayload as any).eq("profile_id", user.id),
-    ]);
-
-    setSaving(false);
-    if (profileRes.error || doctorRes.error) {
-      toast({ variant: "destructive", title: "Error saving", description: (profileRes.error || doctorRes.error)?.message });
-    } else {
-      toast({ title: "Profile updated successfully" });
-    }
-  };
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
