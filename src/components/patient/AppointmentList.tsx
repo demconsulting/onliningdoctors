@@ -29,9 +29,20 @@ const statusColors: Record<string, string> = {
   awaiting_payment: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+// Map raw DB status to a normalized dashboard status.
+const normalizeStatus = (s: string | null | undefined): string => {
+  const v = (s || "").toLowerCase();
+  if (["pending", "booked", "paid"].includes(v)) return "pending";
+  if (["confirmed", "scheduled"].includes(v)) return "confirmed";
+  if (["completed", "done"].includes(v)) return "completed";
+  if (["cancelled", "canceled", "declined"].includes(v)) return "cancelled";
+  return v;
+};
+
 const AppointmentList = ({ user }: AppointmentListProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [reviewedIds, setReviewedIds] = useState<Set<string>>(new Set());
   const [reviewsMap, setReviewsMap] = useState<Record<string, any>>({});
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
@@ -40,20 +51,43 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
+    setLoadError(null);
+
+    // Include appointments booked by the patient AND any booked for their dependents.
+    const { data: deps } = await supabase
+      .from("dependents")
+      .select("id")
+      .eq("guardian_id", user.id);
+    const dependentIds = (deps || []).map((d: any) => d.id);
+
+    let query = supabase
+      .from("appointments")
+      .select(
+        "*, payment:payments(amount, currency, status, payment_method, paid_at), doctor:profiles!appointments_doctor_id_fkey(full_name, avatar_url), dependent:dependent_id(full_name, relationship)"
+      )
+      .order("scheduled_at", { ascending: false });
+
+    query = dependentIds.length
+      ? query.or(`patient_id.eq.${user.id},dependent_id.in.(${dependentIds.join(",")})`)
+      : query.eq("patient_id", user.id);
+
     const [aptRes, reviewRes] = await Promise.all([
-      supabase
-        .from("appointments")
-        .select("*, doctor:doctor_id(full_name, avatar_url), dependent:dependent_id(full_name, relationship)")
-        .eq("patient_id", user.id)
-        .order("scheduled_at", { ascending: false }),
-      supabase
-        .from("reviews")
-        .select("id, appointment_id, rating, comment, created_at")
-        .eq("patient_id", user.id),
+      query,
+      supabase.from("reviews").select("id, appointment_id, rating, comment, created_at").eq("patient_id", user.id),
     ]);
 
-    if (aptRes.data) setAppointments(aptRes.data);
-    if (aptRes.error) console.error(aptRes.error);
+    console.log("[PatientAppointments]", {
+      userId: user.id,
+      dependentIds,
+      returned: aptRes.data?.length ?? 0,
+      error: aptRes.error,
+    });
+
+    if (aptRes.error) {
+      setLoadError("Unable to load appointments. Please try again.");
+    } else if (aptRes.data) {
+      setAppointments(aptRes.data);
+    }
     if (reviewRes.data) {
       setReviewedIds(new Set(reviewRes.data.map((r: any) => r.appointment_id)));
       const map: Record<string, any> = {};
