@@ -175,6 +175,11 @@ const DoctorDashboard = () => {
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
           </TabsContent>
+          <TabsContent value="practice-patients">
+            <Suspense fallback={<TabFallback />}>
+              <PracticePatients user={user} />
+            </Suspense>
+          </TabsContent>
           <TabsContent value="availability">
             <AvailabilityManager user={user} />
           </TabsContent>
