@@ -22,6 +22,7 @@ const DoctorMedicalAids = lazy(() => import("@/components/doctor/DoctorMedicalAi
 const DoctorMedicalAidRequests = lazy(() => import("@/components/doctor/DoctorMedicalAidRequests"));
 const PracticeCalendar = lazy(() => import("@/components/calendar/PracticeCalendar"));
 const DoctorProfileChanges = lazy(() => import("@/components/doctor/DoctorProfileChanges"));
+const PracticePatients = lazy(() => import("@/components/doctor/PracticePatients"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 
 const TabFallback = () => (
