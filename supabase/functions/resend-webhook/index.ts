@@ -143,6 +143,19 @@ serve(async (req) => {
       throw insertError;
     }
 
+    // Update doctor onboarding email log timestamps when we can match by resend_id
+    if (messageId) {
+      const patch: Record<string, string> = {};
+      if (eventType === "email.delivered") patch.delivered_at = new Date().toISOString();
+      if (eventType === "email.opened") patch.opened_at = new Date().toISOString();
+      if (Object.keys(patch).length > 0) {
+        await serviceClient
+          .from("doctor_onboarding_email_log")
+          .update(patch)
+          .eq("resend_id", messageId);
+      }
+    }
+
     // Business logic based on event type
     if (eventType === "email.bounced" && email) {
       // Flag bounced emails — update profile if user exists

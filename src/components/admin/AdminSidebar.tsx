@@ -28,6 +28,7 @@ const items = [
   { title: "Doctor Verification", key: "doctor-verification", icon: ShieldCheck },
   { title: "Profile Reviews", key: "profile-reviews", icon: ClipboardCheck },
   { title: "Doctor Onboarding", key: "doctor-onboarding", icon: Mail },
+  { title: "Reminder Center", key: "reminder-center", icon: Mail },
   { title: "Founding Doctors", key: "founding-doctors", icon: Crown },
   { title: "Users", key: "users", icon: Users },
   { title: "Appointments", key: "appointments", icon: Calendar },
