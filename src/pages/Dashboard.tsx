@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import AppointmentList from "@/components/patient/AppointmentList";
 import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
+import PracticePatientLinkPrompt from "@/components/patient/PracticePatientLinkPrompt";
 
 const BookAppointment = lazy(() => import("@/components/patient/BookAppointment"));
 const FamilyMembers = lazy(() => import("@/components/patient/FamilyMembers"));
