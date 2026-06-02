@@ -92,11 +92,6 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
   useEffect(() => {
     const load = async () => {
-      const [profileRes, doctorRes, specRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", user.id).single(),
-        supabase.from("doctors").select("*").eq("profile_id", user.id).single(),
-        supabase.from("specialties").select("*"),
-      ]);
 
       const [profileRes, doctorRes, specRes, pendingRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
