@@ -40,6 +40,7 @@ const items = [
   { title: "Financial Settings", key: "financial-settings", icon: DollarSign },
   { title: "Payments", key: "payments", icon: Receipt },
   { title: "Payouts", key: "payouts", icon: Wallet },
+  { title: "Financial Management", key: "financial-management", icon: TrendingUp },
   { title: "Countries", key: "countries", icon: Globe },
   { title: "Legal Documents", key: "legal-documents", icon: FileText },
   { title: "AI Assistant", key: "ai-assistant", icon: Bot },
