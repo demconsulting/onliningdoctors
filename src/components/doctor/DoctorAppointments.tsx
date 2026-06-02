@@ -73,7 +73,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
       supabase
         .from("appointments")
         .select(
-          "*, patient:profiles!appointments_patient_id_fkey(full_name, avatar_url, phone), dependent:dependent_id(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes), payment:payments(amount, currency, status, payment_method, paid_at)"
+          "*, patient:profiles!appointments_patient_id_fkey(full_name, avatar_url, phone), dependent:dependents!appointments_dependent_id_fkey(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes), payment:payments(amount, currency, status, payment_method, paid_at)"
         )
         .in("doctor_id", doctorIds)
         .order("scheduled_at", { ascending: false }),
