@@ -116,7 +116,7 @@ const DoctorDashboard = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           {/* Mobile-friendly: horizontal scroll on small screens */}
           <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-12">
+            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-13">
               <TabsTrigger value="dashboard" className="gap-1.5">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </TabsTrigger>
@@ -131,6 +131,9 @@ const DoctorDashboard = () => {
               </TabsTrigger>
               <TabsTrigger value="appointments" className="gap-1.5">
                 <Calendar className="h-4 w-4" /> Appointments
+              </TabsTrigger>
+              <TabsTrigger value="practice-patients" className="gap-1.5">
+                <Users className="h-4 w-4" /> Practice Patients
               </TabsTrigger>
               <TabsTrigger value="availability" className="gap-1.5">
                 <Clock className="h-4 w-4" /> Availability
