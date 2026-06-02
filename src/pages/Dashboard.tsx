@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import AppointmentList from "@/components/patient/AppointmentList";
 import ReviewPromptBanner from "@/components/patient/ReviewPromptBanner";
+import PracticePatientLinkPrompt from "@/components/patient/PracticePatientLinkPrompt";
 
 const BookAppointment = lazy(() => import("@/components/patient/BookAppointment"));
 const FamilyMembers = lazy(() => import("@/components/patient/FamilyMembers"));
@@ -102,6 +103,7 @@ const Dashboard = () => {
         </div>
 
         <ReviewPromptBanner user={user} onSwitchToAppointments={() => setActiveTab("appointments")} />
+        <PracticePatientLinkPrompt user={user} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           {/* Mobile: 3-col wrapping grid (2 rows) — no horizontal scroll. Desktop: single row. */}

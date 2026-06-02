@@ -32,6 +32,7 @@ const items = [
   { title: "Founding Doctors", key: "founding-doctors", icon: Crown },
   { title: "Users", key: "users", icon: Users },
   { title: "Appointments", key: "appointments", icon: Calendar },
+  { title: "Practice Patients", key: "practice-patients", icon: Users },
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Consultation Outcomes", key: "consultation-outcomes", icon: ClipboardCheck },
   { title: "Contact Messages", key: "contacts", icon: Mail },
