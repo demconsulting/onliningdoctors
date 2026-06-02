@@ -1013,6 +1013,45 @@ export type Database = {
           },
         ]
       }
+      doctor_profile_changes: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          field_name: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["profile_change_status"]
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          field_name: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["profile_change_status"]
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          field_name?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["profile_change_status"]
+        }
+        Relationships: []
+      }
       doctors: {
         Row: {
           accepted_payment_method: Database["public"]["Enums"]["accepted_payment_method_enum"]
@@ -2457,6 +2496,10 @@ export type Database = {
       }
     }
     Functions: {
+      approve_profile_change: {
+        Args: { _change_id: string }
+        Returns: undefined
+      }
       can_impersonate: { Args: { _user_id: string }; Returns: boolean }
       check_appointment_conflict: {
         Args: {
@@ -2505,6 +2548,10 @@ export type Database = {
         Returns: boolean
       }
       is_test_or_demo_user: { Args: { _user_id: string }; Returns: boolean }
+      reject_profile_change: {
+        Args: { _change_id: string; _reason: string }
+        Returns: undefined
+      }
       user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
       verify_prescription: {
         Args: { _token: string }
@@ -2537,6 +2584,7 @@ export type Database = {
         | "receptionist"
         | "practice_admin"
       pricing_tier_type: "private" | "medical_aid" | "follow_up" | "specialist"
+      profile_change_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2684,6 +2732,7 @@ export const Constants = {
         "practice_admin",
       ],
       pricing_tier_type: ["private", "medical_aid", "follow_up", "specialist"],
+      profile_change_status: ["pending", "approved", "rejected"],
     },
   },
 } as const

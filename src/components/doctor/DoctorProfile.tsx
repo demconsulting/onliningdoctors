@@ -34,6 +34,15 @@ const EDUCATION_SUGGESTIONS = [
   "MPH", "MSc Medicine", "Fellowship"
 ];
 
+const REVIEW_FIELDS = new Set([
+  "full_name",
+  "license_number",
+  "specialty_id",
+  "education",
+  "license_document_path",
+  "id_document_path",
+]);
+
 const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -69,6 +78,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     practice_logo_url: "",
     accepted_payment_method: "both" as "medical_aid_only" | "card_only" | "both",
   });
+  const [originalReview, setOriginalReview] = useState<Record<string, any>>({});
+  const [pendingReviewFields, setPendingReviewFields] = useState<Set<string>>(new Set());
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [idDocPath, setIdDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
@@ -81,24 +92,30 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
   useEffect(() => {
     const load = async () => {
-      const [profileRes, doctorRes, specRes] = await Promise.all([
+
+      const [profileRes, doctorRes, specRes, pendingRes] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).single(),
         supabase.from("doctors").select("*").eq("profile_id", user.id).single(),
         supabase.from("specialties").select("*"),
+        supabase.from("doctor_profile_changes" as any).select("field_name").eq("doctor_id", user.id).eq("status", "pending"),
       ]);
+
+      const origReview: Record<string, any> = {};
 
       if (profileRes.data) {
         setAvatarUrl(profileRes.data.avatar_url || null);
+        const p = profileRes.data;
         setProfile({
-          full_name: profileRes.data.full_name || "",
-          phone: profileRes.data.phone || "",
-          date_of_birth: profileRes.data.date_of_birth || "",
-          gender: profileRes.data.gender || "",
-          address: profileRes.data.address || "",
-          city: profileRes.data.city || "",
-          state: (profileRes.data as any).state || "",
-          country: profileRes.data.country || "",
+          full_name: p.full_name || "",
+          phone: p.phone || "",
+          date_of_birth: p.date_of_birth || "",
+          gender: p.gender || "",
+          address: p.address || "",
+          city: p.city || "",
+          state: (p as any).state || "",
+          country: p.country || "",
         });
+        origReview.full_name = p.full_name || "";
       }
 
       if (doctorRes.data) {
@@ -122,12 +139,19 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         });
         setLicenseDocPath(d.license_document_path || null);
         setIdDocPath((d as any).id_document_path || null);
-        // Load signed URL for practice logo
+        origReview.license_number = d.license_number || "";
+        origReview.specialty_id = d.specialty_id || "";
+        origReview.education = d.education || "";
+        origReview.license_document_path = d.license_document_path || "";
+        origReview.id_document_path = (d as any).id_document_path || "";
         if (d.practice_logo_url) {
           const { data: url } = await supabase.storage.from("prescription-assets").createSignedUrl(d.practice_logo_url, 3600);
           if (url) setPracticeLogoSignedUrl(url.signedUrl);
         }
       }
+
+      setOriginalReview(origReview);
+      setPendingReviewFields(new Set(((pendingRes.data as any) || []).map((r: any) => r.field_name)));
 
       if (specRes.data) setSpecialties(specRes.data);
       setLoading(false);
@@ -136,6 +160,24 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
+
+  // Submit a single field as a pending change (review-required fields)
+  const submitReviewChange = async (field: string, oldValue: any, newValue: any) => {
+    // Delete any existing pending request for this field then insert fresh
+    await supabase
+      .from("doctor_profile_changes" as any)
+      .delete()
+      .eq("doctor_id", user.id)
+      .eq("field_name", field)
+      .eq("status", "pending");
+    const { error } = await supabase.from("doctor_profile_changes" as any).insert({
+      doctor_id: user.id,
+      field_name: field,
+      old_value: oldValue ?? null,
+      new_value: newValue ?? null,
+    });
+    return error;
+  };
 
   const handleSave = async () => {
     // Required advanced details — admin verification requires these
@@ -159,30 +201,82 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
     setSaving(true);
 
-    const profilePayload = {
-      ...profile,
-      date_of_birth: profile.date_of_birth || null,
+    // Build review-field changes (only when changed vs original)
+    const reviewChanges: Array<{ field: string; oldV: any; newV: any }> = [];
+    const newReviewSnapshot: Record<string, any> = {
+      full_name: profile.full_name || "",
+      license_number: doctor.license_number || "",
+      specialty_id: doctor.specialty_id || "",
+      education: doctor.education || "",
     };
-    // Exclude consultation_fee — it's managed in the Pricing tab and would
-    // otherwise be overwritten with the stale value loaded at mount.
-    const { consultation_fee: _ignoredFee, ...doctorPayload } = doctor;
+    for (const f of Object.keys(newReviewSnapshot)) {
+      if ((newReviewSnapshot[f] || "") !== (originalReview[f] || "")) {
+        reviewChanges.push({ field: f, oldV: originalReview[f] ?? "", newV: newReviewSnapshot[f] });
+      }
+    }
+
+    // Auto-approved payloads (strip review fields and consultation_fee)
+    const { full_name: _fn, ...autoProfile } = profile;
+    const profilePayload = { ...autoProfile, date_of_birth: profile.date_of_birth || null };
+    const {
+      consultation_fee: _fee,
+      license_number: _ln,
+      specialty_id: _sid,
+      education: _edu,
+      ...autoDoctor
+    } = doctor;
+
     const [profileRes, doctorRes] = await Promise.all([
       supabase.from("profiles").update(profilePayload).eq("id", user.id),
-      supabase.from("doctors").update(doctorPayload as any).eq("profile_id", user.id),
+      supabase.from("doctors").update(autoDoctor as any).eq("profile_id", user.id),
     ]);
 
+    let reviewError: any = null;
+    for (const c of reviewChanges) {
+      const err = await submitReviewChange(c.field, c.oldV, c.newV);
+      if (err) reviewError = err;
+    }
+
     setSaving(false);
-    if (profileRes.error || doctorRes.error) {
-      toast({ variant: "destructive", title: "Error saving", description: (profileRes.error || doctorRes.error)?.message });
+    if (profileRes.error || doctorRes.error || reviewError) {
+      toast({
+        variant: "destructive",
+        title: "Error saving",
+        description: (profileRes.error || doctorRes.error || reviewError)?.message,
+      });
+      return;
+    }
+
+    if (reviewChanges.length > 0) {
+      setPendingReviewFields(prev => {
+        const next = new Set(prev);
+        reviewChanges.forEach(c => next.add(c.field));
+        return next;
+      });
+      toast({
+        title: "Profile updated",
+        description: `${reviewChanges.length} regulated change(s) submitted for admin review.`,
+      });
     } else {
       toast({ title: "Profile updated successfully" });
     }
   };
 
+
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-6">
+      {pendingReviewFields.size > 0 && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-100">
+          <strong>Pending admin review:</strong>{" "}
+          {Array.from(pendingReviewFields).map(f => f.replace(/_/g, " ")).join(", ")}.
+          The current approved profile remains visible until review is complete.
+        </div>
+      )}
+      <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+        Most edits go live instantly. Regulated fields — full name, HPCSA number, specialty, qualifications and verification documents — are submitted to admin for review.
+      </div>
       {/* Essentials — minimum to receive bookings */}
       <Card>
         <CardHeader>
@@ -366,9 +460,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                           profile: "doctor_id",
                           onOptimizing: () => toast({ title: "Optimising image before upload..." }),
                         });
-                        await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
-                        setIdDocPath(path);
-                        toast({ title: "ID copy uploaded" });
+                        if (!idDocPath) {
+                          await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
+                          setIdDocPath(path);
+                          toast({ title: "ID copy uploaded" });
+                        } else {
+                          const err = await submitReviewChange("id_document_path", idDocPath, path);
+                          if (err) throw err;
+                          setPendingReviewFields(prev => new Set(prev).add("id_document_path"));
+                          toast({ title: "Submitted for review", description: "Your new ID document is pending admin approval." });
+                        }
                       } catch (err: any) {
                         toast({ variant: "destructive", title: "Upload failed", description: err.message });
                       }
@@ -410,9 +511,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                           profile: "hpcsa",
                           onOptimizing: () => toast({ title: "Optimising image before upload..." }),
                         });
-                        await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
-                        setLicenseDocPath(path);
-                        toast({ title: "Document uploaded" });
+                        if (!licenseDocPath) {
+                          await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
+                          setLicenseDocPath(path);
+                          toast({ title: "Document uploaded" });
+                        } else {
+                          const err = await submitReviewChange("license_document_path", licenseDocPath, path);
+                          if (err) throw err;
+                          setPendingReviewFields(prev => new Set(prev).add("license_document_path"));
+                          toast({ title: "Submitted for review", description: "Your new HPCSA document is pending admin approval." });
+                        }
                       } catch (err: any) {
                         toast({ variant: "destructive", title: "Upload failed", description: err.message });
                       }
