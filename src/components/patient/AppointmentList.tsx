@@ -63,7 +63,7 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
     let query = supabase
       .from("appointments")
       .select(
-        "*, payment:payments(amount, currency, status, payment_method, paid_at), doctor:profiles!appointments_doctor_id_fkey(full_name, avatar_url), dependent:dependent_id(full_name, relationship)"
+        "*, payment:payments(amount, currency, status, payment_method, paid_at), doctor:profiles!appointments_doctor_id_fkey(full_name, avatar_url), dependent:dependents!appointments_dependent_id_fkey(full_name, relationship)"
       )
       .order("scheduled_at", { ascending: false });
 
