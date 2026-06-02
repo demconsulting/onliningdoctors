@@ -103,6 +103,7 @@ const Dashboard = () => {
         </div>
 
         <ReviewPromptBanner user={user} onSwitchToAppointments={() => setActiveTab("appointments")} />
+        <PracticePatientLinkPrompt user={user} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           {/* Mobile: 3-col wrapping grid (2 rows) — no horizontal scroll. Desktop: single row. */}
