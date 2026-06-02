@@ -1,86 +1,83 @@
-## Secure File Upload Management & Storage Optimisation
+# Doctor Profile Change Management System
 
-Build a centralized upload utility + apply it across all existing upload points, plus an admin storage dashboard. Reuse existing buckets — do NOT create new ones (would orphan existing files).
+## Overview
 
-### 1. Shared upload utility — `src/lib/fileUpload.ts`
+Build a two-tier profile update system: most fields update instantly (self-service), while regulated/verification fields go through an admin approval queue. Adds a new `doctor_profile_changes` table, doctor "Profile Changes" view, and admin "Doctor Profile Reviews" panel.
 
-Single source of truth for all uploads:
-- `UPLOAD_PROFILES` config map: `avatar` (2MB, img), `doctor_id` (5MB, pdf+img), `hpcsa` (5MB), `patient_doc` (10MB), `prescription` (5MB pdf), `referral` (5MB pdf), `medical_report` (10MB pdf+img), `practice_logo` (3MB img), `practice_signature` (2MB img).
-- `validateFile(file, profile)` — checks size, extension, MIME; blocks exe/zip/rar/bat/apk/dmg/js/html/php/py/sh and any unknown.
-- `optimizeImage(file, {maxWidth, maxBytes, quality})` — uses HTMLCanvasElement + `canvas.toBlob('image/webp')` to resize (max 1600px long edge for documents, 512px for avatars), strip metadata, target 50–80% reduction. Skip for PDFs. Skip for ID/HPCSA if quality drop would harm verification — use lossless-ish (q=0.92) and larger max dimension (2000px).
-- `uploadFile({ bucket, path, file, profile, onProgress })` — validate → optimize if image → upload to Supabase Storage → return `{ path, size, mimeType }`.
-- Friendly toast helpers: "File exceeds maximum size limit", "Unsupported file type", "Optimising image before upload…".
+## Field Categorization
 
-### 2. Reusable preview component — `src/components/shared/FilePreview.tsx`
+**Category A – Auto Approved (instant save)**
+- Profile photo (with client-side validation), bio, about me, languages, consultation fee, availability, practice address/phone/website, areas of interest, experience description, awards, social links
 
-Renders selected file before upload: image thumbnail (object URL) or PDF icon + filename + size. Used in avatar upload, ID/HPCSA upload, document uploads.
+**Category B – Review Required (pending → admin approves/rejects)**
+- Full name, HPCSA/license number, specialty, qualifications/education, practice number, identity/registration document paths
 
-### 3. Wire into existing components
+## Database
 
-Replace ad-hoc validation/upload code in:
-- `src/components/shared/AvatarUpload.tsx` — 2MB → use avatar profile, auto-WEBP @ 512px.
-- `src/pages/DoctorSignup.tsx` — ID copy + HPCSA inputs (5MB, pdf/img).
-- `src/components/doctor/DoctorProfile.tsx` — same.
-- `src/components/doctor/PrescriptionSettings.tsx` — logo (3MB img → webp), signature (2MB png preserving transparency).
-- `src/components/patient/DocumentUpload.tsx` — 10MB, type-aware (prescriptions/referrals = pdf only).
-- `src/components/doctor/PatientDocuments.tsx` — same patient-doc rules.
+New table `public.doctor_profile_changes`:
+- `id`, `doctor_id` (uuid), `field_name` (text), `old_value` (jsonb), `new_value` (jsonb)
+- `status` (enum: pending/approved/rejected, default pending)
+- `rejection_reason` (text, nullable)
+- `created_at`, `reviewed_at`, `reviewed_by` (uuid, nullable)
 
-All show pre-upload preview where the user picks a file.
+RLS:
+- Doctors INSERT/SELECT their own rows
+- Admins SELECT all, UPDATE status (approve/reject)
+- On approval, an admin-side handler writes the new value into `profiles`/`doctors`
 
-### 4. Admin Document Viewer — `src/components/admin/DocumentViewerModal.tsx`
+Grants: `authenticated` (SELECT/INSERT), `service_role` ALL.
 
-In-app modal (Dialog) that fetches a signed URL and renders:
-- Images → `<img>` inside the modal.
-- PDFs → `<iframe>` of the signed URL.
-- Buttons: Download, Approve, Reject (callbacks passed in).
+Indexes on `(doctor_id, status)` and `(status, created_at)`.
 
-Wire into `AdminDoctorVerification.tsx` to replace `window.open` flow for ID + HPCSA docs.
+## Doctor Side
 
-### 5. Admin Storage Dashboard — `src/components/admin/AdminStorageUsage.tsx`
+`DoctorProfile.tsx` is split into two save paths:
+- **Auto fields**: existing direct `update()` on `profiles`/`doctors` (already works for most). Show "Saved" toast.
+- **Review fields**: instead of writing to live tables, insert a row per changed field into `doctor_profile_changes` with status=pending and show "Submitted for review" toast. If a pending change already exists for that field, update it instead of creating duplicates.
 
-New admin sidebar entry "Storage". Calls a new edge function `admin-storage-stats` (service role) that iterates each bucket via `supabase.storage.from(b).list('', {limit, recursive})` and aggregates:
-- Total bytes used, per-bucket bytes + file count.
-- Top 10 largest files (name, bucket, size, created_at).
-- Recent uploads (last 7 days) chart.
+Add a new tab **"Profile Changes"** in `DoctorDashboard`:
+- Lists pending / approved / rejected change requests with field, old → new value, submission date, status, rejection reason.
 
-Renders summary cards + table + Recharts AreaChart (matches existing earnings pattern). Admin-only via `has_role` check in edge function.
+## Admin Side
 
-### 6. Storage architecture (no new buckets)
+New `AdminDoctorProfileReviews.tsx` component + sidebar entry **"Profile Reviews"** in `AdminDashboard`:
+- Table grouped by doctor: field, old value, new value, submitted date
+- Approve button → calls RPC `approve_profile_change(change_id)` that updates target table and marks row approved
+- Reject button → opens dialog requiring reason, marks row rejected
 
-Keep existing buckets — they already cover the use cases:
-- `avatars` → profile photos (public).
-- `doctor-licenses` → ID + HPCSA (private).
-- `patient-documents` → patient uploads, prescriptions, referrals, medical reports (private). Use `document_type` column to segregate logically — already supported.
-- `prescription-assets` → practice logo + signature (private).
-- `branding` → site branding (public).
+Approval RPC is `SECURITY DEFINER`, checks `has_role(auth.uid(),'admin')`, dispatches by `field_name` to update either `profiles.full_name` or `doctors.<column>`.
 
-This preserves all existing files and signed-URL flows.
+## Profile Photo Validation
 
-### Files
+Add client-side checks in `AvatarUpload.tsx` before upload:
+- Reject unsupported formats (already done)
+- Reject extremely small (<200px) or low-quality images (file <5KB or >2MB)
+- Basic blur heuristic via canvas (variance of Laplacian approximation) — optional, off by default with a TODO; face-detection requires a model, so we keep a lightweight `face-api`-free heuristic (image dimensions + aspect + non-blank check) and accept otherwise.
+- Document the limitation; full face-detection can be a follow-up.
 
-**New**
-- `src/lib/fileUpload.ts`
-- `src/components/shared/FilePreview.tsx`
-- `src/components/admin/DocumentViewerModal.tsx`
-- `src/components/admin/AdminStorageUsage.tsx`
-- `supabase/functions/admin-storage-stats/index.ts`
+## Notifications
 
-**Edited**
-- `src/components/shared/AvatarUpload.tsx`
-- `src/components/doctor/PrescriptionSettings.tsx`
-- `src/components/patient/DocumentUpload.tsx`
-- `src/components/doctor/PatientDocuments.tsx`
-- `src/components/admin/AdminDoctorVerification.tsx`
-- `src/components/admin/AdminSidebar.tsx`
-- `src/pages/AdminDashboard.tsx`
-- `src/pages/DoctorSignup.tsx`
-- `src/components/doctor/DoctorProfile.tsx`
-- `supabase/config.toml` (register new function)
+Reuse existing `notifications` system (in-app bell):
+- On insert into `doctor_profile_changes`: trigger creates notification for all admins ("New profile change submitted").
+- On update to approved/rejected: trigger creates notification for the doctor.
 
-### Technical notes
+## Audit Trail
 
-- Client-side image optimisation via Canvas → WEBP keeps cost at zero (no edge processing).
-- PNG signatures with transparency stay PNG (no WEBP conversion) to preserve alpha for prescriptions.
-- ID/HPCSA images compressed lightly (q=0.92, max 2000px) to keep text legible for verification.
-- File type security uses an extension allowlist + MIME prefix check; everything else rejected with "Unsupported file type."
-- No new tables. No new buckets. No DB migration needed.
+The `doctor_profile_changes` table itself is the audit trail (keeps old/new/reviewer/date). Approved-changes view is filterable by date and field. We do not delete rows.
+
+## Files
+
+- New migration: create enum, table, grants, RLS, approve/reject RPCs, notification triggers
+- New `src/components/doctor/DoctorProfileChanges.tsx`
+- Update `src/components/doctor/DoctorProfile.tsx` (split save logic; review fields submit changes instead)
+- Update `src/pages/DoctorDashboard.tsx` (add tab)
+- New `src/components/admin/AdminDoctorProfileReviews.tsx`
+- Update `src/components/admin/AdminSidebar.tsx` + `src/pages/AdminDashboard.tsx` (add section)
+- Update `src/components/shared/AvatarUpload.tsx` (image validation)
+
+## Out of Scope
+
+- ML-based face detection (documented limitation; basic heuristics only)
+- Email notifications for change events (in-app only for now)
+
+Confirm and I'll implement.
