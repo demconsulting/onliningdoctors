@@ -53,6 +53,9 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
             city: data.city || "",
             state: data.state || "",
             country: data.country || "",
+            id_type: (data as any).id_type || "",
+            id_number: (data as any).id_number || "",
+            id_country_code: (data as any).id_country_code || "",
           });
         }
         setLoading(false);
