@@ -136,9 +136,11 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
     else toast({ title: "Note saved" });
   };
 
-  // Only show confirmed, completed, or cancelled appointments to doctors (exclude awaiting_payment and pending)
-  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show", "doctor_no_show"].includes(a.status));
-  const filtered = filter === "all" ? confirmedAppointments : confirmedAppointments.filter(a => a.status === filter);
+  // Doctors see all statuses except hidden awaiting_payment placeholders.
+  const visibleAppointments = appointments.filter((a) => a.status !== "awaiting_payment");
+  const filtered = filter === "all"
+    ? visibleAppointments
+    : visibleAppointments.filter((a) => normalizeStatus(a.status) === filter || a.status === filter);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -164,7 +166,15 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        {filtered.length === 0 ? (
+        {loadError ? (
+          <div className="py-10 text-center text-destructive">
+            <AlertCircle className="mx-auto mb-3 h-10 w-10" />
+            <p>{loadError}</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => { setLoading(true); fetchAppointments(); }}>
+              Retry
+            </Button>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p>No appointments found</p>
