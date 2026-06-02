@@ -267,6 +267,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
 
   return (
     <div className="space-y-6">
+      {pendingReviewFields.size > 0 && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/40 dark:text-amber-100">
+          <strong>Pending admin review:</strong>{" "}
+          {Array.from(pendingReviewFields).map(f => f.replace(/_/g, " ")).join(", ")}.
+          The current approved profile remains visible until review is complete.
+        </div>
+      )}
+      <div className="rounded-md border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
+        Most edits go live instantly. Regulated fields — full name, HPCSA number, specialty, qualifications and verification documents — are submitted to admin for review.
+      </div>
       {/* Essentials — minimum to receive bookings */}
       <Card>
         <CardHeader>
