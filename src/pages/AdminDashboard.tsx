@@ -78,6 +78,7 @@ const AdminDoctorOnboarding = lazy(loaders["doctor-onboarding"]);
 const AdminStorageUsage = lazy(loaders["storage-usage"]);
 const AdminBrandAssets = lazy(loaders["brand-assets"]);
 const AdminDoctorProfileReviews = lazy(loaders["profile-reviews"]);
+const AdminDoctorReminderCenter = lazy(loaders["reminder-center"]);
 
 
 const SectionFallback = () => (
