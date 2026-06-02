@@ -34,6 +34,15 @@ const EDUCATION_SUGGESTIONS = [
   "MPH", "MSc Medicine", "Fellowship"
 ];
 
+const REVIEW_FIELDS = new Set([
+  "full_name",
+  "license_number",
+  "specialty_id",
+  "education",
+  "license_document_path",
+  "id_document_path",
+]);
+
 const DoctorProfile = ({ user }: DoctorProfileProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -69,6 +78,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     practice_logo_url: "",
     accepted_payment_method: "both" as "medical_aid_only" | "card_only" | "both",
   });
+  const [originalReview, setOriginalReview] = useState<Record<string, any>>({});
+  const [pendingReviewFields, setPendingReviewFields] = useState<Set<string>>(new Set());
   const [licenseDocPath, setLicenseDocPath] = useState<string | null>(null);
   const [idDocPath, setIdDocPath] = useState<string | null>(null);
   const [uploadingLicense, setUploadingLicense] = useState(false);
