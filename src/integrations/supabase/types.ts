@@ -888,10 +888,16 @@ export type Database = {
       }
       doctor_onboarding_email_log: {
         Row: {
+          clicked_at: string | null
+          completed_after_reminder: boolean | null
+          created_by: string | null
+          delivered_at: string | null
+          doctor_name: string | null
           doctor_profile_id: string
           email_type: string
           error: string | null
           id: string
+          opened_at: string | null
           recipient: string
           reminder_id: string | null
           resend_id: string | null
@@ -900,10 +906,16 @@ export type Database = {
           subject: string
         }
         Insert: {
+          clicked_at?: string | null
+          completed_after_reminder?: boolean | null
+          created_by?: string | null
+          delivered_at?: string | null
+          doctor_name?: string | null
           doctor_profile_id: string
           email_type: string
           error?: string | null
           id?: string
+          opened_at?: string | null
           recipient: string
           reminder_id?: string | null
           resend_id?: string | null
@@ -912,10 +924,16 @@ export type Database = {
           subject: string
         }
         Update: {
+          clicked_at?: string | null
+          completed_after_reminder?: boolean | null
+          created_by?: string | null
+          delivered_at?: string | null
+          doctor_name?: string | null
           doctor_profile_id?: string
           email_type?: string
           error?: string | null
           id?: string
+          opened_at?: string | null
           recipient?: string
           reminder_id?: string | null
           resend_id?: string | null
