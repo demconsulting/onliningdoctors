@@ -31,9 +31,20 @@ const statusColors: Record<string, string> = {
   doctor_no_show: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+// Map raw DB status to a normalized dashboard status.
+const normalizeStatus = (s: string | null | undefined): string => {
+  const v = (s || "").toLowerCase();
+  if (["pending", "booked", "paid"].includes(v)) return "pending";
+  if (["confirmed", "scheduled"].includes(v)) return "confirmed";
+  if (["completed", "done"].includes(v)) return "completed";
+  if (["cancelled", "canceled", "declined"].includes(v)) return "cancelled";
+  return v;
+};
+
 const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<string | null>(null);
@@ -48,11 +59,23 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
+    setLoadError(null);
+
+    // doctor_id on appointments points at profile_id; also look up the doctors row id as a defensive fallback.
+    const { data: doctorRow } = await supabase
+      .from("doctors")
+      .select("id, profile_id")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    const doctorIds = Array.from(new Set([user.id, doctorRow?.id, doctorRow?.profile_id].filter(Boolean) as string[]));
+
     const [aptRes, sharingRes] = await Promise.all([
       supabase
         .from("appointments")
-        .select("*, patient:patient_id(full_name, avatar_url, phone), dependent:dependent_id(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes)")
-        .eq("doctor_id", user.id)
+        .select(
+          "*, patient:profiles!appointments_patient_id_fkey(full_name, avatar_url, phone), dependent:dependent_id(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes), payment:payments(amount, currency, status, payment_method, paid_at)"
+        )
+        .in("doctor_id", doctorIds)
         .order("scheduled_at", { ascending: false }),
       supabase
         .from("document_sharing")
@@ -61,13 +84,22 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
         .eq("is_active", true),
     ]);
 
-    if (aptRes.data) {
+    console.log("[DoctorAppointments]", {
+      userId: user.id,
+      doctorRowId: doctorRow?.id,
+      doctorIds,
+      returned: aptRes.data?.length ?? 0,
+      error: aptRes.error,
+    });
+
+    if (aptRes.error) {
+      setLoadError("Unable to load appointments. Please try again.");
+    } else if (aptRes.data) {
       setAppointments(aptRes.data);
       const notes: Record<string, string> = {};
-      aptRes.data.forEach(a => { notes[a.id] = a.notes || ""; });
+      aptRes.data.forEach((a: any) => { notes[a.id] = a.notes || ""; });
       setNotesMap(notes);
     }
-    if (aptRes.error) console.error(aptRes.error);
 
     if (sharingRes.data) {
       const map: Record<string, boolean> = {};
