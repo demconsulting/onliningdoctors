@@ -41,6 +41,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "brand-assets": () => import("@/components/admin/AdminBrandAssets"),
   "profile-reviews": () => import("@/components/admin/AdminDoctorProfileReviews"),
   "reminder-center": () => import("@/components/admin/AdminDoctorReminderCenter"),
+  "financial-management": () => import("@/components/admin/AdminFinancialManagement"),
 };
 
 
