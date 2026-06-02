@@ -157,6 +157,7 @@ const AdminDashboard = () => {
       case "storage-usage": return <AdminStorageUsage />;
       case "brand-assets": return <AdminBrandAssets />;
       case "profile-reviews": return <AdminDoctorProfileReviews />;
+      case "reminder-center": return <AdminDoctorReminderCenter />;
       default: return <AdminHero />;
 
     }
