@@ -31,9 +31,20 @@ const statusColors: Record<string, string> = {
   doctor_no_show: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+// Map raw DB status to a normalized dashboard status.
+const normalizeStatus = (s: string | null | undefined): string => {
+  const v = (s || "").toLowerCase();
+  if (["pending", "booked", "paid"].includes(v)) return "pending";
+  if (["confirmed", "scheduled"].includes(v)) return "confirmed";
+  if (["completed", "done"].includes(v)) return "completed";
+  if (["cancelled", "canceled", "declined"].includes(v)) return "cancelled";
+  return v;
+};
+
 const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<string | null>(null);
@@ -48,11 +59,23 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const { toast } = useToast();
 
   const fetchAppointments = async () => {
+    setLoadError(null);
+
+    // doctor_id on appointments points at profile_id; also look up the doctors row id as a defensive fallback.
+    const { data: doctorRow } = await supabase
+      .from("doctors")
+      .select("id, profile_id")
+      .eq("profile_id", user.id)
+      .maybeSingle();
+    const doctorIds = Array.from(new Set([user.id, doctorRow?.id, doctorRow?.profile_id].filter(Boolean) as string[]));
+
     const [aptRes, sharingRes] = await Promise.all([
       supabase
         .from("appointments")
-        .select("*, patient:patient_id(full_name, avatar_url, phone), dependent:dependent_id(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes)")
-        .eq("doctor_id", user.id)
+        .select(
+          "*, patient:profiles!appointments_patient_id_fkey(full_name, avatar_url, phone), dependent:dependent_id(full_name, relationship, date_of_birth, gender, allergies, chronic_conditions, medical_notes), payment:payments(amount, currency, status, payment_method, paid_at)"
+        )
+        .in("doctor_id", doctorIds)
         .order("scheduled_at", { ascending: false }),
       supabase
         .from("document_sharing")
@@ -61,13 +84,22 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
         .eq("is_active", true),
     ]);
 
-    if (aptRes.data) {
+    console.log("[DoctorAppointments]", {
+      userId: user.id,
+      doctorRowId: doctorRow?.id,
+      doctorIds,
+      returned: aptRes.data?.length ?? 0,
+      error: aptRes.error,
+    });
+
+    if (aptRes.error) {
+      setLoadError("Unable to load appointments. Please try again.");
+    } else if (aptRes.data) {
       setAppointments(aptRes.data);
       const notes: Record<string, string> = {};
-      aptRes.data.forEach(a => { notes[a.id] = a.notes || ""; });
+      aptRes.data.forEach((a: any) => { notes[a.id] = a.notes || ""; });
       setNotesMap(notes);
     }
-    if (aptRes.error) console.error(aptRes.error);
 
     if (sharingRes.data) {
       const map: Record<string, boolean> = {};
@@ -104,9 +136,11 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
     else toast({ title: "Note saved" });
   };
 
-  // Only show confirmed, completed, or cancelled appointments to doctors (exclude awaiting_payment and pending)
-  const confirmedAppointments = appointments.filter(a => ["confirmed", "completed", "cancelled", "no_show", "doctor_no_show"].includes(a.status));
-  const filtered = filter === "all" ? confirmedAppointments : confirmedAppointments.filter(a => a.status === filter);
+  // Doctors see all statuses except hidden awaiting_payment placeholders.
+  const visibleAppointments = appointments.filter((a) => a.status !== "awaiting_payment");
+  const filtered = filter === "all"
+    ? visibleAppointments
+    : visibleAppointments.filter((a) => normalizeStatus(a.status) === filter || a.status === filter);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -132,7 +166,15 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        {filtered.length === 0 ? (
+        {loadError ? (
+          <div className="py-10 text-center text-destructive">
+            <AlertCircle className="mx-auto mb-3 h-10 w-10" />
+            <p>{loadError}</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => { setLoading(true); fetchAppointments(); }}>
+              Retry
+            </Button>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p>No appointments found</p>
@@ -166,6 +208,23 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                           {format(new Date(apt.scheduled_at), "h:mm a")}
                         </span>
                         <span>{apt.duration_minutes} min</span>
+                        {apt.appointment_type && (
+                          <span className="uppercase tracking-wide">{apt.appointment_type}</span>
+                        )}
+                        {(() => {
+                          const pay = Array.isArray(apt.payment) ? apt.payment[0] : apt.payment;
+                          if (!pay?.amount) return null;
+                          return (
+                            <>
+                              <span className="font-medium text-foreground">
+                                {pay.currency || ""} {Number(pay.amount).toFixed(2)}
+                              </span>
+                              <Badge variant="outline" className={pay.status === "success" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}>
+                                {pay.status === "success" ? "Paid" : pay.status}
+                              </Badge>
+                            </>
+                          );
+                        })()}
                       </div>
                       {apt.reason && <p className="mt-1 text-xs text-muted-foreground italic">Reason: {apt.reason}</p>}
                       {apt.dependent && (apt.dependent.allergies || apt.dependent.chronic_conditions) && (
