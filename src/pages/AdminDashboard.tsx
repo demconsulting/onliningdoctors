@@ -41,6 +41,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "brand-assets": () => import("@/components/admin/AdminBrandAssets"),
   "profile-reviews": () => import("@/components/admin/AdminDoctorProfileReviews"),
   "reminder-center": () => import("@/components/admin/AdminDoctorReminderCenter"),
+  "financial-management": () => import("@/components/admin/AdminFinancialManagement"),
 };
 
 
@@ -79,6 +80,7 @@ const AdminStorageUsage = lazy(loaders["storage-usage"]);
 const AdminBrandAssets = lazy(loaders["brand-assets"]);
 const AdminDoctorProfileReviews = lazy(loaders["profile-reviews"]);
 const AdminDoctorReminderCenter = lazy(loaders["reminder-center"]);
+const AdminFinancialManagement = lazy(loaders["financial-management"]);
 
 
 const SectionFallback = () => (
@@ -158,6 +160,7 @@ const AdminDashboard = () => {
       case "brand-assets": return <AdminBrandAssets />;
       case "profile-reviews": return <AdminDoctorProfileReviews />;
       case "reminder-center": return <AdminDoctorReminderCenter />;
+      case "financial-management": return <AdminFinancialManagement />;
       default: return <AdminHero />;
 
     }

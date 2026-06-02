@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { prefetchAdminSection } from "@/pages/AdminDashboard";
 import {
@@ -40,6 +40,7 @@ const items = [
   { title: "Financial Settings", key: "financial-settings", icon: DollarSign },
   { title: "Payments", key: "payments", icon: Receipt },
   { title: "Payouts", key: "payouts", icon: Wallet },
+  { title: "Financial Management", key: "financial-management", icon: TrendingUp },
   { title: "Countries", key: "countries", icon: Globe },
   { title: "Legal Documents", key: "legal-documents", icon: FileText },
   { title: "AI Assistant", key: "ai-assistant", icon: Bot },

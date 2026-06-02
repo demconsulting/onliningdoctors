@@ -1318,6 +1318,111 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          parent_group: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_group?: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_group?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string
+          expense_date: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          receipt_path: string | null
+          recurring_expense_id: string | null
+          status: string
+          supplier: string | null
+          tax_deductible: boolean
+          updated_at: string
+          vat_amount: number
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          receipt_path?: string | null
+          recurring_expense_id?: string | null
+          status?: string
+          supplier?: string | null
+          tax_deductible?: boolean
+          updated_at?: string
+          vat_amount?: number
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          receipt_path?: string | null
+          recurring_expense_id?: string | null
+          status?: string
+          supplier?: string | null
+          tax_deductible?: boolean
+          updated_at?: string
+          vat_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_recurring_expense_id_fkey"
+            columns: ["recurring_expense_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faq_articles: {
         Row: {
           answer: string | null
@@ -2271,6 +2376,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      recurring_expenses: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string
+          frequency: string
+          id: string
+          is_active: boolean
+          next_due_date: string
+          notes: string | null
+          reminder_days: number
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          next_due_date: string
+          notes?: string | null
+          reminder_days?: number
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          next_due_date?: string
+          notes?: string | null
+          reminder_days?: number
+          supplier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "expense_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
