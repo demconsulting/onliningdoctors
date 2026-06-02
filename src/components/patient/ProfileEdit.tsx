@@ -139,6 +139,32 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
             onCityChange={(v) => setProfile((prev) => ({ ...prev, city: v }))}
           />
         </div>
+        <div className="rounded-lg border border-border p-3 space-y-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">National ID / Passport</p>
+            <p className="text-xs text-muted-foreground">Used only to securely match you to existing doctor practice records. Stored privately.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>ID Type</Label>
+              <Select value={profile.id_type} onValueChange={(v) => setProfile({ ...profile, id_type: v })}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="national_id">National ID</SelectItem>
+                  <SelectItem value="passport">Passport</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Country (issuing)</Label>
+              <Input value={profile.id_country_code} onChange={(e) => setProfile({ ...profile, id_country_code: e.target.value })} placeholder="e.g. ZA" />
+            </div>
+            <div className="space-y-2">
+              <Label>ID / Passport Number</Label>
+              <Input value={profile.id_number} onChange={(e) => setProfile({ ...profile, id_number: e.target.value })} />
+            </div>
+          </div>
+        </div>
         <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save Changes
