@@ -192,7 +192,15 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
         </div>
 
         {/* Appointments list */}
-        {filteredAppointments.length === 0 ? (
+        {loadError ? (
+          <div className="py-10 text-center text-destructive">
+            <AlertCircle className="mx-auto mb-3 h-10 w-10" />
+            <p>{loadError}</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => { setLoading(true); fetchAppointments(); }}>
+              Retry
+            </Button>
+          </div>
+        ) : filteredAppointments.length === 0 ? (
           <div className="py-10 text-center text-muted-foreground">
             <Calendar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
             <p>{statusFilter ? `No ${statusFilter} appointments` : "No appointments yet"}</p>
@@ -225,6 +233,18 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
                         {format(new Date(apt.scheduled_at), "h:mm a")}
                       </span>
                       <span>{apt.duration_minutes} min</span>
+                      {apt.appointment_type && (
+                        <span className="uppercase tracking-wide">{apt.appointment_type}</span>
+                      )}
+                      {(() => {
+                        const pay = Array.isArray(apt.payment) ? apt.payment[0] : apt.payment;
+                        if (!pay?.amount) return null;
+                        return (
+                          <span className="font-medium text-foreground">
+                            {pay.currency || ""} {Number(pay.amount).toFixed(2)}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {apt.reason && <p className="mt-1 text-xs text-muted-foreground">{apt.reason}</p>}
                     {apt.status === "cancelled" && apt.cancellation_reason && (
