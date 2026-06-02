@@ -82,6 +82,7 @@ const AdminBrandAssets = lazy(loaders["brand-assets"]);
 const AdminDoctorProfileReviews = lazy(loaders["profile-reviews"]);
 const AdminDoctorReminderCenter = lazy(loaders["reminder-center"]);
 const AdminFinancialManagement = lazy(loaders["financial-management"]);
+const AdminPracticePatients = lazy(loaders["practice-patients"]);
 
 
 const SectionFallback = () => (
