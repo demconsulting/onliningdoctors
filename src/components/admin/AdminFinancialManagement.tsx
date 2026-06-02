@@ -1,0 +1,861 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { format, startOfMonth, startOfDay, subMonths, addMonths, addYears, addWeeks } from "date-fns";
+import { Loader2, Plus, Pencil, Trash2, Download, Upload, FileText, Repeat, Receipt, TrendingUp, TrendingDown, Wallet, AlertTriangle } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from "recharts";
+
+type Category = { id: string; name: string; slug: string; parent_group: string; sort_order: number; is_active: boolean };
+type Expense = {
+  id: string; expense_date: string; category_id: string | null; supplier: string | null;
+  description: string; amount: number; vat_amount: number; currency: string;
+  payment_method: string | null; status: string; receipt_path: string | null;
+  notes: string | null; tax_deductible: boolean; recurring_expense_id: string | null; created_at: string;
+};
+type Recurring = {
+  id: string; category_id: string | null; supplier: string | null; description: string;
+  amount: number; currency: string; frequency: string; next_due_date: string;
+  reminder_days: number; is_active: boolean; notes: string | null;
+};
+
+const fmt = (n: number, cur = "ZAR") =>
+  `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
+  <Card>
+    <CardContent className="pt-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="text-xl font-bold text-foreground mt-1">{value}</p>
+        </div>
+        {Icon && (
+          <div className={`p-2 rounded-md ${tone === "good" ? "bg-emerald-500/10 text-emerald-600" : tone === "bad" ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"}`}>
+            <Icon className="h-4 w-4" />
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const downloadCSV = (filename: string, rows: any[]) => {
+  if (!rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) => headers.map((h) => `"${String(r[h] ?? "").replace(/"/g, '""')}"`).join(",")),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+};
+
+const AdminFinancialManagement = () => {
+  const { toast } = useToast();
+  const [tab, setTab] = useState("dashboard");
+  const [loading, setLoading] = useState(true);
+
+  const [payments, setPayments] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [recurring, setRecurring] = useState<Recurring[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [doctorNames, setDoctorNames] = useState<Record<string, string>>({});
+
+  const loadAll = async () => {
+    setLoading(true);
+    const [p, po, ex, rc, ct] = await Promise.all([
+      supabase.from("payments").select("*").order("created_at", { ascending: false }),
+      supabase.from("payout_requests").select("*").order("created_at", { ascending: false }),
+      supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
+      supabase.from("recurring_expenses").select("*").order("next_due_date"),
+      supabase.from("expense_categories").select("*").order("sort_order"),
+    ]);
+    setPayments(p.data || []);
+    setPayouts(po.data || []);
+    setExpenses((ex.data as any) || []);
+    setRecurring((rc.data as any) || []);
+    setCategories((ct.data as any) || []);
+
+    const ids = [...new Set([...(p.data || []).map((x: any) => x.doctor_id), ...(po.data || []).map((x: any) => x.doctor_id)].filter(Boolean))];
+    if (ids.length) {
+      const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      const map: Record<string, string> = {};
+      (profiles || []).forEach((pr: any) => (map[pr.id] = pr.full_name || "Unknown"));
+      setDoctorNames(map);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadAll(); }, []);
+
+  // Derived stats
+  const stats = useMemo(() => {
+    const today = startOfDay(new Date());
+    const monthStart = startOfMonth(new Date());
+    const successful = payments.filter((p) => p.status === "success");
+    const todayRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= today).reduce((s, p) => s + Number(p.amount), 0);
+    const monthRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= monthStart).reduce((s, p) => s + Number(p.amount), 0);
+    const totalRev = successful.reduce((s, p) => s + Number(p.amount), 0);
+    const platformFees = successful.reduce((s, p) => s + Number(p.fee_amount || 0), 0);
+    const medicalAidRev = successful.filter((p) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
+    const cardRev = successful.filter((p) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
+    const avgRev = successful.length ? totalRev / successful.length : 0;
+
+    const monthExp = expenses.filter((e) => new Date(e.expense_date) >= monthStart).reduce((s, e) => s + Number(e.amount), 0);
+    const totalExp = expenses.reduce((s, e) => s + Number(e.amount), 0);
+
+    const pendingPayouts = payouts.filter((p) => p.status === "pending").reduce((s, p) => s + Number(p.amount), 0);
+    const completedPayouts = payouts.filter((p) => p.status === "approved").reduce((s, p) => s + Number(p.amount), 0);
+
+    return {
+      todayRev, monthRev, totalRev, platformFees, medicalAidRev, cardRev, avgRev,
+      monthExp, totalExp, netProfit: totalRev - totalExp,
+      pendingPayouts, completedPayouts,
+    };
+  }, [payments, expenses, payouts]);
+
+  // Monthly trend (last 12 months)
+  const trend = useMemo(() => {
+    const buckets: Record<string, { month: string; revenue: number; expenses: number; profit: number }> = {};
+    for (let i = 11; i >= 0; i--) {
+      const d = subMonths(new Date(), i);
+      const key = format(d, "yyyy-MM");
+      buckets[key] = { month: format(d, "MMM yy"), revenue: 0, expenses: 0, profit: 0 };
+    }
+    payments.filter((p) => p.status === "success").forEach((p) => {
+      const key = format(new Date(p.paid_at || p.created_at), "yyyy-MM");
+      if (buckets[key]) buckets[key].revenue += Number(p.amount);
+    });
+    expenses.forEach((e) => {
+      const key = format(new Date(e.expense_date), "yyyy-MM");
+      if (buckets[key]) buckets[key].expenses += Number(e.amount);
+    });
+    Object.values(buckets).forEach((b) => (b.profit = b.revenue - b.expenses));
+    return Object.values(buckets);
+  }, [payments, expenses]);
+
+  // Doctor payout summary
+  const doctorSummary = useMemo(() => {
+    const rows: Record<string, any> = {};
+    payments.filter((p) => p.status === "success").forEach((p) => {
+      const id = p.doctor_id;
+      if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
+      rows[id].consultations += 1;
+      rows[id].revenue += Number(p.amount);
+      rows[id].fees += Number(p.fee_amount || 0);
+    });
+    Object.values(rows).forEach((r: any) => (r.net = r.revenue - r.fees));
+    payouts.forEach((po) => {
+      const r = rows[po.doctor_id];
+      if (!r) return;
+      if (po.status === "pending") r.pending = (r.pending || 0) + Number(po.amount);
+      if (po.status === "approved") r.completed = (r.completed || 0) + Number(po.amount);
+    });
+    return Object.values(rows);
+  }, [payments, payouts, doctorNames]);
+
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-foreground font-display">Financial Management</h2>
+        <p className="text-sm text-muted-foreground">Track revenue, expenses, profitability, and payouts.</p>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="revenue">Revenue</TabsTrigger>
+          <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsTrigger value="payouts">Doctor Payouts</TabsTrigger>
+          <TabsTrigger value="pl">Profit & Loss</TabsTrigger>
+          <TabsTrigger value="recurring">Recurring</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+        </TabsList>
+
+        {/* DASHBOARD */}
+        <TabsContent value="dashboard" className="space-y-4 mt-6">
+          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Today's Revenue" value={fmt(stats.todayRev)} icon={TrendingUp} tone="good" />
+            <StatCard label="This Month Revenue" value={fmt(stats.monthRev)} icon={TrendingUp} tone="good" />
+            <StatCard label="Total Revenue" value={fmt(stats.totalRev)} icon={Receipt} />
+            <StatCard label="This Month Expenses" value={fmt(stats.monthExp)} icon={TrendingDown} tone="bad" />
+            <StatCard label="Total Expenses" value={fmt(stats.totalExp)} icon={TrendingDown} tone="bad" />
+            <StatCard label="Net Profit" value={fmt(stats.netProfit)} icon={Wallet} tone={stats.netProfit >= 0 ? "good" : "bad"} />
+            <StatCard label="Pending Payouts" value={fmt(stats.pendingPayouts)} icon={Wallet} />
+            <StatCard label="Completed Payouts" value={fmt(stats.completedPayouts)} icon={Wallet} tone="good" />
+            <StatCard label="Platform Fees" value={fmt(stats.platformFees)} icon={Receipt} tone="good" />
+            <StatCard label="Medical Aid Revenue" value={fmt(stats.medicalAidRev)} icon={Receipt} />
+            <StatCard label="Card Payment Revenue" value={fmt(stats.cardRev)} icon={Receipt} />
+            <StatCard label="Avg / Consultation" value={fmt(stats.avgRev)} icon={Receipt} />
+          </div>
+
+          <Card>
+            <CardHeader><CardTitle>Revenue vs Expenses (last 12 months)</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trend}>
+                    <defs>
+                      <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} /><stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient>
+                      <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.4} /><stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0} /></linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="month" fontSize={11} />
+                    <YAxis fontSize={11} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                    <Legend />
+                    <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#g1)" />
+                    <Area type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" fill="url(#g2)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Profit Trend</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-60">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={trend}>
+                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                    <XAxis dataKey="month" fontSize={11} />
+                    <YAxis fontSize={11} />
+                    <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                    <Bar dataKey="profit" fill="hsl(var(--primary))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* REVENUE */}
+        <TabsContent value="revenue" className="mt-6">
+          <RevenueTab payments={payments} doctorNames={doctorNames} />
+        </TabsContent>
+
+        {/* EXPENSES */}
+        <TabsContent value="expenses" className="mt-6">
+          <ExpensesTab expenses={expenses} categories={categories} onChange={loadAll} />
+        </TabsContent>
+
+        {/* PAYOUTS */}
+        <TabsContent value="payouts" className="mt-6">
+          <Card>
+            <CardHeader><CardTitle>Doctor Payouts Summary</CardTitle></CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Consultations</TableHead>
+                      <TableHead>Revenue</TableHead>
+                      <TableHead>Platform Fees</TableHead>
+                      <TableHead>Net Earnings</TableHead>
+                      <TableHead>Pending</TableHead>
+                      <TableHead>Completed</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {doctorSummary.length === 0 ? (
+                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No data</TableCell></TableRow>
+                    ) : doctorSummary.map((r: any) => (
+                      <TableRow key={r.doctor_id}>
+                        <TableCell className="font-medium">{r.name}</TableCell>
+                        <TableCell>{r.consultations}</TableCell>
+                        <TableCell>{fmt(r.revenue)}</TableCell>
+                        <TableCell>{fmt(r.fees)}</TableCell>
+                        <TableCell>{fmt(r.net)}</TableCell>
+                        <TableCell>{fmt(r.pending || 0)}</TableCell>
+                        <TableCell>{fmt(r.completed || 0)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* P&L */}
+        <TabsContent value="pl" className="mt-6 space-y-4">
+          <PLTab trend={trend} />
+        </TabsContent>
+
+        {/* RECURRING */}
+        <TabsContent value="recurring" className="mt-6">
+          <RecurringTab recurring={recurring} categories={categories} onChange={loadAll} />
+        </TabsContent>
+
+        {/* REPORTS */}
+        <TabsContent value="reports" className="mt-6 space-y-4">
+          <Card>
+            <CardHeader><CardTitle>Export Reports</CardTitle></CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <Button variant="outline" onClick={() => downloadCSV("revenue-report.csv", payments.filter(p => p.status === "success").map(p => ({
+                date: p.paid_at || p.created_at, doctor: doctorNames[p.doctor_id] || "", amount: p.amount, currency: p.currency, method: p.payment_method, fee: p.fee_amount, reference: p.paystack_reference,
+              })))}><Download className="h-4 w-4 mr-2" />Revenue Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("expense-report.csv", expenses.map(e => ({
+                date: e.expense_date, supplier: e.supplier, description: e.description, amount: e.amount, vat: e.vat_amount, status: e.status, tax_deductible: e.tax_deductible,
+              })))}><Download className="h-4 w-4 mr-2" />Expense Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("profit-report.csv", trend)}><Download className="h-4 w-4 mr-2" />Profit Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("doctor-payouts.csv", doctorSummary as any)}><Download className="h-4 w-4 mr-2" />Doctor Payout Report (CSV)</Button>
+              <Button variant="outline" onClick={() => {
+                const vatCollected = payments.filter(p => p.status === "success").reduce((s, p) => s + (Number(p.amount) * 0.15 / 1.15), 0);
+                const vatPaid = expenses.reduce((s, e) => s + Number(e.vat_amount || 0), 0);
+                const deductible = expenses.filter(e => e.tax_deductible).reduce((s, e) => s + Number(e.amount), 0);
+                downloadCSV("tax-report.csv", [{ vat_collected_est: vatCollected.toFixed(2), vat_paid: vatPaid.toFixed(2), vat_net: (vatCollected - vatPaid).toFixed(2), deductible_expenses: deductible.toFixed(2) }]);
+              }}><Download className="h-4 w-4 mr-2" />Tax Report (CSV)</Button>
+            </CardContent>
+          </Card>
+          <p className="text-xs text-muted-foreground">PDF and Excel exports use the same CSV data — open in Excel or use a CSV-to-PDF tool. Native PDF/XLSX support can be added on request.</p>
+        </TabsContent>
+
+        {/* CATEGORIES */}
+        <TabsContent value="categories" className="mt-6">
+          <CategoriesTab categories={categories} onChange={loadAll} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+/* ===================== REVENUE TAB ===================== */
+const RevenueTab = ({ payments, doctorNames }: any) => {
+  const successful = payments.filter((p: any) => p.status === "success");
+  const totals = useMemo(() => ({
+    total: successful.reduce((s: number, p: any) => s + Number(p.amount), 0),
+    platform: successful.reduce((s: number, p: any) => s + Number(p.fee_amount || 0), 0),
+    consultations: successful.length,
+    medicalAid: successful.filter((p: any) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s: number, p: any) => s + Number(p.amount), 0),
+    card: successful.filter((p: any) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s: number, p: any) => s + Number(p.amount), 0),
+    pending: payments.filter((p: any) => p.status === "pending").reduce((s: number, p: any) => s + Number(p.amount), 0),
+  }), [payments]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Total Revenue" value={fmt(totals.total)} icon={Receipt} />
+        <StatCard label="Platform Fees" value={fmt(totals.platform)} icon={Receipt} tone="good" />
+        <StatCard label="Doctor Earnings" value={fmt(totals.total - totals.platform)} icon={Wallet} />
+        <StatCard label="Consultations" value={totals.consultations} icon={Receipt} />
+        <StatCard label="Medical Aid Revenue" value={fmt(totals.medicalAid)} icon={Receipt} />
+        <StatCard label="Card Revenue" value={fmt(totals.card)} icon={Receipt} />
+        <StatCard label="Pending Revenue" value={fmt(totals.pending)} icon={Receipt} tone="bad" />
+        <StatCard label="Completed Revenue" value={fmt(totals.total)} icon={Receipt} tone="good" />
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Recent Payments</CardTitle></CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Date</TableHead><TableHead>Doctor</TableHead><TableHead>Amount</TableHead><TableHead>Fee</TableHead><TableHead>Method</TableHead><TableHead>Status</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {payments.slice(0, 50).map((p: any) => (
+                  <TableRow key={p.id}>
+                    <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
+                    <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
+                    <TableCell className="text-sm">{fmt(p.amount, p.currency)}</TableCell>
+                    <TableCell className="text-sm">{fmt(p.fee_amount || 0, p.currency)}</TableCell>
+                    <TableCell className="text-sm capitalize">{p.payment_method || "—"}</TableCell>
+                    <TableCell><Badge variant={p.status === "success" ? "default" : p.status === "failed" ? "destructive" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+/* ===================== EXPENSES TAB ===================== */
+const ExpensesTab = ({ expenses, categories, onChange }: { expenses: Expense[]; categories: Category[]; onChange: () => void }) => {
+  const { toast } = useToast();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editing, setEditing] = useState<Expense | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState<any>({
+    expense_date: format(new Date(), "yyyy-MM-dd"),
+    category_id: "", supplier: "", description: "",
+    amount: "", vat_amount: "0", currency: "ZAR",
+    payment_method: "card", status: "paid", notes: "", tax_deductible: true,
+  });
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+
+  const openNew = () => {
+    setEditing(null);
+    setForm({ expense_date: format(new Date(), "yyyy-MM-dd"), category_id: "", supplier: "", description: "", amount: "", vat_amount: "0", currency: "ZAR", payment_method: "card", status: "paid", notes: "", tax_deductible: true });
+    setReceiptFile(null);
+    setOpenDialog(true);
+  };
+  const openEdit = (e: Expense) => {
+    setEditing(e);
+    setForm({ ...e, amount: String(e.amount), vat_amount: String(e.vat_amount) });
+    setReceiptFile(null);
+    setOpenDialog(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.description || !form.amount) { toast({ variant: "destructive", title: "Description and amount required" }); return; }
+    setSaving(true);
+    let receipt_path = editing?.receipt_path || null;
+    if (receiptFile) {
+      const path = `${Date.now()}-${receiptFile.name}`;
+      const { error: upErr } = await supabase.storage.from("expense-receipts").upload(path, receiptFile);
+      if (upErr) { toast({ variant: "destructive", title: "Upload failed", description: upErr.message }); setSaving(false); return; }
+      receipt_path = path;
+    }
+    const payload: any = {
+      expense_date: form.expense_date,
+      category_id: form.category_id || null,
+      supplier: form.supplier || null,
+      description: form.description,
+      amount: Number(form.amount),
+      vat_amount: Number(form.vat_amount || 0),
+      currency: form.currency,
+      payment_method: form.payment_method,
+      status: form.status,
+      notes: form.notes || null,
+      tax_deductible: !!form.tax_deductible,
+      receipt_path,
+    };
+    let err;
+    if (editing) {
+      ({ error: err } = await supabase.from("expenses").update(payload).eq("id", editing.id));
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      payload.created_by = user?.id;
+      ({ error: err } = await supabase.from("expenses").insert(payload));
+    }
+    setSaving(false);
+    if (err) { toast({ variant: "destructive", title: "Save failed", description: err.message }); return; }
+    toast({ title: editing ? "Expense updated" : "Expense added" });
+    setOpenDialog(false); onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this expense?")) return;
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) toast({ variant: "destructive", title: "Delete failed", description: error.message });
+    else { toast({ title: "Deleted" }); onChange(); }
+  };
+
+  const viewReceipt = async (path: string) => {
+    const { data, error } = await supabase.storage.from("expense-receipts").createSignedUrl(path, 60);
+    if (error) { toast({ variant: "destructive", title: "Cannot open receipt", description: error.message }); return; }
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const catMap = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Expenses</CardTitle>
+        <Button size="sm" onClick={openNew}><Plus className="h-4 w-4 mr-1" />New Expense</Button>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border overflow-x-auto">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Date</TableHead><TableHead>Category</TableHead><TableHead>Supplier</TableHead><TableHead>Description</TableHead><TableHead>Amount</TableHead><TableHead>VAT</TableHead><TableHead>Status</TableHead><TableHead>Receipt</TableHead><TableHead className="text-right">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {expenses.length === 0 ? (
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No expenses recorded</TableCell></TableRow>
+              ) : expenses.map((e) => (
+                <TableRow key={e.id}>
+                  <TableCell className="text-xs whitespace-nowrap">{format(new Date(e.expense_date), "MMM dd, yyyy")}</TableCell>
+                  <TableCell className="text-sm">{e.category_id ? catMap[e.category_id]?.name || "—" : "—"}</TableCell>
+                  <TableCell className="text-sm">{e.supplier || "—"}</TableCell>
+                  <TableCell className="text-sm max-w-[260px] truncate">{e.description}</TableCell>
+                  <TableCell className="text-sm font-medium">{fmt(e.amount, e.currency)}</TableCell>
+                  <TableCell className="text-sm">{fmt(e.vat_amount, e.currency)}</TableCell>
+                  <TableCell><Badge variant={e.status === "paid" ? "default" : e.status === "overdue" ? "destructive" : "secondary"} className="capitalize text-xs">{e.status}</Badge></TableCell>
+                  <TableCell>{e.receipt_path ? <Button size="sm" variant="ghost" onClick={() => viewReceipt(e.receipt_path!)}><FileText className="h-4 w-4" /></Button> : "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(e)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => handleDelete(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editing ? "Edit Expense" : "New Expense"}</DialogTitle></DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Date</Label><Input type="date" value={form.expense_date} onChange={(e) => setForm({ ...form, expense_date: e.target.value })} /></div>
+            <div><Label>Category</Label>
+              <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.parent_group} — {c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Supplier</Label><Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} /></div>
+            <div><Label>Payment Method</Label>
+              <Select value={form.payment_method} onValueChange={(v) => setForm({ ...form, payment_method: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="card">Card</SelectItem>
+                  <SelectItem value="eft">EFT</SelectItem>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="debit_order">Debit Order</SelectItem>
+                  <SelectItem value="paypal">PayPal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sm:col-span-2"><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+            <div><Label>Amount</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+            <div><Label>VAT Amount</Label><Input type="number" step="0.01" value={form.vat_amount} onChange={(e) => setForm({ ...form, vat_amount: e.target.value })} /></div>
+            <div><Label>Currency</Label><Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} /></div>
+            <div><Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="sm:col-span-2"><Label>Receipt (PDF / Image)</Label><Input type="file" accept=".pdf,image/*" onChange={(e) => setReceiptFile(e.target.files?.[0] || null)} />
+              {editing?.receipt_path && !receiptFile && <p className="text-xs text-muted-foreground mt-1">Existing receipt attached. Upload a new file to replace.</p>}
+            </div>
+            <div className="sm:col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+            <div className="flex items-center gap-2 sm:col-span-2">
+              <input type="checkbox" id="td" checked={form.tax_deductible} onChange={(e) => setForm({ ...form, tax_deductible: e.target.checked })} />
+              <Label htmlFor="td" className="cursor-pointer">Tax deductible</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+};
+
+/* ===================== RECURRING TAB ===================== */
+const RecurringTab = ({ recurring, categories, onChange }: { recurring: Recurring[]; categories: Category[]; onChange: () => void }) => {
+  const { toast } = useToast();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editing, setEditing] = useState<Recurring | null>(null);
+  const [form, setForm] = useState<any>({
+    category_id: "", supplier: "", description: "", amount: "",
+    currency: "ZAR", frequency: "monthly",
+    next_due_date: format(new Date(), "yyyy-MM-dd"),
+    reminder_days: 7, is_active: true, notes: "",
+  });
+
+  const openNew = () => { setEditing(null); setForm({ category_id: "", supplier: "", description: "", amount: "", currency: "ZAR", frequency: "monthly", next_due_date: format(new Date(), "yyyy-MM-dd"), reminder_days: 7, is_active: true, notes: "" }); setOpenDialog(true); };
+  const openEdit = (r: Recurring) => { setEditing(r); setForm({ ...r, amount: String(r.amount) }); setOpenDialog(true); };
+
+  const handleSave = async () => {
+    if (!form.description || !form.amount) { toast({ variant: "destructive", title: "Description and amount required" }); return; }
+    const payload: any = { ...form, amount: Number(form.amount), reminder_days: Number(form.reminder_days), category_id: form.category_id || null };
+    let err;
+    if (editing) ({ error: err } = await supabase.from("recurring_expenses").update(payload).eq("id", editing.id));
+    else {
+      const { data: { user } } = await supabase.auth.getUser();
+      payload.created_by = user?.id;
+      ({ error: err } = await supabase.from("recurring_expenses").insert(payload));
+    }
+    if (err) { toast({ variant: "destructive", title: "Save failed", description: err.message }); return; }
+    toast({ title: editing ? "Updated" : "Added" });
+    setOpenDialog(false); onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete recurring expense?")) return;
+    const { error } = await supabase.from("recurring_expenses").delete().eq("id", id);
+    if (error) toast({ variant: "destructive", title: "Delete failed", description: error.message });
+    else { toast({ title: "Deleted" }); onChange(); }
+  };
+
+  const logPayment = async (r: Recurring) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: insErr } = await supabase.from("expenses").insert({
+      expense_date: r.next_due_date,
+      category_id: r.category_id, supplier: r.supplier,
+      description: r.description, amount: r.amount, currency: r.currency,
+      payment_method: "debit_order", status: "paid",
+      recurring_expense_id: r.id, created_by: user?.id,
+    });
+    if (insErr) { toast({ variant: "destructive", title: "Failed", description: insErr.message }); return; }
+    // advance next_due_date
+    const d = new Date(r.next_due_date);
+    const next = r.frequency === "yearly" ? addYears(d, 1) : r.frequency === "weekly" ? addWeeks(d, 1) : r.frequency === "quarterly" ? addMonths(d, 3) : addMonths(d, 1);
+    await supabase.from("recurring_expenses").update({ next_due_date: format(next, "yyyy-MM-dd") }).eq("id", r.id);
+    toast({ title: "Payment logged" });
+    onChange();
+  };
+
+  const catMap = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories]);
+  const today = startOfDay(new Date());
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2"><Repeat className="h-5 w-5 text-primary" />Recurring Expenses</CardTitle>
+        <Button size="sm" onClick={openNew}><Plus className="h-4 w-4 mr-1" />New Recurring</Button>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border overflow-x-auto">
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Description</TableHead><TableHead>Category</TableHead><TableHead>Amount</TableHead><TableHead>Frequency</TableHead><TableHead>Next Due</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {recurring.length === 0 ? (
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No recurring expenses</TableCell></TableRow>
+              ) : recurring.map((r) => {
+                const due = new Date(r.next_due_date);
+                const daysToDue = Math.ceil((due.getTime() - today.getTime()) / 86400000);
+                const overdue = daysToDue < 0;
+                const dueSoon = daysToDue >= 0 && daysToDue <= r.reminder_days;
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium text-sm">{r.description}<br /><span className="text-xs text-muted-foreground">{r.supplier}</span></TableCell>
+                    <TableCell className="text-sm">{r.category_id ? catMap[r.category_id]?.name || "—" : "—"}</TableCell>
+                    <TableCell className="text-sm">{fmt(r.amount, r.currency)}</TableCell>
+                    <TableCell className="text-sm capitalize">{r.frequency}</TableCell>
+                    <TableCell className="text-sm">
+                      {format(due, "MMM dd, yyyy")}
+                      {overdue && <Badge variant="destructive" className="ml-2 text-xs gap-1"><AlertTriangle className="h-3 w-3" />Overdue</Badge>}
+                      {!overdue && dueSoon && <Badge variant="secondary" className="ml-2 text-xs">Due soon</Badge>}
+                    </TableCell>
+                    <TableCell><Badge variant={r.is_active ? "default" : "secondary"} className="text-xs">{r.is_active ? "Active" : "Paused"}</Badge></TableCell>
+                    <TableCell className="text-right">
+                      <Button size="sm" variant="outline" className="mr-1" onClick={() => logPayment(r)}>Log paid</Button>
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleDelete(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>{editing ? "Edit Recurring Expense" : "New Recurring Expense"}</DialogTitle></DialogHeader>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2"><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="e.g. Supabase Pro plan" /></div>
+            <div><Label>Supplier</Label><Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} /></div>
+            <div><Label>Category</Label>
+              <Select value={form.category_id} onValueChange={(v) => setForm({ ...form, category_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.parent_group} — {c.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Amount</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+            <div><Label>Currency</Label><Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} /></div>
+            <div><Label>Frequency</Label>
+              <Select value={form.frequency} onValueChange={(v) => setForm({ ...form, frequency: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="quarterly">Quarterly</SelectItem>
+                  <SelectItem value="yearly">Yearly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Next Due Date</Label><Input type="date" value={form.next_due_date} onChange={(e) => setForm({ ...form, next_due_date: e.target.value })} /></div>
+            <div><Label>Reminder Days Before</Label><Input type="number" value={form.reminder_days} onChange={(e) => setForm({ ...form, reminder_days: e.target.value })} /></div>
+            <div className="flex items-center gap-2 sm:col-span-2">
+              <input type="checkbox" id="ra" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
+              <Label htmlFor="ra" className="cursor-pointer">Active</Label>
+            </div>
+            <div className="sm:col-span-2"><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+};
+
+/* ===================== CATEGORIES TAB ===================== */
+const CategoriesTab = ({ categories, onChange }: { categories: Category[]; onChange: () => void }) => {
+  const { toast } = useToast();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editing, setEditing] = useState<Category | null>(null);
+  const [form, setForm] = useState({ name: "", parent_group: "Other", sort_order: 0, is_active: true });
+
+  const openNew = () => { setEditing(null); setForm({ name: "", parent_group: "Other", sort_order: 0, is_active: true }); setOpenDialog(true); };
+  const openEdit = (c: Category) => { setEditing(c); setForm({ name: c.name, parent_group: c.parent_group, sort_order: c.sort_order, is_active: c.is_active }); setOpenDialog(true); };
+
+  const handleSave = async () => {
+    if (!form.name) { toast({ variant: "destructive", title: "Name required" }); return; }
+    const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    let err;
+    if (editing) ({ error: err } = await supabase.from("expense_categories").update({ ...form }).eq("id", editing.id));
+    else ({ error: err } = await supabase.from("expense_categories").insert({ ...form, slug }));
+    if (err) { toast({ variant: "destructive", title: "Save failed", description: err.message }); return; }
+    toast({ title: editing ? "Updated" : "Added" });
+    setOpenDialog(false); onChange();
+  };
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this category?")) return;
+    const { error } = await supabase.from("expense_categories").delete().eq("id", id);
+    if (error) toast({ variant: "destructive", title: "Delete failed", description: error.message });
+    else { toast({ title: "Deleted" }); onChange(); }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Expense Categories</CardTitle>
+        <Button size="sm" onClick={openNew}><Plus className="h-4 w-4 mr-1" />New Category</Button>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border overflow-x-auto">
+          <Table>
+            <TableHeader><TableRow><TableHead>Group</TableHead><TableHead>Name</TableHead><TableHead>Order</TableHead><TableHead>Active</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {categories.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="text-sm font-medium">{c.parent_group}</TableCell>
+                  <TableCell className="text-sm">{c.name}</TableCell>
+                  <TableCell className="text-sm">{c.sort_order}</TableCell>
+                  <TableCell><Badge variant={c.is_active ? "default" : "secondary"} className="text-xs">{c.is_active ? "Yes" : "No"}</Badge></TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(c)}><Pencil className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? "Edit Category" : "New Category"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+            <div><Label>Group</Label>
+              <Select value={form.parent_group} onValueChange={(v) => setForm({ ...form, parent_group: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Technology", "Operations", "Marketing", "Administration", "Other"].map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Sort Order</Label><Input type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} /></div>
+            <div className="flex items-center gap-2"><input type="checkbox" id="ca" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} /><Label htmlFor="ca">Active</Label></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button onClick={handleSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+};
+
+/* ===================== P&L TAB ===================== */
+const PLTab = ({ trend }: { trend: any[] }) => {
+  const totals = trend.reduce((acc, t) => ({ revenue: acc.revenue + t.revenue, expenses: acc.expenses + t.expenses }), { revenue: 0, expenses: 0 });
+  const quarterly = useMemo(() => {
+    const q: Record<string, any> = {};
+    trend.forEach((t) => {
+      const [mon, yr] = t.month.split(" ");
+      const monthIdx = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(mon);
+      const qNum = Math.floor(monthIdx / 3) + 1;
+      const key = `Q${qNum} ${yr}`;
+      if (!q[key]) q[key] = { period: key, revenue: 0, expenses: 0, profit: 0 };
+      q[key].revenue += t.revenue; q[key].expenses += t.expenses; q[key].profit += t.profit;
+    });
+    return Object.values(q);
+  }, [trend]);
+
+  return (
+    <>
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+        <StatCard label="12-Month Revenue" value={fmt(totals.revenue)} icon={TrendingUp} tone="good" />
+        <StatCard label="12-Month Expenses" value={fmt(totals.expenses)} icon={TrendingDown} tone="bad" />
+        <StatCard label="12-Month Gross Profit" value={fmt(totals.revenue - totals.expenses)} icon={Wallet} tone={totals.revenue - totals.expenses >= 0 ? "good" : "bad"} />
+      </div>
+      <Card>
+        <CardHeader><CardTitle>Monthly P&L</CardTitle></CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow><TableHead>Month</TableHead><TableHead>Revenue</TableHead><TableHead>Expenses</TableHead><TableHead>Gross Profit</TableHead><TableHead>Margin</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {trend.map((t: any) => (
+                  <TableRow key={t.month}>
+                    <TableCell className="text-sm">{t.month}</TableCell>
+                    <TableCell className="text-sm">{fmt(t.revenue)}</TableCell>
+                    <TableCell className="text-sm">{fmt(t.expenses)}</TableCell>
+                    <TableCell className={`text-sm font-medium ${t.profit >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(t.profit)}</TableCell>
+                    <TableCell className="text-sm">{t.revenue > 0 ? `${((t.profit / t.revenue) * 100).toFixed(1)}%` : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>Quarterly P&L</CardTitle></CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow><TableHead>Quarter</TableHead><TableHead>Revenue</TableHead><TableHead>Expenses</TableHead><TableHead>Profit</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {quarterly.map((q: any) => (
+                  <TableRow key={q.period}>
+                    <TableCell className="text-sm">{q.period}</TableCell>
+                    <TableCell className="text-sm">{fmt(q.revenue)}</TableCell>
+                    <TableCell className="text-sm">{fmt(q.expenses)}</TableCell>
+                    <TableCell className={`text-sm font-medium ${q.profit >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(q.profit)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  );
+};
+
+export default AdminFinancialManagement;
