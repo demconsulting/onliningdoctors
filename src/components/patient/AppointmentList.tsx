@@ -127,11 +127,11 @@ const AppointmentList = ({ user }: AppointmentListProps) => {
 
 
   // Separate unpaid (awaiting_payment) from normal appointments
-  const unpaidAppointments = appointments.filter((apt) => apt.status === "awaiting_payment");
+  const unpaidAppointments = appointments.filter((apt) => normalizeStatus(apt.status) === "awaiting_payment" || apt.status === "awaiting_payment");
   const paidAppointments = appointments.filter((apt) => apt.status !== "awaiting_payment");
 
   const filteredAppointments = statusFilter
-    ? paidAppointments.filter((apt) => apt.status === statusFilter)
+    ? paidAppointments.filter((apt) => normalizeStatus(apt.status) === statusFilter)
     : paidAppointments;
 
   const [showArchived, setShowArchived] = useState(false);
