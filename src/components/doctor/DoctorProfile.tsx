@@ -450,9 +450,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                           profile: "doctor_id",
                           onOptimizing: () => toast({ title: "Optimising image before upload..." }),
                         });
-                        await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
-                        setIdDocPath(path);
-                        toast({ title: "ID copy uploaded" });
+                        if (!idDocPath) {
+                          await supabase.from("doctors").update({ id_document_path: path } as any).eq("profile_id", user.id);
+                          setIdDocPath(path);
+                          toast({ title: "ID copy uploaded" });
+                        } else {
+                          const err = await submitReviewChange("id_document_path", idDocPath, path);
+                          if (err) throw err;
+                          setPendingReviewFields(prev => new Set(prev).add("id_document_path"));
+                          toast({ title: "Submitted for review", description: "Your new ID document is pending admin approval." });
+                        }
                       } catch (err: any) {
                         toast({ variant: "destructive", title: "Upload failed", description: err.message });
                       }
@@ -494,9 +501,16 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
                           profile: "hpcsa",
                           onOptimizing: () => toast({ title: "Optimising image before upload..." }),
                         });
-                        await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
-                        setLicenseDocPath(path);
-                        toast({ title: "Document uploaded" });
+                        if (!licenseDocPath) {
+                          await supabase.from("doctors").update({ license_document_path: path } as any).eq("profile_id", user.id);
+                          setLicenseDocPath(path);
+                          toast({ title: "Document uploaded" });
+                        } else {
+                          const err = await submitReviewChange("license_document_path", licenseDocPath, path);
+                          if (err) throw err;
+                          setPendingReviewFields(prev => new Set(prev).add("license_document_path"));
+                          toast({ title: "Submitted for review", description: "Your new HPCSA document is pending admin approval." });
+                        }
                       } catch (err: any) {
                         toast({ variant: "destructive", title: "Upload failed", description: err.message });
                       }
