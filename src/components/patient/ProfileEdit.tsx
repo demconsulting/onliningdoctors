@@ -30,6 +30,9 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
     city: "",
     state: "",
     country: "",
+    id_type: "",
+    id_number: "",
+    id_country_code: "",
   });
 
   useEffect(() => {
