@@ -208,6 +208,23 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                           {format(new Date(apt.scheduled_at), "h:mm a")}
                         </span>
                         <span>{apt.duration_minutes} min</span>
+                        {apt.appointment_type && (
+                          <span className="uppercase tracking-wide">{apt.appointment_type}</span>
+                        )}
+                        {(() => {
+                          const pay = Array.isArray(apt.payment) ? apt.payment[0] : apt.payment;
+                          if (!pay?.amount) return null;
+                          return (
+                            <>
+                              <span className="font-medium text-foreground">
+                                {pay.currency || ""} {Number(pay.amount).toFixed(2)}
+                              </span>
+                              <Badge variant="outline" className={pay.status === "success" ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}>
+                                {pay.status === "success" ? "Paid" : pay.status}
+                              </Badge>
+                            </>
+                          );
+                        })()}
                       </div>
                       {apt.reason && <p className="mt-1 text-xs text-muted-foreground italic">Reason: {apt.reason}</p>}
                       {apt.dependent && (apt.dependent.allergies || apt.dependent.chronic_conditions) && (
