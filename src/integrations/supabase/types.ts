@@ -2117,6 +2117,132 @@ export type Database = {
           },
         ]
       }
+      practice_patient_link_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          id: string
+          ip: string | null
+          practice_patient_id: string
+          reason: string | null
+          status: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          ip?: string | null
+          practice_patient_id: string
+          reason?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          ip?: string | null
+          practice_patient_id?: string
+          reason?: string | null
+          status?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      practice_patients: {
+        Row: {
+          address: string | null
+          allergies: string | null
+          chronic_conditions: string | null
+          consent_decided_at: string | null
+          consent_ip: string | null
+          consent_requested_at: string | null
+          consent_status: string
+          consent_user_agent: string | null
+          created_at: string
+          created_by: string
+          date_of_birth: string | null
+          doctor_id: string | null
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string
+          gender: string | null
+          id: string
+          id_country_code: string | null
+          id_last_four: string | null
+          id_number_hash: string | null
+          id_type: string | null
+          linked_user_id: string | null
+          medical_notes: string | null
+          phone: string | null
+          practice_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          allergies?: string | null
+          chronic_conditions?: string | null
+          consent_decided_at?: string | null
+          consent_ip?: string | null
+          consent_requested_at?: string | null
+          consent_status?: string
+          consent_user_agent?: string | null
+          created_at?: string
+          created_by: string
+          date_of_birth?: string | null
+          doctor_id?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name: string
+          gender?: string | null
+          id?: string
+          id_country_code?: string | null
+          id_last_four?: string | null
+          id_number_hash?: string | null
+          id_type?: string | null
+          linked_user_id?: string | null
+          medical_notes?: string | null
+          phone?: string | null
+          practice_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          allergies?: string | null
+          chronic_conditions?: string | null
+          consent_decided_at?: string | null
+          consent_ip?: string | null
+          consent_requested_at?: string | null
+          consent_status?: string
+          consent_user_agent?: string | null
+          created_at?: string
+          created_by?: string
+          date_of_birth?: string | null
+          doctor_id?: string | null
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string
+          gender?: string | null
+          id?: string
+          id_country_code?: string | null
+          id_last_four?: string | null
+          id_number_hash?: string | null
+          id_type?: string | null
+          linked_user_id?: string | null
+          medical_notes?: string | null
+          phone?: string | null
+          practice_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       practices: {
         Row: {
           address: string
@@ -2335,6 +2461,10 @@ export type Database = {
           full_name: string | null
           gender: string | null
           id: string
+          id_country_code: string | null
+          id_number: string | null
+          id_number_hash: string | null
+          id_type: string | null
           is_suspended: boolean
           phone: string | null
           state: string | null
@@ -2355,6 +2485,10 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id: string
+          id_country_code?: string | null
+          id_number?: string | null
+          id_number_hash?: string | null
+          id_type?: string | null
           is_suspended?: boolean
           phone?: string | null
           state?: string | null
@@ -2375,6 +2509,10 @@ export type Database = {
           full_name?: string | null
           gender?: string | null
           id?: string
+          id_country_code?: string | null
+          id_number?: string | null
+          id_number_hash?: string | null
+          id_type?: string | null
           is_suspended?: boolean
           phone?: string | null
           state?: string | null
@@ -2685,6 +2823,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_unlink_practice_patient: {
+        Args: { _practice_patient_id: string; _reason: string }
+        Returns: undefined
+      }
       approve_profile_change: {
         Args: { _change_id: string }
         Returns: undefined
@@ -2699,7 +2841,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      deny_practice_patient: {
+        Args: { _practice_patient_id: string }
+        Returns: undefined
+      }
       expire_stale_payments: { Args: never; Returns: undefined }
+      find_matching_practice_patients: {
+        Args: never
+        Returns: {
+          created_at: string
+          date_of_birth_year: number
+          doctor_id: string
+          doctor_name: string
+          id: string
+          practice_id: string
+          practice_name: string
+        }[]
+      }
       get_doctor_blocked_slots: {
         Args: { _doctor_id: string }
         Returns: {
@@ -2728,6 +2886,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      hash_identifier: {
+        Args: { _country: string; _id_type: string; _id_value: string }
+        Returns: string
+      }
       is_practice_manager: {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
@@ -2737,6 +2899,10 @@ export type Database = {
         Returns: boolean
       }
       is_test_or_demo_user: { Args: { _user_id: string }; Returns: boolean }
+      link_practice_patient: {
+        Args: { _practice_patient_id: string }
+        Returns: string
+      }
       reject_profile_change: {
         Args: { _change_id: string; _reason: string }
         Returns: undefined
