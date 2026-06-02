@@ -1,83 +1,96 @@
-# Doctor Profile Change Management System
+# Practice Patient Linking
 
-## Overview
-
-Build a two-tier profile update system: most fields update instantly (self-service), while regulated/verification fields go through an admin approval queue. Adds a new `doctor_profile_changes` table, doctor "Profile Changes" view, and admin "Doctor Profile Reviews" panel.
-
-## Field Categorization
-
-**Category A – Auto Approved (instant save)**
-- Profile photo (with client-side validation), bio, about me, languages, consultation fee, availability, practice address/phone/website, areas of interest, experience description, awards, social links
-
-**Category B – Review Required (pending → admin approves/rejects)**
-- Full name, HPCSA/license number, specialty, qualifications/education, practice number, identity/registration document paths
+Let doctors/receptionists create offline practice patient records and securely link them to a Doctors Onlining account once the patient registers and consents.
 
 ## Database
 
-New table `public.doctor_profile_changes`:
-- `id`, `doctor_id` (uuid), `field_name` (text), `old_value` (jsonb), `new_value` (jsonb)
-- `status` (enum: pending/approved/rejected, default pending)
-- `rejection_reason` (text, nullable)
-- `created_at`, `reviewed_at`, `reviewed_by` (uuid, nullable)
+### `practice_patients`
+- `id` uuid PK
+- `practice_id` uuid (nullable — for solo doctors)
+- `doctor_id` uuid (creating doctor; nullable if practice-owned)
+- `created_by` uuid (auth.uid of staff who created)
+- `full_name`, `phone`, `email` (nullable), `date_of_birth`, `gender`
+- `id_number_hash` text (SHA-256 of normalized ID/passport) — indexed
+- `id_type` text (`national_id` | `passport`)
+- `country_code` text (for normalization scope)
+- `address`, `emergency_contact_name`, `emergency_contact_phone`
+- `allergies`, `chronic_conditions`, `medical_notes` (offline history fields)
+- `linked_user_id` uuid (nullable) — set after consent
+- `consent_status` text: `none` | `pending` | `granted` | `revoked` | `denied`
+- `consent_requested_at`, `consent_decided_at`, `consent_ip`, `consent_user_agent`
+- `created_at`, `updated_at`
 
-RLS:
-- Doctors INSERT/SELECT their own rows
-- Admins SELECT all, UPDATE status (approve/reject)
-- On approval, an admin-side handler writes the new value into `profiles`/`doctors`
+Unique partial index: `(practice_id, id_number_hash)` where `id_number_hash` not null — prevents duplicates inside a practice.
 
-Grants: `authenticated` (SELECT/INSERT), `service_role` ALL.
+### `practice_patient_link_requests`
+Track each link offer shown to a registering patient (audit + idempotency).
+- `id`, `practice_patient_id`, `user_id`, `status` (`pending`|`granted`|`denied`|`expired`)
+- `created_at`, `decided_at`, `ip`, `user_agent`
 
-Indexes on `(doctor_id, status)` and `(status, created_at)`.
+### Helper
+DB function `hash_identifier(_id_type text, _id_value text, _country text) returns text` — normalize (uppercase, strip whitespace/dashes) + SHA-256 with a server-side salt stored in DB setting. Used by triggers to populate `id_number_hash`. Frontend never sees raw IDs from other patients.
 
-## Doctor Side
+DB function `find_matching_practice_patients(_user_id uuid) returns setof practice_patients` (SECURITY DEFINER): matches the calling user's profile ID/passport hash against unlinked rows; returns only minimal fields (practice/doctor name, masked DOB).
 
-`DoctorProfile.tsx` is split into two save paths:
-- **Auto fields**: existing direct `update()` on `profiles`/`doctors` (already works for most). Show "Saved" toast.
-- **Review fields**: instead of writing to live tables, insert a row per changed field into `doctor_profile_changes` with status=pending and show "Submitted for review" toast. If a pending change already exists for that field, update it instead of creating duplicates.
+DB function `link_practice_patient(_practice_patient_id uuid)` (SECURITY DEFINER): verifies the match again, sets `linked_user_id = auth.uid()`, `consent_status='granted'`, writes audit_log entry.
 
-Add a new tab **"Profile Changes"** in `DoctorDashboard`:
-- Lists pending / approved / rejected change requests with field, old → new value, submission date, status, rejection reason.
+DB function `deny_practice_patient(_practice_patient_id uuid)`: marks `denied`, logs.
 
-## Admin Side
+### RLS
+- `practice_patients` SELECT: creating doctor, practice staff (existing `practice_members` pattern), admins, and the linked user (only after `consent_status='granted'`).
+- INSERT/UPDATE: doctor (own) or active practice staff with roles `owner|practice_admin|doctor|receptionist|nurse`.
+- DELETE: owner/practice_admin or creating doctor; not the linked patient.
+- `practice_patient_link_requests` SELECT: the user, the practice staff, admins.
 
-New `AdminDoctorProfileReviews.tsx` component + sidebar entry **"Profile Reviews"** in `AdminDashboard`:
-- Table grouped by doctor: field, old value, new value, submitted date
-- Approve button → calls RPC `approve_profile_change(change_id)` that updates target table and marks row approved
-- Reject button → opens dialog requiring reason, marks row rejected
+Profile additions on `profiles` (if not present): `id_number` (encrypted/raw stored only for own user), `id_type`, `country_code`. RLS already limits profile reads to self+admin.
 
-Approval RPC is `SECURITY DEFINER`, checks `has_role(auth.uid(),'admin')`, dispatches by `field_name` to update either `profiles.full_name` or `doctors.<column>`.
+## Frontend
 
-## Profile Photo Validation
+### Doctor / Receptionist
+New tab in Doctor Dashboard + Practice Calendar: **Practice Patients**.
+- List view with search by name/phone/ID (server-side; staff can search raw ID since they have access).
+- "Add Patient" dialog: full form, validates ID/passport, auto-hashes via trigger.
+- Patient detail drawer: offline notes editor, list of online appointments once linked, link status badge.
+- Component: `src/components/doctor/PracticePatients.tsx` + `PracticePatientForm.tsx` + `PracticePatientDetail.tsx`.
 
-Add client-side checks in `AvatarUpload.tsx` before upload:
-- Reject unsupported formats (already done)
-- Reject extremely small (<200px) or low-quality images (file <5KB or >2MB)
-- Basic blur heuristic via canvas (variance of Laplacian approximation) — optional, off by default with a TODO; face-detection requires a model, so we keep a lightweight `face-api`-free heuristic (image dimensions + aspect + non-blank check) and accept otherwise.
-- Document the limitation; full face-detection can be a follow-up.
+### Patient
+On signup completion / first dashboard load:
+- Query `find_matching_practice_patients` (uses the user's stored ID number).
+- If matches exist, show modal **"We found an existing practice profile"**:
+  - Shows doctor/practice name, partial DOB ("•• ••• 1985"), date created.
+  - Buttons: **Link my account** (calls `link_practice_patient`) | **Not me** (calls `deny`).
+- Once linked, banner in Appointments tab: "Linked to Dr. X's practice records."
+- Component: `src/components/patient/PracticePatientLinkPrompt.tsx`, mounted from `Dashboard.tsx`.
 
-## Notifications
+Patient profile edit: capture `id_number` + `id_type` + `country_code` if missing (required to enable matching). Already partially exists — extend `ProfileEdit.tsx` to ensure required.
 
-Reuse existing `notifications` system (in-app bell):
-- On insert into `doctor_profile_changes`: trigger creates notification for all admins ("New profile change submitted").
-- On update to approved/rejected: trigger creates notification for the doctor.
+### Admin
+New admin tab **Practice Patients**: view all, audit log of link decisions, ability to unlink (with reason → audit_log).
 
-## Audit Trail
+## Security & POPIA
+- Raw ID numbers stored only on the patient's own `profiles` row (RLS self-only). Practice patients store only the salted hash + last 4.
+- All link/deny/unlink actions write to `audit_logs` via SECURITY DEFINER functions.
+- Linking never auto-merges medical records — it just associates the IDs; doctor's offline notes remain in `practice_patients.medical_notes`, online appointments stay in `appointments`. The doctor's view joins both.
+- Other doctors cannot see another practice's patients (RLS scoped via `practice_id`/`doctor_id`).
 
-The `doctor_profile_changes` table itself is the audit trail (keeps old/new/reviewer/date). Approved-changes view is filterable by date and field. We do not delete rows.
+## Non-goals (not modifying)
+- Existing `appointments`, `payments`, `consultation_notes` tables untouched.
+- Booking and payment flows unchanged.
+- Medical Aid flows unchanged.
 
 ## Files
+**New**
+- `supabase/migrations/<ts>_practice_patient_linking.sql`
+- `src/components/doctor/PracticePatients.tsx`
+- `src/components/doctor/PracticePatientForm.tsx`
+- `src/components/doctor/PracticePatientDetail.tsx`
+- `src/components/patient/PracticePatientLinkPrompt.tsx`
+- `src/components/admin/AdminPracticePatients.tsx`
 
-- New migration: create enum, table, grants, RLS, approve/reject RPCs, notification triggers
-- New `src/components/doctor/DoctorProfileChanges.tsx`
-- Update `src/components/doctor/DoctorProfile.tsx` (split save logic; review fields submit changes instead)
-- Update `src/pages/DoctorDashboard.tsx` (add tab)
-- New `src/components/admin/AdminDoctorProfileReviews.tsx`
-- Update `src/components/admin/AdminSidebar.tsx` + `src/pages/AdminDashboard.tsx` (add section)
-- Update `src/components/shared/AvatarUpload.tsx` (image validation)
+**Edited**
+- `src/pages/DoctorDashboard.tsx` — add tab
+- `src/pages/Dashboard.tsx` — mount link prompt
+- `src/components/patient/ProfileEdit.tsx` — capture ID/passport if missing
+- `src/pages/AdminDashboard.tsx` + `AdminSidebar.tsx` — admin tab
 
-## Out of Scope
-
-- ML-based face detection (documented limitation; basic heuristics only)
-- Email notifications for change events (in-app only for now)
-
-Confirm and I'll implement.
+Proceed?
