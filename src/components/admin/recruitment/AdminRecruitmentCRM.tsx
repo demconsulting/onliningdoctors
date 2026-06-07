@@ -51,16 +51,22 @@ const AdminRecruitmentCRM = () => {
   const [refOpen, setRefOpen] = useState(false);
   const [refForm, setRefForm] = useState<any>({ referrer_name: "", prospect_name: "", status: "new", notes: "" });
 
+  const [funnel, setFunnel] = useState<Record<string, number>>({});
+
   const load = useCallback(async () => {
     setLoading(true);
-    const [p, t, r] = await Promise.all([
+    const [p, t, r, f] = await Promise.all([
       supabase.from("recruitment_prospects" as any).select("*").order("updated_at", { ascending: false }),
       supabase.from("recruitment_tasks" as any).select("*").order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("recruitment_referrals" as any).select("*").order("referral_date", { ascending: false }),
+      supabase.rpc("admin_recruitment_funnel" as any),
     ]);
     setProspects((p.data as any[]) || []);
     setTasks((t.data as any[]) || []);
     setReferrals((r.data as any[]) || []);
+    const fmap: Record<string, number> = {};
+    ((f.data as any[]) || []).forEach((row: any) => { fmap[row.stage] = Number(row.current_count); });
+    setFunnel(fmap);
     setLoading(false);
   }, []);
 
