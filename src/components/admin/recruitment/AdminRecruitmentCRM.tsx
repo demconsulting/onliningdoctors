@@ -174,28 +174,29 @@ const AdminRecruitmentCRM = () => {
   // Reports
   const reports = useMemo(() => {
     const monthAgo = new Date(Date.now() - 30 * 86400000);
-    const addedThisMonth = prospects.filter(p => new Date(p.created_at) >= monthAgo).length;
+    const addedThisMonth = allProspects.filter(p => new Date(p.created_at) >= monthAgo).length;
     const registered = counts.registered + counts.pending_verification + counts.verified + counts.founding_doctor;
     const verified = counts.verified + counts.founding_doctor;
-    const leads = prospects.length;
+    const leads = allProspects.length;
     const leadToReg = leads > 0 ? Math.round((registered / leads) * 100) : 0;
     const regToVer = registered > 0 ? Math.round((verified / registered) * 100) : 0;
     const verToFounding = verified > 0 ? Math.round((counts.founding_doctor / verified) * 100) : 0;
     const bucket = (key: "referral_source" | "province" | "specialty") => {
       const m: Record<string, number> = {};
-      prospects.forEach(p => { const v = (p[key] || "Unknown").trim() || "Unknown"; m[v] = (m[v] || 0) + 1; });
+      allProspects.forEach(p => { const v = (p[key] || "Unknown").trim() || "Unknown"; m[v] = (m[v] || 0) + 1; });
       return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 5);
     };
     return { addedThisMonth, leadToReg, regToVer, verToFounding, topReferral: bucket("referral_source"), topProvinces: bucket("province"), topSpecialties: bucket("specialty") };
-  }, [prospects, counts]);
+  }, [allProspects, counts]);
 
   const overdueTasks = tasks.filter(t => t.status === "pending" && t.due_date && new Date(t.due_date) < new Date());
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   const merged = (k: string) => Math.max(counts[k] || 0, funnel[k] || 0);
+  const totalProspects = Math.max(allProspects.length, funnel.lead || 0);
   const STAT_CARDS = [
-    { key: "lead", label: "Total Prospects", value: Math.max(prospects.length, funnel.lead || 0), icon: Users },
+    { key: "lead", label: "Total Prospects", value: totalProspects, icon: Users },
     { key: "contacted", label: "Contacted", value: merged("contacted") },
     { key: "interested", label: "Interested", value: merged("interested") },
     { key: "meeting_scheduled", label: "Demo Scheduled", value: merged("meeting_scheduled") + merged("demo_completed") },
