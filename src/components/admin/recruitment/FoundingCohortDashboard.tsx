@@ -54,7 +54,7 @@ export default function FoundingCohortDashboard() {
             <Stat label="Applications Rejected" value={stats.rejected} />
           </div>
           {slots && (
-            <p className="text-xs text-muted-foreground">Live slots: {slots.filled}/{slots.total} (open: {slots.remaining})</p>
+            <p className="text-xs text-muted-foreground">Live slots: {slots.approved_count}/{slots.max_slots} (open: {slots.remaining})</p>
           )}
         </CardContent>
       </Card>
