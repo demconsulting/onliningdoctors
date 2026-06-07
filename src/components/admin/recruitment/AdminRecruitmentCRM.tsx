@@ -305,7 +305,7 @@ const AdminRecruitmentCRM = () => {
 
         {/* PIPELINE */}
         <TabsContent value="pipeline">
-          <PipelineBoard prospects={allProspects} onStageChange={handleStageChange} onOpen={openPipelineItem} />
+          <PipelineBoard prospects={allProspects} stageCounts={funnel} onStageChange={handleStageChange} onOpen={openPipelineItem} />
         </TabsContent>
 
         {/* PROSPECTS */}
