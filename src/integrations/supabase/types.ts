@@ -2522,6 +2522,240 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_communications: {
+        Row: {
+          body: string | null
+          channel: string
+          created_at: string
+          created_by: string | null
+          delivery_status: string | null
+          direction: string
+          id: string
+          occurred_at: string
+          outcome: string | null
+          prospect_id: string
+          subject: string | null
+          template_key: string | null
+        }
+        Insert: {
+          body?: string | null
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          delivery_status?: string | null
+          direction?: string
+          id?: string
+          occurred_at?: string
+          outcome?: string | null
+          prospect_id: string
+          subject?: string | null
+          template_key?: string | null
+        }
+        Update: {
+          body?: string | null
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          delivery_status?: string | null
+          direction?: string
+          id?: string
+          occurred_at?: string
+          outcome?: string | null
+          prospect_id?: string
+          subject?: string | null
+          template_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_communications_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_prospects: {
+        Row: {
+          assigned_recruiter: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          first_name: string
+          hpcsa_number: string | null
+          id: string
+          last_name: string
+          linked_doctor_profile_id: string | null
+          mobile_number: string | null
+          next_follow_up_date: string | null
+          notes: string | null
+          practice_name: string | null
+          province: string | null
+          referral_source: string | null
+          referrer_doctor_id: string | null
+          specialty: string | null
+          stage: string
+          title: string | null
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          assigned_recruiter?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name: string
+          hpcsa_number?: string | null
+          id?: string
+          last_name: string
+          linked_doctor_profile_id?: string | null
+          mobile_number?: string | null
+          next_follow_up_date?: string | null
+          notes?: string | null
+          practice_name?: string | null
+          province?: string | null
+          referral_source?: string | null
+          referrer_doctor_id?: string | null
+          specialty?: string | null
+          stage?: string
+          title?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          assigned_recruiter?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          first_name?: string
+          hpcsa_number?: string | null
+          id?: string
+          last_name?: string
+          linked_doctor_profile_id?: string | null
+          mobile_number?: string | null
+          next_follow_up_date?: string | null
+          notes?: string | null
+          practice_name?: string | null
+          province?: string | null
+          referral_source?: string | null
+          referrer_doctor_id?: string | null
+          specialty?: string | null
+          stage?: string
+          title?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
+      }
+      recruitment_referrals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          prospect_id: string | null
+          prospect_name: string | null
+          referral_date: string
+          referrer_doctor_id: string | null
+          referrer_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+          prospect_name?: string | null
+          referral_date?: string
+          referrer_doctor_id?: string | null
+          referrer_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+          prospect_name?: string | null
+          referral_date?: string
+          referrer_doctor_id?: string | null
+          referrer_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_referrals_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_tasks: {
+        Row: {
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          priority: string
+          prospect_id: string | null
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          prospect_id?: string | null
+          status?: string
+          task_type: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          prospect_id?: string | null
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_tasks_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recurring_expenses: {
         Row: {
           amount: number
