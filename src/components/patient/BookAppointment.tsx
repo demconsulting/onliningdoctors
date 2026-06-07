@@ -187,13 +187,19 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     setLoadingDoctors(true);
     setSelectedDoctor("");
     supabase
-      .from("doctors")
-      .select("*, profile:profile_id(id, full_name, avatar_url, city, country), specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
+      .from("public_doctors" as any)
+      .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
       .eq("specialty_id", selectedSpecialty)
       .eq("is_available", true)
       .eq("is_suspended", false)
-      .then(({ data }) => {
-        if (data) setDoctors(data);
+      .then(({ data }: any) => {
+        if (data) {
+          const mapped = (data as any[]).map((d) => ({
+            ...d,
+            profile: { id: d.profile_id, full_name: d.full_name, avatar_url: d.avatar_url, city: d.city, country: d.country },
+          }));
+          setDoctors(mapped);
+        }
         setLoadingDoctors(false);
       });
   }, [selectedSpecialty]);
