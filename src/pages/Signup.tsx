@@ -11,6 +11,7 @@ import { Stethoscope, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 
 const Signup = () => {
   const [fullName, setFullName] = useState("");
