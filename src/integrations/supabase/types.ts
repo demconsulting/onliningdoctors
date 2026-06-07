@@ -2522,6 +2522,47 @@ export type Database = {
         }
         Relationships: []
       }
+      recruitment_activation_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doctor_profile_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          occurred_at: string
+          prospect_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doctor_profile_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          prospect_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doctor_profile_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          occurred_at?: string
+          prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_activation_events_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_communications: {
         Row: {
           body: string | null
@@ -2575,16 +2616,60 @@ export type Database = {
           },
         ]
       }
+      recruitment_early_access_interest: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doctor_profile_id: string | null
+          email: string | null
+          feature_key: string
+          id: string
+          notes: string | null
+          prospect_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doctor_profile_id?: string | null
+          email?: string | null
+          feature_key: string
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doctor_profile_id?: string | null
+          email?: string | null
+          feature_key?: string
+          id?: string
+          notes?: string | null
+          prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_early_access_interest_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_prospects: {
         Row: {
+          activated_at: string | null
           assigned_recruiter: string | null
           city: string | null
           created_at: string
           created_by: string | null
           email: string | null
+          first_consultation_at: string | null
           first_name: string
           hpcsa_number: string | null
           id: string
+          last_activity_at: string | null
           last_name: string
           linked_doctor_profile_id: string | null
           mobile_number: string | null
@@ -2601,14 +2686,17 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          activated_at?: string | null
           assigned_recruiter?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          first_consultation_at?: string | null
           first_name: string
           hpcsa_number?: string | null
           id?: string
+          last_activity_at?: string | null
           last_name: string
           linked_doctor_profile_id?: string | null
           mobile_number?: string | null
@@ -2625,14 +2713,17 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          activated_at?: string | null
           assigned_recruiter?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
+          first_consultation_at?: string | null
           first_name?: string
           hpcsa_number?: string | null
           id?: string
+          last_activity_at?: string | null
           last_name?: string
           linked_doctor_profile_id?: string | null
           mobile_number?: string | null
@@ -2699,6 +2790,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recruitment_source_catalog: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
       }
       recruitment_tasks: {
         Row: {
@@ -3057,6 +3172,71 @@ export type Database = {
       }
     }
     Functions: {
+      admin_doctor_health_score: {
+        Args: { _doctor_profile_id: string }
+        Returns: Json
+      }
+      admin_doctor_success_list: {
+        Args: never
+        Returns: {
+          activated_at: string
+          doctor_id: string
+          email: string
+          first_consultation_at: string
+          full_name: string
+          is_founding_doctor: boolean
+          is_suspended: boolean
+          is_verified: boolean
+          last_activity_at: string
+          profile_id: string
+          registration_date: string
+          status: string
+          total_consultations: number
+          verification_date: string
+        }[]
+      }
+      admin_first_consultation_pending: {
+        Args: never
+        Returns: {
+          days_since_verified: number
+          email: string
+          full_name: string
+          has_availability: boolean
+          last_activity_at: string
+          profile_completion_pct: number
+          profile_id: string
+          verified_at: string
+        }[]
+      }
+      admin_recruitment_funnel: {
+        Args: never
+        Returns: {
+          current_count: number
+          prior_count: number
+          stage: string
+        }[]
+      }
+      admin_recruitment_geo: {
+        Args: never
+        Returns: {
+          city: string
+          founding: number
+          province: string
+          specialty: string
+          total: number
+          verified: number
+        }[]
+      }
+      admin_recruitment_source_stats: {
+        Args: never
+        Returns: {
+          conversion_pct: number
+          registered: number
+          source: string
+          total: number
+          verified: number
+        }[]
+      }
       admin_unlink_practice_patient: {
         Args: { _practice_patient_id: string; _reason: string }
         Returns: undefined
