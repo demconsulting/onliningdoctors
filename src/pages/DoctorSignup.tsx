@@ -11,6 +11,7 @@ import { Stethoscope, Loader2, ShieldCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { getCountries } from "@/data/locations";
 
 const DoctorSignup = () => {
@@ -140,6 +141,15 @@ const DoctorSignup = () => {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Application"}
               </Button>
             </form>
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleAuthButton intent="doctor" label="Continue with Google" />
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              You'll add your HPCSA number after signing in.
+            </p>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Not a doctor?{" "}
               <Link to="/signup" className="font-medium text-primary hover:underline">Sign up as a patient</Link>

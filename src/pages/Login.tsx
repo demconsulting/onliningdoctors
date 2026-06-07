@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Stethoscope, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 
 // Warm dashboard bundles in the background as soon as the login page mounts,
 // so post-login navigation doesn't wait on a network round-trip for the chunk.
@@ -93,6 +94,12 @@ const Login = () => {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Log in"}
               </Button>
             </form>
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleAuthButton redirectTo={redirectTo} />
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
               <Link to={redirectTo ? `/signup?redirect=${encodeURIComponent(redirectTo)}` : "/signup"} className="font-medium text-primary hover:underline">Sign up</Link>

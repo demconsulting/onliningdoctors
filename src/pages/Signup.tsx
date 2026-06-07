@@ -11,6 +11,7 @@ import { Stethoscope, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 
 const Signup = () => {
   const [fullName, setFullName] = useState("");
@@ -81,6 +82,12 @@ const Signup = () => {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
               </Button>
             </form>
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleAuthButton redirectTo={redirectTo} intent="patient" />
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Are you a doctor?{" "}
               <Link to="/signup/doctor" className="font-medium text-primary hover:underline">Register as a Doctor</Link>

@@ -3255,6 +3255,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      complete_doctor_signup: {
+        Args: { _country: string; _license_number: string; _title: string }
+        Returns: undefined
+      }
       deny_practice_patient: {
         Args: { _practice_patient_id: string }
         Returns: undefined
@@ -3316,6 +3320,10 @@ export type Database = {
       link_practice_patient: {
         Args: { _practice_patient_id: string }
         Returns: string
+      }
+      log_audit_event_self: {
+        Args: { _action: string; _details: Json; _table_name: string }
+        Returns: undefined
       }
       reject_profile_change: {
         Args: { _change_id: string; _reason: string }
