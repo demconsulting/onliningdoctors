@@ -338,8 +338,8 @@ const AdminRecruitmentCRM = () => {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No prospects.</TableCell></TableRow>
-                  ) : filtered.map(p => (
-                    <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openEdit(p)}>
+                    ) : filtered.map(p => (
+                    <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openPipelineItem(p)}>
                       <TableCell className="font-medium">{p.title || ""} {p.first_name} {p.last_name}</TableCell>
                       <TableCell>{p.specialty || "—"}</TableCell>
                       <TableCell>{[p.city, p.province].filter(Boolean).join(", ") || "—"}</TableCell>
