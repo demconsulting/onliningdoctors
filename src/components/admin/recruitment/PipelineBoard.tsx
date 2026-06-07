@@ -6,6 +6,7 @@ import { Mail, MessageCircle, Phone } from "lucide-react";
 
 interface Props {
   prospects: any[];
+  stageCounts?: Record<string, number>;
   onStageChange: (id: string, stage: string) => void;
   onOpen: (p: any) => void;
 }
@@ -32,7 +33,7 @@ const Card = ({ p, onOpen }: { p: any; onOpen: (p: any) => void }) => {
   );
 };
 
-const Column = ({ stage, items, onOpen }: { stage: typeof PIPELINE_STAGES[number]; items: any[]; onOpen: (p: any) => void }) => {
+const Column = ({ stage, items, count, onOpen }: { stage: typeof PIPELINE_STAGES[number]; items: any[]; count: number; onOpen: (p: any) => void }) => {
   const { setNodeRef, isOver } = useDroppable({ id: stage.key });
   return (
     <div ref={setNodeRef} className={`flex-shrink-0 w-64 rounded-lg border bg-muted/30 p-2 flex flex-col gap-2 ${isOver ? "ring-2 ring-primary" : ""}`}>
@@ -41,7 +42,7 @@ const Column = ({ stage, items, onOpen }: { stage: typeof PIPELINE_STAGES[number
           <span className={`h-2 w-2 rounded-full ${stage.color}`} />
           <span className="text-sm font-semibold">{stage.label}</span>
         </div>
-        <Badge variant="secondary" className="text-xs">{items.length}</Badge>
+        <Badge variant="secondary" className="text-xs">{count}</Badge>
       </div>
       <div className="space-y-2 min-h-[80px]">
         {items.map(p => <Card key={p.id} p={p} onOpen={onOpen} />)}
@@ -50,7 +51,7 @@ const Column = ({ stage, items, onOpen }: { stage: typeof PIPELINE_STAGES[number
   );
 };
 
-const PipelineBoard = ({ prospects, onStageChange, onOpen }: Props) => {
+const PipelineBoard = ({ prospects, stageCounts = {}, onStageChange, onOpen }: Props) => {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [activeId, setActiveId] = useState<string | null>(null);
   const grouped = useMemo(() => {
@@ -75,7 +76,7 @@ const PipelineBoard = ({ prospects, onStageChange, onOpen }: Props) => {
   return (
     <DndContext sensors={sensors} onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)} onDragEnd={handleEnd}>
       <div className="flex gap-3 overflow-x-auto pb-3">
-        {PIPELINE_STAGES.map(s => <Column key={s.key} stage={s} items={grouped[s.key] || []} onOpen={onOpen} />)}
+        {PIPELINE_STAGES.map(s => <Column key={s.key} stage={s} items={grouped[s.key] || []} count={Math.max((grouped[s.key] || []).length, stageCounts[s.key] || 0)} onOpen={onOpen} />)}
       </div>
       <DragOverlay>{active && <Card p={active} onOpen={() => {}} />}</DragOverlay>
     </DndContext>

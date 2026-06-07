@@ -27,12 +27,14 @@ import FirstConsultationTracker from "./FirstConsultationTracker";
 import GeographicDashboard from "./GeographicDashboard";
 import SourceTrackingDashboard from "./SourceTrackingDashboard";
 import EarlyAccessInterestList from "./EarlyAccessInterestList";
+import { buildDoctorProspectRows, mergeFunnelWithDoctors } from "./doctorProspectMerge";
 
 const AdminRecruitmentCRM = () => {
   const { toast } = useToast();
   const { slots } = useFoundingSlots();
   const [loading, setLoading] = useState(true);
   const [prospects, setProspects] = useState<any[]>([]);
+  const [doctorProspects, setDoctorProspects] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [referrals, setReferrals] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -60,38 +62,23 @@ const AdminRecruitmentCRM = () => {
       supabase.from("recruitment_tasks" as any).select("*").order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("recruitment_referrals" as any).select("*").order("referral_date", { ascending: false }),
       supabase.rpc("admin_recruitment_funnel" as any),
-      supabase.from("doctors").select("profile_id,is_verified,is_founding_doctor,is_suspended,created_at"),
+      supabase.from("doctors").select("profile_id,title,license_number,practice_name,is_verified,is_founding_doctor,is_suspended,created_at,updated_at,profile:profiles!doctors_profile_id_fkey(full_name,phone,city,state)"),
       supabase.from("doctor_availability").select("doctor_id"),
       supabase.from("appointments").select("doctor_id,status").eq("status", "completed"),
     ]);
     if (f.error) console.warn("admin_recruitment_funnel rpc failed:", f.error);
     if (d.error) console.warn("doctors fetch failed:", d.error);
-    setProspects((p.data as any[]) || []);
+    const crmProspects = (p.data as any[]) || [];
+    setProspects(crmProspects);
     setTasks((t.data as any[]) || []);
     setReferrals((r.data as any[]) || []);
 
     const fmap: Record<string, number> = {};
     ((f.data as any[]) || []).forEach((row: any) => { fmap[row.stage] = Number(row.current_count); });
 
-    // Client-side fallback merge from doctors table (works even if RPC blocked)
     const docs = ((d.data as any[]) || []).filter((x: any) => !x.is_suspended);
-    const avSet = new Set(((av.data as any[]) || []).map((x: any) => x.doctor_id));
-    const consultSet = new Set(((ap.data as any[]) || []).map((x: any) => x.doctor_id));
-    const registered = docs.length;
-    const pending = docs.filter((x: any) => !x.is_verified).length;
-    const verified = docs.filter((x: any) => x.is_verified).length;
-    const founding = docs.filter((x: any) => x.is_founding_doctor).length;
-    const activated = docs.filter((x: any) => x.is_verified && avSet.has(x.profile_id)).length;
-    const firstConsult = docs.filter((x: any) => consultSet.has(x.profile_id)).length;
-    const bump = (k: string, v: number) => { fmap[k] = Math.max(fmap[k] || 0, v); };
-    bump("registered", registered);
-    bump("pending_verification", pending);
-    bump("verified", verified);
-    bump("founding_doctor", founding);
-    bump("activated", activated);
-    bump("first_consultation_completed", firstConsult);
-
-    setFunnel(fmap);
+    setDoctorProspects(buildDoctorProspectRows(docs, crmProspects));
+    setFunnel(mergeFunnelWithDoctors(fmap, docs, (av.data as any[]) || [], (ap.data as any[]) || [], crmProspects.length));
     setLoading(false);
   }, []);
 
@@ -102,8 +89,10 @@ const AdminRecruitmentCRM = () => {
     if (tpl) { setBulkSubject(tpl.emailSubject); setBulkBody(tpl.emailBody); }
   }, [bulkTpl]);
 
+  const allProspects = useMemo(() => [...doctorProspects, ...prospects], [doctorProspects, prospects]);
+
   const filtered = useMemo(() => {
-    return prospects.filter(p => {
+    return allProspects.filter(p => {
       if (stageFilter !== "all" && p.stage !== stageFilter) return false;
       if (search) {
         const q = search.toLowerCase();
@@ -112,19 +101,30 @@ const AdminRecruitmentCRM = () => {
       }
       return true;
     });
-  }, [prospects, search, stageFilter]);
+  }, [allProspects, search, stageFilter]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     PIPELINE_STAGES.forEach(s => c[s.key] = 0);
-    prospects.forEach(p => { c[p.stage] = (c[p.stage] || 0) + 1; });
+    allProspects.forEach(p => { c[p.stage] = (c[p.stage] || 0) + 1; });
     return c;
-  }, [prospects]);
+  }, [allProspects]);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openEdit = (p: any) => { setEditing(p); setDialogOpen(true); };
+  const openPipelineItem = (p: any) => {
+    if (p.__source === "doctor") {
+      toast({ title: `${p.title || "Dr."} ${p.first_name} ${p.last_name}`, description: p.notes || "Registered doctor" });
+      return;
+    }
+    openEdit(p);
+  };
 
   const handleStageChange = async (id: string, stage: string) => {
+    if (id.startsWith("doctor:")) {
+      toast({ title: "Registered doctors move by verification status", description: "Update the doctor's verification or founding status to move this card." });
+      return;
+    }
     const prev = prospects;
     setProspects(prev.map(p => p.id === id ? { ...p, stage } : p));
     const { error } = await supabase.from("recruitment_prospects" as any).update({ stage }).eq("id", id);
@@ -174,28 +174,29 @@ const AdminRecruitmentCRM = () => {
   // Reports
   const reports = useMemo(() => {
     const monthAgo = new Date(Date.now() - 30 * 86400000);
-    const addedThisMonth = prospects.filter(p => new Date(p.created_at) >= monthAgo).length;
+    const addedThisMonth = allProspects.filter(p => new Date(p.created_at) >= monthAgo).length;
     const registered = counts.registered + counts.pending_verification + counts.verified + counts.founding_doctor;
     const verified = counts.verified + counts.founding_doctor;
-    const leads = prospects.length;
+    const leads = allProspects.length;
     const leadToReg = leads > 0 ? Math.round((registered / leads) * 100) : 0;
     const regToVer = registered > 0 ? Math.round((verified / registered) * 100) : 0;
     const verToFounding = verified > 0 ? Math.round((counts.founding_doctor / verified) * 100) : 0;
     const bucket = (key: "referral_source" | "province" | "specialty") => {
       const m: Record<string, number> = {};
-      prospects.forEach(p => { const v = (p[key] || "Unknown").trim() || "Unknown"; m[v] = (m[v] || 0) + 1; });
+      allProspects.forEach(p => { const v = (p[key] || "Unknown").trim() || "Unknown"; m[v] = (m[v] || 0) + 1; });
       return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 5);
     };
     return { addedThisMonth, leadToReg, regToVer, verToFounding, topReferral: bucket("referral_source"), topProvinces: bucket("province"), topSpecialties: bucket("specialty") };
-  }, [prospects, counts]);
+  }, [allProspects, counts]);
 
   const overdueTasks = tasks.filter(t => t.status === "pending" && t.due_date && new Date(t.due_date) < new Date());
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   const merged = (k: string) => Math.max(counts[k] || 0, funnel[k] || 0);
+  const totalProspects = Math.max(allProspects.length, funnel.lead || 0);
   const STAT_CARDS = [
-    { key: "lead", label: "Total Prospects", value: Math.max(prospects.length, funnel.lead || 0), icon: Users },
+    { key: "lead", label: "Total Prospects", value: totalProspects, icon: Users },
     { key: "contacted", label: "Contacted", value: merged("contacted") },
     { key: "interested", label: "Interested", value: merged("interested") },
     { key: "meeting_scheduled", label: "Demo Scheduled", value: merged("meeting_scheduled") + merged("demo_completed") },
@@ -232,7 +233,7 @@ const AdminRecruitmentCRM = () => {
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="early-access">Early Access</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          <TabsTrigger value="prospects">Prospects ({prospects.length})</TabsTrigger>
+          <TabsTrigger value="prospects">Prospects ({totalProspects})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks {overdueTasks.length > 0 && <Badge variant="destructive" className="ml-1.5">{overdueTasks.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="referrals">Referrals</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -272,10 +273,10 @@ const AdminRecruitmentCRM = () => {
                 </>
               )}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2">
-                <Stat label="Applied" value={prospects.filter(p => p.stage === "invited" || p.stage === "registered").length} />
-                <Stat label="Pending Verification" value={counts.pending_verification} />
-                <Stat label="Verified" value={counts.verified} />
-                <Stat label="Approved Founding" value={counts.founding_doctor} />
+                <Stat label="Applied" value={merged("invited") + merged("registered")} />
+                <Stat label="Pending Verification" value={merged("pending_verification")} />
+                <Stat label="Verified" value={merged("verified")} />
+                <Stat label="Approved Founding" value={merged("founding_doctor")} />
               </div>
             </CardContent>
           </Card>
@@ -304,7 +305,7 @@ const AdminRecruitmentCRM = () => {
 
         {/* PIPELINE */}
         <TabsContent value="pipeline">
-          <PipelineBoard prospects={prospects} onStageChange={handleStageChange} onOpen={openEdit} />
+          <PipelineBoard prospects={allProspects} stageCounts={funnel} onStageChange={handleStageChange} onOpen={openPipelineItem} />
         </TabsContent>
 
         {/* PROSPECTS */}
@@ -337,8 +338,8 @@ const AdminRecruitmentCRM = () => {
                 <TableBody>
                   {filtered.length === 0 ? (
                     <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No prospects.</TableCell></TableRow>
-                  ) : filtered.map(p => (
-                    <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openEdit(p)}>
+                    ) : filtered.map(p => (
+                    <TableRow key={p.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openPipelineItem(p)}>
                       <TableCell className="font-medium">{p.title || ""} {p.first_name} {p.last_name}</TableCell>
                       <TableCell>{p.specialty || "—"}</TableCell>
                       <TableCell>{[p.city, p.province].filter(Boolean).join(", ") || "—"}</TableCell>
@@ -350,7 +351,7 @@ const AdminRecruitmentCRM = () => {
                       </TableCell>
                       <TableCell><Badge variant="outline">{stageLabel(p.stage)}</Badge></TableCell>
                       <TableCell>{p.next_follow_up_date ? format(new Date(p.next_follow_up_date), "PP") : "—"}</TableCell>
-                      <TableCell><Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteProspect(p.id); }}>Delete</Button></TableCell>
+                      <TableCell>{p.__source !== "doctor" && <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteProspect(p.id); }}>Delete</Button>}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

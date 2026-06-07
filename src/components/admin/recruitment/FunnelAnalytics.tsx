@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import ExportMenu from "./ExportMenu";
+import { FUNNEL_STAGE_KEYS, mergeFunnelWithDoctors } from "./doctorProspectMerge";
 
 const STAGE_LABELS: Record<string, string> = {
   lead: "Prospects",
@@ -25,8 +26,27 @@ export default function FunnelAnalytics() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.rpc("admin_recruitment_funnel" as any);
-      setRows((data as any[]) || []);
+      const [funnelRes, prospectRes, doctorRes, availabilityRes, appointmentRes] = await Promise.all([
+        supabase.rpc("admin_recruitment_funnel" as any),
+        supabase.from("recruitment_prospects" as any).select("id"),
+        supabase.from("doctors").select("profile_id,is_verified,is_founding_doctor,is_suspended"),
+        supabase.from("doctor_availability").select("doctor_id"),
+        supabase.from("appointments").select("doctor_id,status").eq("status", "completed"),
+      ]);
+      const base: Record<string, number> = {};
+      ((funnelRes.data as any[]) || []).forEach((row: any) => { base[row.stage] = Number(row.current_count); });
+      const merged = mergeFunnelWithDoctors(
+        base,
+        (doctorRes.data as any[]) || [],
+        (availabilityRes.data as any[]) || [],
+        (appointmentRes.data as any[]) || [],
+        ((prospectRes.data as any[]) || []).length,
+      );
+      setRows(FUNNEL_STAGE_KEYS.map((stage) => ({
+        stage,
+        current_count: merged[stage] || 0,
+        prior_count: ((funnelRes.data as any[]) || []).find((row: any) => row.stage === stage)?.prior_count || 0,
+      })));
       setLoading(false);
     })();
   }, []);
