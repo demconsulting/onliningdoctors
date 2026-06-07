@@ -51,16 +51,22 @@ const AdminRecruitmentCRM = () => {
   const [refOpen, setRefOpen] = useState(false);
   const [refForm, setRefForm] = useState<any>({ referrer_name: "", prospect_name: "", status: "new", notes: "" });
 
+  const [funnel, setFunnel] = useState<Record<string, number>>({});
+
   const load = useCallback(async () => {
     setLoading(true);
-    const [p, t, r] = await Promise.all([
+    const [p, t, r, f] = await Promise.all([
       supabase.from("recruitment_prospects" as any).select("*").order("updated_at", { ascending: false }),
       supabase.from("recruitment_tasks" as any).select("*").order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("recruitment_referrals" as any).select("*").order("referral_date", { ascending: false }),
+      supabase.rpc("admin_recruitment_funnel" as any),
     ]);
     setProspects((p.data as any[]) || []);
     setTasks((t.data as any[]) || []);
     setReferrals((r.data as any[]) || []);
+    const fmap: Record<string, number> = {};
+    ((f.data as any[]) || []).forEach((row: any) => { fmap[row.stage] = Number(row.current_count); });
+    setFunnel(fmap);
     setLoading(false);
   }, []);
 
@@ -162,16 +168,17 @@ const AdminRecruitmentCRM = () => {
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
+  const merged = (k: string) => Math.max(counts[k] || 0, funnel[k] || 0);
   const STAT_CARDS = [
-    { key: "lead", label: "Total Prospects", value: prospects.length, icon: Users },
-    { key: "contacted", label: "Contacted", value: counts.contacted },
-    { key: "interested", label: "Interested", value: counts.interested },
-    { key: "meeting_scheduled", label: "Demo Scheduled", value: counts.meeting_scheduled + counts.demo_completed },
-    { key: "registered", label: "Registered", value: counts.registered },
-    { key: "pending_verification", label: "Pending Verification", value: counts.pending_verification },
-    { key: "verified", label: "Verified", value: counts.verified },
-    { key: "founding_doctor", label: "Founding Doctors", value: counts.founding_doctor, icon: Crown },
-    { key: "declined", label: "Declined", value: counts.declined },
+    { key: "lead", label: "Total Prospects", value: Math.max(prospects.length, funnel.lead || 0), icon: Users },
+    { key: "contacted", label: "Contacted", value: merged("contacted") },
+    { key: "interested", label: "Interested", value: merged("interested") },
+    { key: "meeting_scheduled", label: "Demo Scheduled", value: merged("meeting_scheduled") + merged("demo_completed") },
+    { key: "registered", label: "Registered", value: merged("registered") },
+    { key: "pending_verification", label: "Pending Verification", value: merged("pending_verification") },
+    { key: "verified", label: "Verified", value: merged("verified") },
+    { key: "founding_doctor", label: "Founding Doctors", value: merged("founding_doctor"), icon: Crown },
+    { key: "declined", label: "Declined", value: merged("declined") },
   ];
 
   return (
