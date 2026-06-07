@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Stethoscope, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 
 // Warm dashboard bundles in the background as soon as the login page mounts,
 // so post-login navigation doesn't wait on a network round-trip for the chunk.
