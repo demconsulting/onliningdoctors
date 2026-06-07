@@ -166,6 +166,7 @@ const AdminDashboard = () => {
       case "reminder-center": return <AdminDoctorReminderCenter />;
       case "financial-management": return <AdminFinancialManagement />;
       case "practice-patients": return <AdminPracticePatients />;
+      case "recruitment-crm": return <AdminRecruitmentCRM />;
       default: return <AdminHero />;
 
     }
