@@ -55,17 +55,42 @@ const AdminRecruitmentCRM = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [p, t, r, f] = await Promise.all([
+    const [p, t, r, f, d, av, ap] = await Promise.all([
       supabase.from("recruitment_prospects" as any).select("*").order("updated_at", { ascending: false }),
       supabase.from("recruitment_tasks" as any).select("*").order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("recruitment_referrals" as any).select("*").order("referral_date", { ascending: false }),
       supabase.rpc("admin_recruitment_funnel" as any),
+      supabase.from("doctors").select("profile_id,is_verified,is_founding_doctor,is_suspended,created_at"),
+      supabase.from("doctor_availability").select("doctor_id"),
+      supabase.from("appointments").select("doctor_id,status").eq("status", "completed"),
     ]);
+    if (f.error) console.warn("admin_recruitment_funnel rpc failed:", f.error);
+    if (d.error) console.warn("doctors fetch failed:", d.error);
     setProspects((p.data as any[]) || []);
     setTasks((t.data as any[]) || []);
     setReferrals((r.data as any[]) || []);
+
     const fmap: Record<string, number> = {};
     ((f.data as any[]) || []).forEach((row: any) => { fmap[row.stage] = Number(row.current_count); });
+
+    // Client-side fallback merge from doctors table (works even if RPC blocked)
+    const docs = ((d.data as any[]) || []).filter((x: any) => !x.is_suspended);
+    const avSet = new Set(((av.data as any[]) || []).map((x: any) => x.doctor_id));
+    const consultSet = new Set(((ap.data as any[]) || []).map((x: any) => x.doctor_id));
+    const registered = docs.length;
+    const pending = docs.filter((x: any) => !x.is_verified).length;
+    const verified = docs.filter((x: any) => x.is_verified).length;
+    const founding = docs.filter((x: any) => x.is_founding_doctor).length;
+    const activated = docs.filter((x: any) => x.is_verified && avSet.has(x.profile_id)).length;
+    const firstConsult = docs.filter((x: any) => consultSet.has(x.profile_id)).length;
+    const bump = (k: string, v: number) => { fmap[k] = Math.max(fmap[k] || 0, v); };
+    bump("registered", registered);
+    bump("pending_verification", pending);
+    bump("verified", verified);
+    bump("founding_doctor", founding);
+    bump("activated", activated);
+    bump("first_consultation_completed", firstConsult);
+
     setFunnel(fmap);
     setLoading(false);
   }, []);
