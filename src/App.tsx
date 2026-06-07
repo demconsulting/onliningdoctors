@@ -82,6 +82,7 @@ import Index from "./pages/Index";
 const Login = lazyWithRetry(() => import("./pages/Login"));
 const Signup = lazyWithRetry(() => import("./pages/Signup"));
 const DoctorSignup = lazyWithRetry(() => import("./pages/DoctorSignup"));
+const DoctorOnboarding = lazyWithRetry(() => import("./pages/DoctorOnboarding"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
 const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"));
