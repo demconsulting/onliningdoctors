@@ -11,6 +11,7 @@ import { Stethoscope, Loader2, ShieldCheck } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { getCountries } from "@/data/locations";
 
 const DoctorSignup = () => {
