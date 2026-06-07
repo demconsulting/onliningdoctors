@@ -90,7 +90,8 @@ const AdminRecruitmentCRM = () => {
   }, [bulkTpl]);
 
   const filtered = useMemo(() => {
-    return prospects.filter(p => {
+    const allProspects = [...doctorProspects, ...prospects];
+    return allProspects.filter(p => {
       if (stageFilter !== "all" && p.stage !== stageFilter) return false;
       if (search) {
         const q = search.toLowerCase();
@@ -99,19 +100,23 @@ const AdminRecruitmentCRM = () => {
       }
       return true;
     });
-  }, [prospects, search, stageFilter]);
+  }, [doctorProspects, prospects, search, stageFilter]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     PIPELINE_STAGES.forEach(s => c[s.key] = 0);
-    prospects.forEach(p => { c[p.stage] = (c[p.stage] || 0) + 1; });
+    [...doctorProspects, ...prospects].forEach(p => { c[p.stage] = (c[p.stage] || 0) + 1; });
     return c;
-  }, [prospects]);
+  }, [doctorProspects, prospects]);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openEdit = (p: any) => { setEditing(p); setDialogOpen(true); };
 
   const handleStageChange = async (id: string, stage: string) => {
+    if (id.startsWith("doctor:")) {
+      toast({ title: "Registered doctors move by verification status", description: "Update the doctor's verification or founding status to move this card." });
+      return;
+    }
     const prev = prospects;
     setProspects(prev.map(p => p.id === id ? { ...p, stage } : p));
     const { error } = await supabase.from("recruitment_prospects" as any).update({ stage }).eq("id", id);
