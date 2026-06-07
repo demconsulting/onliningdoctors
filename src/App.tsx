@@ -162,6 +162,7 @@ const App = () => (
               <Route path="/signin" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/signup/doctor" element={<DoctorSignup />} />
+              <Route path="/onboarding/doctor" element={<DoctorOnboarding />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
