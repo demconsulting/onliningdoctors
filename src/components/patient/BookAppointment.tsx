@@ -154,11 +154,11 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     if (!preselectDoctorId) return;
     let cancelled = false;
     supabase
-      .from("doctors")
+      .from("public_doctors" as any)
       .select("specialty_id")
       .eq("profile_id", preselectDoctorId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (cancelled || !data?.specialty_id) return;
         setSelectedSpecialty(data.specialty_id);
       });
