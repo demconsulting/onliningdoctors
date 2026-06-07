@@ -89,8 +89,9 @@ const AdminRecruitmentCRM = () => {
     if (tpl) { setBulkSubject(tpl.emailSubject); setBulkBody(tpl.emailBody); }
   }, [bulkTpl]);
 
+  const allProspects = useMemo(() => [...doctorProspects, ...prospects], [doctorProspects, prospects]);
+
   const filtered = useMemo(() => {
-    const allProspects = [...doctorProspects, ...prospects];
     return allProspects.filter(p => {
       if (stageFilter !== "all" && p.stage !== stageFilter) return false;
       if (search) {
@@ -100,17 +101,24 @@ const AdminRecruitmentCRM = () => {
       }
       return true;
     });
-  }, [doctorProspects, prospects, search, stageFilter]);
+  }, [allProspects, search, stageFilter]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     PIPELINE_STAGES.forEach(s => c[s.key] = 0);
-    [...doctorProspects, ...prospects].forEach(p => { c[p.stage] = (c[p.stage] || 0) + 1; });
+    allProspects.forEach(p => { c[p.stage] = (c[p.stage] || 0) + 1; });
     return c;
-  }, [doctorProspects, prospects]);
+  }, [allProspects]);
 
   const openNew = () => { setEditing(null); setDialogOpen(true); };
   const openEdit = (p: any) => { setEditing(p); setDialogOpen(true); };
+  const openPipelineItem = (p: any) => {
+    if (p.__source === "doctor") {
+      toast({ title: `${p.title || "Dr."} ${p.first_name} ${p.last_name}`, description: p.notes || "Registered doctor" });
+      return;
+    }
+    openEdit(p);
+  };
 
   const handleStageChange = async (id: string, stage: string) => {
     if (id.startsWith("doctor:")) {
