@@ -155,7 +155,9 @@ const App = () => (
       <ImpersonationBanner />
       <BrowserRouter>
         <ChunkErrorBoundary>
+          <GoogleOneTap />
           <Suspense fallback={<RouteFallback />}>
+
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
