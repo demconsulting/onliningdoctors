@@ -233,7 +233,7 @@ const AdminRecruitmentCRM = () => {
           <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="early-access">Early Access</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          <TabsTrigger value="prospects">Prospects ({prospects.length})</TabsTrigger>
+          <TabsTrigger value="prospects">Prospects ({totalProspects})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks {overdueTasks.length > 0 && <Badge variant="destructive" className="ml-1.5">{overdueTasks.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="referrals">Referrals</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -273,10 +273,10 @@ const AdminRecruitmentCRM = () => {
                 </>
               )}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-2">
-                <Stat label="Applied" value={prospects.filter(p => p.stage === "invited" || p.stage === "registered").length} />
-                <Stat label="Pending Verification" value={counts.pending_verification} />
-                <Stat label="Verified" value={counts.verified} />
-                <Stat label="Approved Founding" value={counts.founding_doctor} />
+                <Stat label="Applied" value={merged("invited") + merged("registered")} />
+                <Stat label="Pending Verification" value={merged("pending_verification")} />
+                <Stat label="Verified" value={merged("verified")} />
+                <Stat label="Approved Founding" value={merged("founding_doctor")} />
               </div>
             </CardContent>
           </Card>
@@ -305,7 +305,7 @@ const AdminRecruitmentCRM = () => {
 
         {/* PIPELINE */}
         <TabsContent value="pipeline">
-          <PipelineBoard prospects={prospects} onStageChange={handleStageChange} onOpen={openEdit} />
+          <PipelineBoard prospects={allProspects} onStageChange={handleStageChange} onOpen={openPipelineItem} />
         </TabsContent>
 
         {/* PROSPECTS */}
@@ -351,7 +351,7 @@ const AdminRecruitmentCRM = () => {
                       </TableCell>
                       <TableCell><Badge variant="outline">{stageLabel(p.stage)}</Badge></TableCell>
                       <TableCell>{p.next_follow_up_date ? format(new Date(p.next_follow_up_date), "PP") : "—"}</TableCell>
-                      <TableCell><Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteProspect(p.id); }}>Delete</Button></TableCell>
+                      <TableCell>{p.__source !== "doctor" && <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); deleteProspect(p.id); }}>Delete</Button>}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
