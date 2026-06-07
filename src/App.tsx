@@ -75,6 +75,8 @@ class ChunkErrorBoundary extends Component<
 // never competes with homepage LCP.
 const ChatWidget = lazyWithRetry(() => import("./components/chat/ChatWidget"));
 import ImpersonationBanner from "./components/admin/ImpersonationBanner";
+import GoogleOneTap from "./components/auth/GoogleOneTap";
+
 import Index from "./pages/Index";
 
 // Code-split: load route bundles only when navigated to.
