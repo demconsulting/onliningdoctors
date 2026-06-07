@@ -62,14 +62,16 @@ const DoctorOnboarding = () => {
     // Fire-and-forget welcome email
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      supabase.functions
+      void supabase.functions
         .invoke("send-doctor-welcome-email", { body: { doctorProfileId: user.id } })
-        .catch(() => undefined);
-      supabase.rpc("log_audit_event_self", {
-        _action: "google_doctor_registration",
-        _table_name: "auth.users",
-        _details: { provider: "google" } as never,
-      }).catch(() => undefined);
+        .then(() => undefined, () => undefined);
+      void Promise.resolve(
+        supabase.rpc("log_audit_event_self", {
+          _action: "google_doctor_registration",
+          _table_name: "auth.users",
+          _details: { provider: "google" },
+        })
+      ).then(() => undefined, () => undefined);
     }
     toast({ title: "Application submitted", description: "An admin will review your credentials shortly." });
     navigate("/doctor-dashboard", { replace: true });
