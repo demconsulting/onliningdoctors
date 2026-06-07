@@ -52,6 +52,29 @@ const AuthCallback = () => {
         .eq("user_id", user.id);
       const isDoctor = roles?.some((r) => r.role === "doctor");
       const isAdmin = roles?.some((r) => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
+
+      // Audit-log Google sign-ins / registrations. New users were created within the last 60s.
+      const provider = (user.app_metadata as { provider?: string } | null)?.provider;
+      if (provider === "google") {
+        const createdAt = user.created_at ? new Date(user.created_at).getTime() : 0;
+        const isNew = Date.now() - createdAt < 60_000;
+        void Promise.resolve(
+          supabase.rpc("log_audit_event_self", {
+            _action: isNew ? "google_registration" : "google_sign_in",
+            _table_name: "auth.users",
+            _details: { provider: "google", email: user.email },
+          })
+        ).then(() => undefined, () => undefined);
+      }
+
+      // Doctor signup via Google: send new accounts (no doctor role yet) to onboarding.
+      const pendingDoctor = localStorage.getItem("pending_doctor_signup") === "1";
+      if (pendingDoctor && !isDoctor && !isAdmin) {
+        navigate("/onboarding/doctor", { replace: true });
+        return;
+      }
+      localStorage.removeItem("pending_doctor_signup");
+
       if (redirectTo && !isAdmin && !isDoctor) {
         navigate(redirectTo, { replace: true });
         return;
