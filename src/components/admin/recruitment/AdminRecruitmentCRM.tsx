@@ -19,6 +19,14 @@ import { PIPELINE_STAGES, TEMPLATES, stageLabel } from "./templates";
 import PipelineBoard from "./PipelineBoard";
 import ProspectDialog from "./ProspectDialog";
 import { useFoundingSlots } from "@/hooks/useFoundingSlots";
+import FunnelAnalytics from "./FunnelAnalytics";
+import ActivationPipeline from "./ActivationPipeline";
+import FoundingCohortDashboard from "./FoundingCohortDashboard";
+import DoctorSuccessTable from "./DoctorSuccessTable";
+import FirstConsultationTracker from "./FirstConsultationTracker";
+import GeographicDashboard from "./GeographicDashboard";
+import SourceTrackingDashboard from "./SourceTrackingDashboard";
+import EarlyAccessInterestList from "./EarlyAccessInterestList";
 
 const AdminRecruitmentCRM = () => {
   const { toast } = useToast();
