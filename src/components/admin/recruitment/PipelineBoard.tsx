@@ -75,7 +75,7 @@ const PipelineBoard = ({ prospects, stageCounts = {}, onStageChange, onOpen }: P
 
   return (
     <DndContext sensors={sensors} onDragStart={(e: DragStartEvent) => setActiveId(e.active.id as string)} onDragEnd={handleEnd}>
-      <div className="flex gap-3 overflow-x-auto pb-3">
+      <div className="flex flex-wrap gap-3 pb-3">
         {PIPELINE_STAGES.map(s => <Column key={s.key} stage={s} items={grouped[s.key] || []} count={Math.max((grouped[s.key] || []).length, stageCounts[s.key] || 0)} onOpen={onOpen} />)}
       </div>
       <DragOverlay>{active && <Card p={active} onOpen={() => {}} />}</DragOverlay>
