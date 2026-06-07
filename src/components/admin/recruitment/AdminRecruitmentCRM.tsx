@@ -19,6 +19,14 @@ import { PIPELINE_STAGES, TEMPLATES, stageLabel } from "./templates";
 import PipelineBoard from "./PipelineBoard";
 import ProspectDialog from "./ProspectDialog";
 import { useFoundingSlots } from "@/hooks/useFoundingSlots";
+import FunnelAnalytics from "./FunnelAnalytics";
+import ActivationPipeline from "./ActivationPipeline";
+import FoundingCohortDashboard from "./FoundingCohortDashboard";
+import DoctorSuccessTable from "./DoctorSuccessTable";
+import FirstConsultationTracker from "./FirstConsultationTracker";
+import GeographicDashboard from "./GeographicDashboard";
+import SourceTrackingDashboard from "./SourceTrackingDashboard";
+import EarlyAccessInterestList from "./EarlyAccessInterestList";
 
 const AdminRecruitmentCRM = () => {
   const { toast } = useToast();
@@ -183,12 +191,29 @@ const AdminRecruitmentCRM = () => {
       <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="funnel">Funnel</TabsTrigger>
+          <TabsTrigger value="activation">Activation</TabsTrigger>
+          <TabsTrigger value="founding">Founding Cohort</TabsTrigger>
+          <TabsTrigger value="success">Success</TabsTrigger>
+          <TabsTrigger value="first-consult">First Consult</TabsTrigger>
+          <TabsTrigger value="geography">Geography</TabsTrigger>
+          <TabsTrigger value="sources">Sources</TabsTrigger>
+          <TabsTrigger value="early-access">Early Access</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
           <TabsTrigger value="prospects">Prospects ({prospects.length})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks {overdueTasks.length > 0 && <Badge variant="destructive" className="ml-1.5">{overdueTasks.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="referrals">Referrals</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="funnel"><FunnelAnalytics /></TabsContent>
+        <TabsContent value="activation"><ActivationPipeline /></TabsContent>
+        <TabsContent value="founding"><FoundingCohortDashboard /></TabsContent>
+        <TabsContent value="success"><DoctorSuccessTable /></TabsContent>
+        <TabsContent value="first-consult"><FirstConsultationTracker /></TabsContent>
+        <TabsContent value="geography"><GeographicDashboard /></TabsContent>
+        <TabsContent value="sources"><SourceTrackingDashboard /></TabsContent>
+        <TabsContent value="early-access"><EarlyAccessInterestList /></TabsContent>
 
         {/* DASHBOARD */}
         <TabsContent value="dashboard" className="space-y-4">
