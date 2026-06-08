@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles, WalletCards, ShieldCheck, CalendarRange, FileText, ClipboardList, Users } from "lucide-react";
+import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles, WalletCards, ShieldCheck, CalendarRange, FileText, ClipboardList, Users, Gift } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
@@ -23,7 +23,9 @@ const DoctorMedicalAidRequests = lazy(() => import("@/components/doctor/DoctorMe
 const PracticeCalendar = lazy(() => import("@/components/calendar/PracticeCalendar"));
 const DoctorProfileChanges = lazy(() => import("@/components/doctor/DoctorProfileChanges"));
 const PracticePatients = lazy(() => import("@/components/doctor/PracticePatients"));
+const ReferralCenter = lazy(() => import("@/components/referrals/ReferralCenter"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
+import { attachPendingReferral } from "@/lib/referral";
 
 const TabFallback = () => (
   <div className="flex items-center justify-center py-12" role="status" aria-label="Loading">
@@ -156,6 +158,9 @@ const DoctorDashboard = () => {
               <TabsTrigger value="wellness" className="gap-1.5">
                 <Sparkles className="h-4 w-4" /> Wellness+
               </TabsTrigger>
+              <TabsTrigger value="referrals" className="gap-1.5">
+                <Gift className="h-4 w-4" /> Referrals
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -209,6 +214,11 @@ const DoctorDashboard = () => {
           <TabsContent value="wellness">
             <Suspense fallback={<TabFallback />}>
               <DoctorWellnessPlus />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="referrals">
+            <Suspense fallback={<TabFallback />}>
+              <ReferralCenter user={user} />
             </Suspense>
           </TabsContent>
           {/* Advanced tools — accessible from the Dashboard overview */}
