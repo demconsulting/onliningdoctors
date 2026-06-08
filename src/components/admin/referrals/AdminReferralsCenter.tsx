@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ShieldAlert, Gift, Users, TrendingUp, CreditCard, Settings as SettingsIcon, BarChart3 } from "lucide-react";
+import { Loader2, ShieldAlert, Gift, Users, TrendingUp, CreditCard, Settings as SettingsIcon, BarChart3, ListChecks } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type Overview = {
