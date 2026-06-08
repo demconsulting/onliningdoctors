@@ -31,13 +31,14 @@ const AdminReferralsCenter = () => {
   const [tab, setTab] = useState("overview");
   return (
     <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
         <TabsTrigger value="overview" className="gap-1.5"><BarChart3 className="h-4 w-4" />Overview</TabsTrigger>
         <TabsTrigger value="top" className="gap-1.5"><TrendingUp className="h-4 w-4" />Top</TabsTrigger>
         <TabsTrigger value="approvals" className="gap-1.5"><Gift className="h-4 w-4" />Approvals</TabsTrigger>
         <TabsTrigger value="fraud" className="gap-1.5"><ShieldAlert className="h-4 w-4" />Fraud</TabsTrigger>
         <TabsTrigger value="settings" className="gap-1.5"><SettingsIcon className="h-4 w-4" />Rewards</TabsTrigger>
         <TabsTrigger value="payouts" className="gap-1.5"><CreditCard className="h-4 w-4" />Payouts</TabsTrigger>
+        <TabsTrigger value="audit" className="gap-1.5"><ListChecks className="h-4 w-4" />Audit</TabsTrigger>
         <TabsTrigger value="program" className="gap-1.5"><Users className="h-4 w-4" />Program</TabsTrigger>
       </TabsList>
       <TabsContent value="overview"><Overview /></TabsContent>
@@ -46,6 +47,7 @@ const AdminReferralsCenter = () => {
       <TabsContent value="fraud"><FraudMonitoring /></TabsContent>
       <TabsContent value="settings"><RewardSettings /></TabsContent>
       <TabsContent value="payouts"><PayoutManagement /></TabsContent>
+      <TabsContent value="audit"><CalculationsAudit /></TabsContent>
       <TabsContent value="program"><ProgramSettings /></TabsContent>
     </Tabs>
   );
