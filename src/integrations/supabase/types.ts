@@ -3073,6 +3073,103 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_reward_calculations: {
+        Row: {
+          applied_amount: number
+          appointment_id: string | null
+          basis: Database["public"]["Enums"]["referral_reward_basis"]
+          basis_value: number
+          computed_amount: number
+          created_at: string
+          currency: string
+          decision: string
+          details: Json
+          fixed_amount: number
+          id: string
+          ledger_id: string | null
+          lifetime_cap: number | null
+          lifetime_used: number
+          monthly_cap: number | null
+          monthly_used: number
+          percentage: number
+          reason: string | null
+          referral_id: string | null
+          referrer_id: string
+          setting_id: string | null
+          trigger_event: Database["public"]["Enums"]["referral_trigger_event"]
+        }
+        Insert: {
+          applied_amount?: number
+          appointment_id?: string | null
+          basis: Database["public"]["Enums"]["referral_reward_basis"]
+          basis_value?: number
+          computed_amount?: number
+          created_at?: string
+          currency?: string
+          decision: string
+          details?: Json
+          fixed_amount?: number
+          id?: string
+          ledger_id?: string | null
+          lifetime_cap?: number | null
+          lifetime_used?: number
+          monthly_cap?: number | null
+          monthly_used?: number
+          percentage?: number
+          reason?: string | null
+          referral_id?: string | null
+          referrer_id: string
+          setting_id?: string | null
+          trigger_event: Database["public"]["Enums"]["referral_trigger_event"]
+        }
+        Update: {
+          applied_amount?: number
+          appointment_id?: string | null
+          basis?: Database["public"]["Enums"]["referral_reward_basis"]
+          basis_value?: number
+          computed_amount?: number
+          created_at?: string
+          currency?: string
+          decision?: string
+          details?: Json
+          fixed_amount?: number
+          id?: string
+          ledger_id?: string | null
+          lifetime_cap?: number | null
+          lifetime_used?: number
+          monthly_cap?: number | null
+          monthly_used?: number
+          percentage?: number
+          reason?: string | null
+          referral_id?: string | null
+          referrer_id?: string
+          setting_id?: string | null
+          trigger_event?: Database["public"]["Enums"]["referral_trigger_event"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_reward_calculations_ledger_id_fkey"
+            columns: ["ledger_id"]
+            isOneToOne: false
+            referencedRelation: "referral_rewards_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_reward_calculations_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_reward_calculations_setting_id_fkey"
+            columns: ["setting_id"]
+            isOneToOne: false
+            referencedRelation: "referral_reward_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       referral_reward_settings: {
         Row: {
           amount: number
@@ -3081,12 +3178,19 @@ export type Database = {
           currency: string
           id: string
           is_enabled: boolean
+          lifetime_reward_cap: number | null
+          monthly_reward_cap: number | null
           referred_type: Database["public"]["Enums"]["referral_user_type"]
           referrer_type: Database["public"]["Enums"]["referral_user_type"]
           requires_admin_approval: boolean
+          reward_basis: Database["public"]["Enums"]["referral_reward_basis"]
+          reward_duration_months: number | null
+          reward_percentage: number
           reward_type: Database["public"]["Enums"]["referral_reward_type"]
+          trigger_event: Database["public"]["Enums"]["referral_trigger_event"]
           updated_at: string
           updated_by: string | null
+          verification_requirements: Json
         }
         Insert: {
           amount?: number
@@ -3095,12 +3199,19 @@ export type Database = {
           currency?: string
           id?: string
           is_enabled?: boolean
+          lifetime_reward_cap?: number | null
+          monthly_reward_cap?: number | null
           referred_type: Database["public"]["Enums"]["referral_user_type"]
           referrer_type: Database["public"]["Enums"]["referral_user_type"]
           requires_admin_approval?: boolean
+          reward_basis?: Database["public"]["Enums"]["referral_reward_basis"]
+          reward_duration_months?: number | null
+          reward_percentage?: number
           reward_type?: Database["public"]["Enums"]["referral_reward_type"]
+          trigger_event?: Database["public"]["Enums"]["referral_trigger_event"]
           updated_at?: string
           updated_by?: string | null
+          verification_requirements?: Json
         }
         Update: {
           amount?: number
@@ -3109,12 +3220,19 @@ export type Database = {
           currency?: string
           id?: string
           is_enabled?: boolean
+          lifetime_reward_cap?: number | null
+          monthly_reward_cap?: number | null
           referred_type?: Database["public"]["Enums"]["referral_user_type"]
           referrer_type?: Database["public"]["Enums"]["referral_user_type"]
           requires_admin_approval?: boolean
+          reward_basis?: Database["public"]["Enums"]["referral_reward_basis"]
+          reward_duration_months?: number | null
+          reward_percentage?: number
           reward_type?: Database["public"]["Enums"]["referral_reward_type"]
+          trigger_event?: Database["public"]["Enums"]["referral_trigger_event"]
           updated_at?: string
           updated_by?: string | null
+          verification_requirements?: Json
         }
         Relationships: []
       }
@@ -3583,6 +3701,10 @@ export type Database = {
         }[]
       }
       admin_referral_overview: { Args: never; Returns: Json }
+      admin_referrer_lifetime_value: {
+        Args: { _referrer_id: string }
+        Returns: Json
+      }
       admin_reject_referral_reward: {
         Args: { _reason: string; _referral_id: string }
         Returns: undefined
@@ -3596,6 +3718,22 @@ export type Database = {
           total_earned: number
           user_id: string
           user_type: Database["public"]["Enums"]["referral_user_type"]
+        }[]
+      }
+      admin_top_referrers_by_type: {
+        Args: {
+          _limit?: number
+          _role: Database["public"]["Enums"]["referral_user_type"]
+        }
+        Returns: {
+          approved: number
+          email: string
+          full_name: string
+          lifetime_value: number
+          paid: number
+          total: number
+          total_earned: number
+          user_id: string
         }[]
       }
       admin_unlink_practice_patient: {
@@ -3623,6 +3761,15 @@ export type Database = {
       complete_doctor_signup: {
         Args: { _country: string; _license_number: string; _title: string }
         Returns: undefined
+      }
+      compute_referral_reward_amount: {
+        Args: {
+          _basis: Database["public"]["Enums"]["referral_reward_basis"]
+          _basis_value: number
+          _fixed: number
+          _percentage: number
+        }
+        Returns: number
       }
       deny_practice_patient: {
         Args: { _practice_patient_id: string }
@@ -3697,9 +3844,47 @@ export type Database = {
         Args: { _action: string; _details: Json; _table_name: string }
         Returns: undefined
       }
+      process_consultation_referral_reward: {
+        Args: { _appointment_id: string }
+        Returns: undefined
+      }
       reject_profile_change: {
         Args: { _change_id: string; _reason: string }
         Returns: undefined
+      }
+      resolve_referral_reward_setting: {
+        Args: {
+          _country: string
+          _referred_type: Database["public"]["Enums"]["referral_user_type"]
+          _referrer_type: Database["public"]["Enums"]["referral_user_type"]
+        }
+        Returns: {
+          amount: number
+          country: string
+          created_at: string
+          currency: string
+          id: string
+          is_enabled: boolean
+          lifetime_reward_cap: number | null
+          monthly_reward_cap: number | null
+          referred_type: Database["public"]["Enums"]["referral_user_type"]
+          referrer_type: Database["public"]["Enums"]["referral_user_type"]
+          requires_admin_approval: boolean
+          reward_basis: Database["public"]["Enums"]["referral_reward_basis"]
+          reward_duration_months: number | null
+          reward_percentage: number
+          reward_type: Database["public"]["Enums"]["referral_reward_type"]
+          trigger_event: Database["public"]["Enums"]["referral_trigger_event"]
+          updated_at: string
+          updated_by: string | null
+          verification_requirements: Json
+        }
+        SetofOptions: {
+          from: "*"
+          to: "referral_reward_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
       verify_prescription: {
@@ -3751,6 +3936,11 @@ export type Database = {
         | "reversed"
         | "rejected"
       referral_ledger_type: "credit" | "debit" | "payout" | "reversal"
+      referral_reward_basis:
+        | "fixed_amount"
+        | "pct_platform_fee"
+        | "pct_consultation_fee"
+        | "pct_net_revenue"
       referral_reward_type:
         | "wallet_credit"
         | "cash"
@@ -3765,6 +3955,12 @@ export type Database = {
         | "rejected"
         | "fraud_detected"
         | "paid"
+      referral_trigger_event:
+        | "signup"
+        | "email_verified"
+        | "identity_verified"
+        | "first_consultation_completed"
+        | "per_consultation"
       referral_user_type: "doctor" | "patient"
     }
     CompositeTypes: {
@@ -3933,6 +4129,12 @@ export const Constants = {
         "rejected",
       ],
       referral_ledger_type: ["credit", "debit", "payout", "reversal"],
+      referral_reward_basis: [
+        "fixed_amount",
+        "pct_platform_fee",
+        "pct_consultation_fee",
+        "pct_net_revenue",
+      ],
       referral_reward_type: [
         "wallet_credit",
         "cash",
@@ -3948,6 +4150,13 @@ export const Constants = {
         "rejected",
         "fraud_detected",
         "paid",
+      ],
+      referral_trigger_event: [
+        "signup",
+        "email_verified",
+        "identity_verified",
+        "first_consultation_completed",
+        "per_consultation",
       ],
       referral_user_type: ["doctor", "patient"],
     },
