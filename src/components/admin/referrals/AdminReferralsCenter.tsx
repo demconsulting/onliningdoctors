@@ -84,36 +84,88 @@ const Overview = () => {
 };
 
 const TopReferrers = () => {
+  const [role, setRole] = useState<"doctor" | "patient">("doctor");
   const [rows, setRows] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any | null>(null);
+  const [ltv, setLtv] = useState<any | null>(null);
+
   useEffect(() => {
-    supabase.rpc("admin_top_referrers", { _limit: 50 }).then(({ data }) => setRows(data ?? []));
-  }, []);
+    supabase.rpc("admin_top_referrers_by_type", { _role: role, _limit: 50 }).then(({ data }) => setRows(data ?? []));
+  }, [role]);
+
+  const openLtv = async (row: any) => {
+    setSelected(row); setLtv(null);
+    const { data } = await supabase.rpc("admin_referrer_lifetime_value", { _referrer_id: row.user_id });
+    setLtv(data);
+  };
+
   return (
     <Card>
-      <CardHeader><CardTitle>Top Referrers</CardTitle></CardHeader>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle>Top Referrers</CardTitle>
+          <Select value={role} onValueChange={(v) => setRole(v as any)}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="doctor">Top Doctors</SelectItem>
+              <SelectItem value="patient">Top Patients</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <CardDescription>Click a row to see lifetime value generated.</CardDescription>
+      </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead><TableHead>Type</TableHead>
+              <TableHead>Name</TableHead>
               <TableHead className="text-right">Total</TableHead>
               <TableHead className="text-right">Approved</TableHead>
               <TableHead className="text-right">Paid</TableHead>
+              <TableHead className="text-right">Earned</TableHead>
+              <TableHead className="text-right">Lifetime Value</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((r) => (
-              <TableRow key={r.user_id}>
-                <TableCell>{r.full_name}</TableCell>
-                <TableCell className="capitalize">{r.user_type}</TableCell>
+              <TableRow key={r.user_id} className="cursor-pointer hover:bg-muted/40" onClick={() => openLtv(r)}>
+                <TableCell>{r.full_name || r.email}</TableCell>
                 <TableCell className="text-right">{r.total}</TableCell>
                 <TableCell className="text-right">{r.approved}</TableCell>
+                <TableCell className="text-right">{r.paid}</TableCell>
                 <TableCell className="text-right">{fmt(Number(r.total_earned))}</TableCell>
+                <TableCell className="text-right">{fmt(Number(r.lifetime_value))}</TableCell>
               </TableRow>
             ))}
+            {rows.length === 0 && <TableRow><TableCell colSpan={6} className="py-6 text-center text-sm text-muted-foreground">No referrers yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent>
+
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{selected?.full_name || selected?.email} — Lifetime Value</DialogTitle></DialogHeader>
+          {!ltv ? <Loader /> : (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {[
+                ["Total referrals", ltv.total_referrals],
+                ["Completed referrals", ltv.completed_referrals],
+                ["Consultations generated", ltv.consultations_generated],
+                ["Gross revenue generated", fmt(Number(ltv.gross_revenue_generated))],
+                ["Platform fees generated", fmt(Number(ltv.platform_fees_generated))],
+                ["Rewards pending", fmt(Number(ltv.rewards_pending))],
+                ["Rewards approved", fmt(Number(ltv.rewards_approved))],
+                ["Rewards paid", fmt(Number(ltv.rewards_paid))],
+              ].map(([k, v]) => (
+                <div key={String(k)} className="rounded-md border p-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">{k}</p>
+                  <p className="mt-1 font-display text-lg font-semibold">{String(v)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
