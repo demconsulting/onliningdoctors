@@ -1,4 +1,4 @@
-import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive, TrendingUp, Network } from "lucide-react";
+import { Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive, TrendingUp, Network, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { prefetchAdminSection } from "@/pages/AdminDashboard";
 import {
@@ -31,6 +31,7 @@ const items = [
   { title: "Reminder Center", key: "reminder-center", icon: Mail },
   { title: "Founding Doctors", key: "founding-doctors", icon: Crown },
   { title: "Recruitment CRM", key: "recruitment-crm", icon: Network },
+  { title: "Referral & Rewards", key: "referrals", icon: Gift },
   { title: "Users", key: "users", icon: Users },
   { title: "Appointments", key: "appointments", icon: Calendar },
   { title: "Practice Patients", key: "practice-patients", icon: Users },
