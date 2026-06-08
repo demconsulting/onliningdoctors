@@ -85,6 +85,7 @@ const DoctorDashboard = () => {
 
       setIsDoctor(true);
       setLoading(false);
+      void attachPendingReferral();
     };
 
     checkAuth();
