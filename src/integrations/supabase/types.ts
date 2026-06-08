@@ -2930,6 +2930,343 @@ export type Database = {
           },
         ]
       }
+      referral_clicks: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          ip: string | null
+          referer: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          referer?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          referer?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          total_clicks: number
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["referral_user_type"]
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          total_clicks?: number
+          updated_at?: string
+          user_id: string
+          user_type?: Database["public"]["Enums"]["referral_user_type"]
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          total_clicks?: number
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["referral_user_type"]
+        }
+        Relationships: []
+      }
+      referral_fraud_flags: {
+        Row: {
+          created_at: string
+          details: Json
+          flag_type: Database["public"]["Enums"]["referral_flag_type"]
+          id: string
+          referral_id: string
+          resolution_notes: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["referral_flag_severity"]
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          flag_type: Database["public"]["Enums"]["referral_flag_type"]
+          id?: string
+          referral_id: string
+          resolution_notes?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["referral_flag_severity"]
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          flag_type?: Database["public"]["Enums"]["referral_flag_type"]
+          id?: string
+          referral_id?: string
+          resolution_notes?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["referral_flag_severity"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_fraud_flags_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_program_settings: {
+        Row: {
+          auto_cash_payouts: boolean
+          fraud_detection_enabled: boolean
+          id: string
+          identity_verification_required: boolean
+          manual_reward_approval: boolean
+          multi_level_enabled: boolean
+          tracking_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+          wallet_credits_enabled: boolean
+        }
+        Insert: {
+          auto_cash_payouts?: boolean
+          fraud_detection_enabled?: boolean
+          id?: string
+          identity_verification_required?: boolean
+          manual_reward_approval?: boolean
+          multi_level_enabled?: boolean
+          tracking_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          wallet_credits_enabled?: boolean
+        }
+        Update: {
+          auto_cash_payouts?: boolean
+          fraud_detection_enabled?: boolean
+          id?: string
+          identity_verification_required?: boolean
+          manual_reward_approval?: boolean
+          multi_level_enabled?: boolean
+          tracking_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          wallet_credits_enabled?: boolean
+        }
+        Relationships: []
+      }
+      referral_reward_settings: {
+        Row: {
+          amount: number
+          country: string
+          created_at: string
+          currency: string
+          id: string
+          is_enabled: boolean
+          referred_type: Database["public"]["Enums"]["referral_user_type"]
+          referrer_type: Database["public"]["Enums"]["referral_user_type"]
+          requires_admin_approval: boolean
+          reward_type: Database["public"]["Enums"]["referral_reward_type"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount?: number
+          country?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_enabled?: boolean
+          referred_type: Database["public"]["Enums"]["referral_user_type"]
+          referrer_type: Database["public"]["Enums"]["referral_user_type"]
+          requires_admin_approval?: boolean
+          reward_type?: Database["public"]["Enums"]["referral_reward_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          country?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_enabled?: boolean
+          referred_type?: Database["public"]["Enums"]["referral_user_type"]
+          referrer_type?: Database["public"]["Enums"]["referral_user_type"]
+          requires_admin_approval?: boolean
+          reward_type?: Database["public"]["Enums"]["referral_reward_type"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      referral_rewards_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          entry_type: Database["public"]["Enums"]["referral_ledger_type"]
+          id: string
+          notes: string | null
+          payout_method: string | null
+          payout_reference: string | null
+          referral_id: string | null
+          status: Database["public"]["Enums"]["referral_ledger_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          entry_type?: Database["public"]["Enums"]["referral_ledger_type"]
+          id?: string
+          notes?: string | null
+          payout_method?: string | null
+          payout_reference?: string | null
+          referral_id?: string | null
+          status?: Database["public"]["Enums"]["referral_ledger_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          entry_type?: Database["public"]["Enums"]["referral_ledger_type"]
+          id?: string
+          notes?: string | null
+          payout_method?: string | null
+          payout_reference?: string | null
+          referral_id?: string | null
+          status?: Database["public"]["Enums"]["referral_ledger_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_ledger_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          admin_notes: string | null
+          code_used: string
+          created_at: string
+          device_fingerprint: string | null
+          first_consultation_date: string | null
+          flagged_reasons: Json
+          id: string
+          referred_email: string | null
+          referred_id: string | null
+          referred_type:
+            | Database["public"]["Enums"]["referral_user_type"]
+            | null
+          referrer_id: string
+          referrer_type: Database["public"]["Enums"]["referral_user_type"]
+          registration_date: string | null
+          reward_amount: number | null
+          reward_approved_at: string | null
+          reward_approved_by: string | null
+          reward_currency: string | null
+          reward_paid_at: string | null
+          reward_type:
+            | Database["public"]["Enums"]["referral_reward_type"]
+            | null
+          signup_ip: string | null
+          signup_user_agent: string | null
+          status: Database["public"]["Enums"]["referral_status"]
+          total_consultations: number
+          updated_at: string
+          verification_date: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          code_used: string
+          created_at?: string
+          device_fingerprint?: string | null
+          first_consultation_date?: string | null
+          flagged_reasons?: Json
+          id?: string
+          referred_email?: string | null
+          referred_id?: string | null
+          referred_type?:
+            | Database["public"]["Enums"]["referral_user_type"]
+            | null
+          referrer_id: string
+          referrer_type: Database["public"]["Enums"]["referral_user_type"]
+          registration_date?: string | null
+          reward_amount?: number | null
+          reward_approved_at?: string | null
+          reward_approved_by?: string | null
+          reward_currency?: string | null
+          reward_paid_at?: string | null
+          reward_type?:
+            | Database["public"]["Enums"]["referral_reward_type"]
+            | null
+          signup_ip?: string | null
+          signup_user_agent?: string | null
+          status?: Database["public"]["Enums"]["referral_status"]
+          total_consultations?: number
+          updated_at?: string
+          verification_date?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          code_used?: string
+          created_at?: string
+          device_fingerprint?: string | null
+          first_consultation_date?: string | null
+          flagged_reasons?: Json
+          id?: string
+          referred_email?: string | null
+          referred_id?: string | null
+          referred_type?:
+            | Database["public"]["Enums"]["referral_user_type"]
+            | null
+          referrer_id?: string
+          referrer_type?: Database["public"]["Enums"]["referral_user_type"]
+          registration_date?: string | null
+          reward_amount?: number | null
+          reward_approved_at?: string | null
+          reward_approved_by?: string | null
+          reward_currency?: string | null
+          reward_paid_at?: string | null
+          reward_type?:
+            | Database["public"]["Enums"]["referral_reward_type"]
+            | null
+          signup_ip?: string | null
+          signup_user_agent?: string | null
+          status?: Database["public"]["Enums"]["referral_status"]
+          total_consultations?: number
+          updated_at?: string
+          verification_date?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           admin_notes: string | null
@@ -3172,6 +3509,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_approve_referral_reward: {
+        Args: { _referral_id: string }
+        Returns: undefined
+      }
       admin_doctor_health_score: {
         Args: { _doctor_profile_id: string }
         Returns: Json
@@ -3208,6 +3549,10 @@ export type Database = {
           verified_at: string
         }[]
       }
+      admin_mark_payout_paid: {
+        Args: { _ledger_id: string; _reference: string }
+        Returns: undefined
+      }
       admin_recruitment_funnel: {
         Args: never
         Returns: {
@@ -3237,6 +3582,22 @@ export type Database = {
           verified: number
         }[]
       }
+      admin_referral_overview: { Args: never; Returns: Json }
+      admin_reject_referral_reward: {
+        Args: { _reason: string; _referral_id: string }
+        Returns: undefined
+      }
+      admin_top_referrers: {
+        Args: { _limit?: number }
+        Returns: {
+          approved: number
+          full_name: string
+          total: number
+          total_earned: number
+          user_id: string
+          user_type: Database["public"]["Enums"]["referral_user_type"]
+        }[]
+      }
       admin_unlink_practice_patient: {
         Args: { _practice_patient_id: string; _reason: string }
         Returns: undefined
@@ -3244,6 +3605,10 @@ export type Database = {
       approve_profile_change: {
         Args: { _change_id: string }
         Returns: undefined
+      }
+      attach_referral_on_signup: {
+        Args: { _code: string; _fp?: string; _ip?: string; _ua?: string }
+        Returns: string
       }
       can_impersonate: { Args: { _user_id: string }; Returns: boolean }
       check_appointment_conflict: {
@@ -3263,6 +3628,11 @@ export type Database = {
         Args: { _practice_patient_id: string }
         Returns: undefined
       }
+      ensure_referral_code: { Args: { _user_id: string }; Returns: string }
+      evaluate_referral_eligibility: {
+        Args: { _referred_id: string }
+        Returns: undefined
+      }
       expire_stale_payments: { Args: never; Returns: undefined }
       find_matching_practice_patients: {
         Args: never
@@ -3276,6 +3646,7 @@ export type Database = {
           practice_name: string
         }[]
       }
+      generate_referral_code: { Args: never; Returns: string }
       get_doctor_blocked_slots: {
         Args: { _doctor_id: string }
         Returns: {
@@ -3297,6 +3668,7 @@ export type Database = {
           would_recommend: boolean
         }[]
       }
+      get_user_referral_stats: { Args: { _user_id?: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3362,6 +3734,38 @@ export type Database = {
         | "practice_admin"
       pricing_tier_type: "private" | "medical_aid" | "follow_up" | "specialist"
       profile_change_status: "pending" | "approved" | "rejected"
+      referral_flag_severity: "block" | "review"
+      referral_flag_type:
+        | "self_referral"
+        | "duplicate_email"
+        | "duplicate_phone"
+        | "duplicate_id"
+        | "same_ip"
+        | "same_device"
+        | "same_card"
+        | "pattern"
+      referral_ledger_status:
+        | "pending"
+        | "approved"
+        | "paid"
+        | "reversed"
+        | "rejected"
+      referral_ledger_type: "credit" | "debit" | "payout" | "reversal"
+      referral_reward_type:
+        | "wallet_credit"
+        | "cash"
+        | "voucher"
+        | "promo_credit"
+      referral_status:
+        | "pending_signup"
+        | "pending_verification"
+        | "pending_first_consult"
+        | "eligible"
+        | "approved"
+        | "rejected"
+        | "fraud_detected"
+        | "paid"
+      referral_user_type: "doctor" | "patient"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3510,6 +3914,42 @@ export const Constants = {
       ],
       pricing_tier_type: ["private", "medical_aid", "follow_up", "specialist"],
       profile_change_status: ["pending", "approved", "rejected"],
+      referral_flag_severity: ["block", "review"],
+      referral_flag_type: [
+        "self_referral",
+        "duplicate_email",
+        "duplicate_phone",
+        "duplicate_id",
+        "same_ip",
+        "same_device",
+        "same_card",
+        "pattern",
+      ],
+      referral_ledger_status: [
+        "pending",
+        "approved",
+        "paid",
+        "reversed",
+        "rejected",
+      ],
+      referral_ledger_type: ["credit", "debit", "payout", "reversal"],
+      referral_reward_type: [
+        "wallet_credit",
+        "cash",
+        "voucher",
+        "promo_credit",
+      ],
+      referral_status: [
+        "pending_signup",
+        "pending_verification",
+        "pending_first_consult",
+        "eligible",
+        "approved",
+        "rejected",
+        "fraud_detected",
+        "paid",
+      ],
+      referral_user_type: ["doctor", "patient"],
     },
   },
 } as const

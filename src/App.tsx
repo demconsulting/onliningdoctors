@@ -108,6 +108,7 @@ const PracticeSettings = lazyWithRetry(() => import("./pages/PracticeSettings"))
 const WellnessPlus = lazyWithRetry(() => import("./pages/WellnessPlus"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Sitemap = lazyWithRetry(() => import("./pages/Sitemap"));
+const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
 
 const queryClient = new QueryClient();
 
@@ -190,6 +191,7 @@ const App = () => (
               <Route path="/wellness-plus" element={<WellnessPlus />} />
               <Route path="/sitemap" element={<Sitemap />} />
               <Route path="/sitemap.html" element={<Sitemap />} />
+              <Route path="/ref/:code" element={<ReferralLanding />} />
               <Route path="*" element={<NotFound />} />
 
             </Routes>

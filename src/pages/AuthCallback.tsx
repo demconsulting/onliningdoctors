@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { friendlyAuthError, parseAuthHashError } from "@/lib/authErrors";
+import { attachPendingReferral } from "@/lib/referral";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -66,6 +67,10 @@ const AuthCallback = () => {
           })
         ).then(() => undefined, () => undefined);
       }
+
+      // Attach any pending referral code captured before signup (fire-and-forget)
+      void attachPendingReferral();
+
 
       // Doctor signup via Google: send new accounts (no doctor role yet) to onboarding.
       const pendingDoctor = localStorage.getItem("pending_doctor_signup") === "1";
