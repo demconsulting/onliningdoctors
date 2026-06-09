@@ -1781,34 +1781,49 @@ export type Database = {
           created_at: string
           description: string | null
           document_type: string | null
+          expiry_date: string | null
           file_name: string
           file_path: string
           file_size: number | null
           id: string
           mime_type: string | null
           patient_id: string
+          rejection_reason: string | null
+          verification_status: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           created_at?: string
           description?: string | null
           document_type?: string | null
+          expiry_date?: string | null
           file_name: string
           file_path: string
           file_size?: number | null
           id?: string
           mime_type?: string | null
           patient_id: string
+          rejection_reason?: string | null
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           created_at?: string
           description?: string | null
           document_type?: string | null
+          expiry_date?: string | null
           file_name?: string
           file_path?: string
           file_size?: number | null
           id?: string
           mime_type?: string | null
           patient_id?: string
+          rejection_reason?: string | null
+          verification_status?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -2467,6 +2482,7 @@ export type Database = {
           id_type: string | null
           is_suspended: boolean
           phone: string | null
+          phone_verified: boolean
           state: string | null
           suspension_reason: string | null
           test_user: boolean
@@ -2491,6 +2507,7 @@ export type Database = {
           id_type?: string | null
           is_suspended?: boolean
           phone?: string | null
+          phone_verified?: boolean
           state?: string | null
           suspension_reason?: string | null
           test_user?: boolean
@@ -2515,6 +2532,7 @@ export type Database = {
           id_type?: string | null
           is_suspended?: boolean
           phone?: string | null
+          phone_verified?: boolean
           state?: string | null
           suspension_reason?: string | null
           test_user?: boolean
@@ -3701,6 +3719,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_approve_patient_document: {
+        Args: { _doc_id: string }
+        Returns: undefined
+      }
       admin_approve_referral_reward: {
         Args: { _referral_id: string }
         Returns: undefined
@@ -3778,6 +3800,10 @@ export type Database = {
       admin_referrer_lifetime_value: {
         Args: { _referrer_id: string }
         Returns: Json
+      }
+      admin_reject_patient_document: {
+        Args: { _doc_id: string; _reason: string }
+        Returns: undefined
       }
       admin_reject_referral_reward: {
         Args: { _reason: string; _referral_id: string }
@@ -3876,6 +3902,10 @@ export type Database = {
         }[]
       }
       get_founding_slots: { Args: never; Returns: Json }
+      get_patient_id_verification_status: {
+        Args: { _user: string }
+        Returns: string
+      }
       get_public_reviews: {
         Args: { _doctor_id: string }
         Returns: {
@@ -3901,6 +3931,7 @@ export type Database = {
         Args: { _country: string; _id_type: string; _id_value: string }
         Returns: string
       }
+      is_identity_verified: { Args: { _user: string }; Returns: boolean }
       is_practice_manager: {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
