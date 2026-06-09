@@ -45,6 +45,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "practice-patients": () => import("@/components/admin/AdminPracticePatients"),
   "recruitment-crm": () => import("@/components/admin/recruitment/AdminRecruitmentCRM"),
   "referrals": () => import("@/components/admin/referrals/AdminReferralsCenter"),
+  "patient-id-verification": () => import("@/components/admin/AdminPatientDocuments"),
 };
 
 
@@ -87,6 +88,7 @@ const AdminFinancialManagement = lazy(loaders["financial-management"]);
 const AdminPracticePatients = lazy(loaders["practice-patients"]);
 const AdminRecruitmentCRM = lazy(loaders["recruitment-crm"]);
 const AdminReferralsCenter = lazy(loaders["referrals"]);
+const AdminPatientDocuments = lazy(loaders["patient-id-verification"]);
 
 
 const SectionFallback = () => (
@@ -170,6 +172,7 @@ const AdminDashboard = () => {
       case "practice-patients": return <AdminPracticePatients />;
       case "recruitment-crm": return <AdminRecruitmentCRM />;
       case "referrals": return <AdminReferralsCenter />;
+      case "patient-id-verification": return <AdminPatientDocuments />;
       default: return <AdminHero />;
 
     }

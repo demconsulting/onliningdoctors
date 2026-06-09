@@ -26,6 +26,7 @@ const items = [
   { title: "Specialties", key: "specialties", icon: Stethoscope },
   { title: "FAQs", key: "faqs", icon: HelpCircle },
   { title: "Doctor Verification", key: "doctor-verification", icon: ShieldCheck },
+  { title: "Patient ID Verification", key: "patient-id-verification", icon: ShieldCheck },
   { title: "Profile Reviews", key: "profile-reviews", icon: ClipboardCheck },
   { title: "Doctor Onboarding", key: "doctor-onboarding", icon: Mail },
   { title: "Reminder Center", key: "reminder-center", icon: Mail },
