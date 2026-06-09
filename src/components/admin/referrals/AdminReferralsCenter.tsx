@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, ShieldAlert, Gift, Users, TrendingUp, CreditCard, Settings as SettingsIcon, BarChart3, ListChecks } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import ProfitabilitySimulator from "./ProfitabilitySimulator";
 
 type Overview = {
   total_referrals: number;
