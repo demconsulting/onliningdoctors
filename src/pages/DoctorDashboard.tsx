@@ -117,49 +117,49 @@ const DoctorDashboard = () => {
         <PracticeDashboardCard userId={user.id} />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          {/* Mobile-friendly: horizontal scroll on small screens */}
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-13">
-              <TabsTrigger value="dashboard" className="gap-1.5">
+          {/* Horizontally scrollable tab bar — keeps all tabs accessible on every viewport */}
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border">
+            <TabsList className="inline-flex h-auto w-max flex-nowrap gap-1 p-1">
+              <TabsTrigger value="dashboard" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <LayoutDashboard className="h-4 w-4" /> Dashboard
               </TabsTrigger>
-              <TabsTrigger value="profile-changes" className="gap-1.5">
+              <TabsTrigger value="profile-changes" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <ClipboardList className="h-4 w-4" /> Profile Changes
               </TabsTrigger>
-              <TabsTrigger value="prescriptions" className="gap-1.5">
+              <TabsTrigger value="prescriptions" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <FileText className="h-4 w-4" /> Prescriptions
               </TabsTrigger>
-              <TabsTrigger value="calendar" className="gap-1.5">
+              <TabsTrigger value="calendar" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <CalendarRange className="h-4 w-4" /> Calendar
               </TabsTrigger>
-              <TabsTrigger value="appointments" className="gap-1.5">
+              <TabsTrigger value="appointments" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Calendar className="h-4 w-4" /> Appointments
               </TabsTrigger>
-              <TabsTrigger value="practice-patients" className="gap-1.5">
+              <TabsTrigger value="practice-patients" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Users className="h-4 w-4" /> Practice Patients
               </TabsTrigger>
-              <TabsTrigger value="availability" className="gap-1.5">
+              <TabsTrigger value="availability" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Clock className="h-4 w-4" /> Availability
               </TabsTrigger>
-              <TabsTrigger value="pricing" className="gap-1.5">
+              <TabsTrigger value="pricing" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <DollarSign className="h-4 w-4" /> Pricing
               </TabsTrigger>
-              <TabsTrigger value="medical-aid" className="gap-1.5">
+              <TabsTrigger value="medical-aid" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <ShieldCheck className="h-4 w-4" /> Medical Aid
               </TabsTrigger>
-              <TabsTrigger value="wallet" className="gap-1.5">
+              <TabsTrigger value="wallet" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <WalletCards className="h-4 w-4" /> Wallet
               </TabsTrigger>
-              <TabsTrigger value="profile" className="gap-1.5">
+              <TabsTrigger value="profile" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Stethoscope className="h-4 w-4" /> Profile
               </TabsTrigger>
-              <TabsTrigger value="payments" className="gap-1.5">
+              <TabsTrigger value="payments" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Wallet className="h-4 w-4" /> Payments
               </TabsTrigger>
-              <TabsTrigger value="wellness" className="gap-1.5">
+              <TabsTrigger value="wellness" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Sparkles className="h-4 w-4" /> Wellness+
               </TabsTrigger>
-              <TabsTrigger value="referrals" className="gap-1.5">
+              <TabsTrigger value="referrals" className="shrink-0 gap-1.5 whitespace-nowrap">
                 <Gift className="h-4 w-4" /> Referrals
               </TabsTrigger>
             </TabsList>
