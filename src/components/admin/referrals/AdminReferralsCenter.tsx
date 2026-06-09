@@ -295,18 +295,21 @@ const RewardSettings = () => {
   };
 
   return (
-    <Card>
-      <CardHeader><CardTitle>Reward Settings</CardTitle>
-        <CardDescription>
-          Configure every reward rule per referrer → referred type and country. Admin can edit at any time; calculations run automatically after the trigger event.
-        </CardDescription></CardHeader>
-      <CardContent className="space-y-6">
-        {rows.map((r) => (
-          <RewardSettingCard key={r.id} row={r} onSave={update} saving={saving === r.id} />
-        ))}
-        {rows.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No reward rows configured.</p>}
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <ProfitabilitySimulator />
+      <Card>
+        <CardHeader><CardTitle>Reward Settings</CardTitle>
+          <CardDescription>
+            Configure every reward rule per referrer → referred type and country. Admin can edit at any time; calculations run automatically after the trigger event.
+          </CardDescription></CardHeader>
+        <CardContent className="space-y-6">
+          {rows.map((r) => (
+            <RewardSettingCard key={r.id} row={r} onSave={update} saving={saving === r.id} />
+          ))}
+          {rows.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">No reward rows configured.</p>}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
