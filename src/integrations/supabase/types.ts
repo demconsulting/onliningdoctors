@@ -3034,6 +3034,81 @@ export type Database = {
           },
         ]
       }
+      referral_profitability_simulations: {
+        Row: {
+          admin_user_id: string
+          consultation_fee: number
+          created_at: string
+          doctors_onlining_keeps: number
+          fixed_processing_fee: number
+          fixed_reward_amount: number
+          id: string
+          lifetime_reward_cap: number | null
+          monthly_reward_cap: number | null
+          net_platform_revenue: number
+          notes: string | null
+          platform_fee_percentage: number
+          platform_revenue: number
+          processing_fee: number
+          processing_fee_percentage: number
+          profit_margin_percentage: number
+          referral_type: string
+          reward_amount: number
+          reward_basis: string
+          reward_duration: string | null
+          reward_percentage: number
+          risk_status: string
+        }
+        Insert: {
+          admin_user_id: string
+          consultation_fee?: number
+          created_at?: string
+          doctors_onlining_keeps?: number
+          fixed_processing_fee?: number
+          fixed_reward_amount?: number
+          id?: string
+          lifetime_reward_cap?: number | null
+          monthly_reward_cap?: number | null
+          net_platform_revenue?: number
+          notes?: string | null
+          platform_fee_percentage?: number
+          platform_revenue?: number
+          processing_fee?: number
+          processing_fee_percentage?: number
+          profit_margin_percentage?: number
+          referral_type: string
+          reward_amount?: number
+          reward_basis: string
+          reward_duration?: string | null
+          reward_percentage?: number
+          risk_status: string
+        }
+        Update: {
+          admin_user_id?: string
+          consultation_fee?: number
+          created_at?: string
+          doctors_onlining_keeps?: number
+          fixed_processing_fee?: number
+          fixed_reward_amount?: number
+          id?: string
+          lifetime_reward_cap?: number | null
+          monthly_reward_cap?: number | null
+          net_platform_revenue?: number
+          notes?: string | null
+          platform_fee_percentage?: number
+          platform_revenue?: number
+          processing_fee?: number
+          processing_fee_percentage?: number
+          profit_margin_percentage?: number
+          referral_type?: string
+          reward_amount?: number
+          reward_basis?: string
+          reward_duration?: string | null
+          reward_percentage?: number
+          risk_status?: string
+        }
+        Relationships: []
+      }
       referral_program_settings: {
         Row: {
           auto_cash_payouts: boolean
