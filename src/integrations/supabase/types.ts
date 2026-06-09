@@ -3665,7 +3665,6 @@ export type Database = {
           hospital_affiliation: string | null
           id: string | null
           is_available: boolean | null
-          is_suspended: boolean | null
           is_verified: boolean | null
           languages: string[] | null
           practice_logo_url: string | null
