@@ -13,8 +13,9 @@ type Change = {
   field_name: string;
   old_value: any;
   new_value: any;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "needs_info";
   rejection_reason: string | null;
+  info_request_message: string | null;
   created_at: string;
   reviewed_at: string | null;
 };
