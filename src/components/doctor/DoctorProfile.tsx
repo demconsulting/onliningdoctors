@@ -253,6 +253,12 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
         reviewChanges.forEach(c => next.add(c.field));
         return next;
       });
+      // Fire-and-forget admin email alert (in-app notifications happen via DB trigger)
+      supabase.functions
+        .invoke("notify-admins-profile-change", {
+          body: { changedFields: reviewChanges.map(c => c.field) },
+        })
+        .catch((err) => console.error("notify-admins-profile-change failed", err));
       toast({
         title: "Profile updated",
         description: `${reviewChanges.length} regulated change(s) submitted for admin review.`,
