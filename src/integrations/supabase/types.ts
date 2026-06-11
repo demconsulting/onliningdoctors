@@ -3901,6 +3901,10 @@ export type Database = {
           start_time: string
         }[]
       }
+      get_doctor_next_available_slot: {
+        Args: { _doctor: string }
+        Returns: string
+      }
       get_founding_slots: { Args: never; Returns: Json }
       get_patient_id_verification_status: {
         Args: { _user: string }
@@ -3931,6 +3935,7 @@ export type Database = {
         Args: { _country: string; _id_type: string; _id_value: string }
         Returns: string
       }
+      is_doctor_available_now: { Args: { _doctor: string }; Returns: boolean }
       is_identity_verified: { Args: { _user: string }; Returns: boolean }
       is_practice_manager: {
         Args: { _practice_id: string; _user_id: string }
@@ -3944,6 +3949,14 @@ export type Database = {
       link_practice_patient: {
         Args: { _practice_patient_id: string }
         Returns: string
+      }
+      list_public_doctor_availability: {
+        Args: never
+        Returns: {
+          doctor_id: string
+          is_available_now: boolean
+          next_available_at: string
+        }[]
       }
       log_audit_event_self: {
         Args: { _action: string; _details: Json; _table_name: string }

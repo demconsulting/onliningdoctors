@@ -33,18 +33,34 @@ const Doctors = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [docRes, specRes] = await Promise.all([
+      const [docRes, specRes, availRes] = await Promise.all([
         supabase
           .from("public_doctors" as any)
           .select("*, specialty:specialty_id(name, icon)")
           .order("rating", { ascending: false }),
         supabase.from("specialties").select("*").order("name"),
+        supabase.rpc("list_public_doctor_availability" as any),
       ]);
+      const availMap = new Map<string, { is_available_now: boolean; next_available_at: string | null }>();
+      if (availRes.data) {
+        (availRes.data as any[]).forEach((r) =>
+          availMap.set(r.doctor_id, {
+            is_available_now: !!r.is_available_now,
+            next_available_at: r.next_available_at,
+          })
+        );
+      }
       if (docRes.data) {
-        const mapped = (docRes.data as any[]).map((d) => ({
-          ...d,
-          profile: { full_name: d.full_name, avatar_url: d.avatar_url, city: d.city, country: d.country },
-        }));
+        const mapped = (docRes.data as any[]).map((d) => {
+          const a = availMap.get(d.profile_id);
+          return {
+            ...d,
+            // Override the manual flag with the real-time, calendar-derived value
+            is_available: a?.is_available_now ?? false,
+            next_available_at: a?.next_available_at ?? null,
+            profile: { full_name: d.full_name, avatar_url: d.avatar_url, city: d.city, country: d.country },
+          };
+        });
         setDoctors(mapped as Doctor[]);
       }
       if (specRes.data) setSpecialties(specRes.data);
