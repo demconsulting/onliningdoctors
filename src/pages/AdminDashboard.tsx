@@ -100,7 +100,10 @@ const SectionFallback = () => (
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeSection, setActiveSection] = useState("hero");
+  const initialSection = (typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("section")
+    : null) || "hero";
+  const [activeSection, setActiveSection] = useState(initialSection);
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -13,8 +13,9 @@ type Change = {
   field_name: string;
   old_value: any;
   new_value: any;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "needs_info";
   rejection_reason: string | null;
+  info_request_message: string | null;
   created_at: string;
   reviewed_at: string | null;
 };
@@ -27,6 +28,7 @@ const fmt = (v: any) => {
 
 const statusVariant = (s: string) =>
   s === "approved" ? "default" : s === "rejected" ? "destructive" : "secondary";
+
 
 const DoctorProfileChanges = ({ user }: Props) => {
   const [loading, setLoading] = useState(true);
@@ -66,6 +68,11 @@ const DoctorProfileChanges = ({ user }: Props) => {
                 {c.rejection_reason && (
                   <p className="text-sm text-destructive">Reason: {c.rejection_reason}</p>
                 )}
+                {c.info_request_message && c.status === "needs_info" && (
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    Admin requested: {c.info_request_message}. Please update your profile and resubmit.
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Submitted {new Date(c.created_at).toLocaleString()}
                   {c.reviewed_at && ` · Reviewed ${new Date(c.reviewed_at).toLocaleString()}`}
@@ -95,10 +102,12 @@ const DoctorProfileChanges = ({ user }: Props) => {
           <Tabs defaultValue="pending">
             <TabsList>
               <TabsTrigger value="pending">Pending ({filter("pending").length})</TabsTrigger>
+              <TabsTrigger value="needs_info">Needs Info ({filter("needs_info").length})</TabsTrigger>
               <TabsTrigger value="approved">Approved ({filter("approved").length})</TabsTrigger>
               <TabsTrigger value="rejected">Rejected ({filter("rejected").length})</TabsTrigger>
             </TabsList>
             <TabsContent value="pending" className="mt-4"><List items={filter("pending")} /></TabsContent>
+            <TabsContent value="needs_info" className="mt-4"><List items={filter("needs_info")} /></TabsContent>
             <TabsContent value="approved" className="mt-4"><List items={filter("approved")} /></TabsContent>
             <TabsContent value="rejected" className="mt-4"><List items={filter("rejected")} /></TabsContent>
           </Tabs>
