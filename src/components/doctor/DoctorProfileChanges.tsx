@@ -102,10 +102,12 @@ const DoctorProfileChanges = ({ user }: Props) => {
           <Tabs defaultValue="pending">
             <TabsList>
               <TabsTrigger value="pending">Pending ({filter("pending").length})</TabsTrigger>
+              <TabsTrigger value="needs_info">Needs Info ({filter("needs_info").length})</TabsTrigger>
               <TabsTrigger value="approved">Approved ({filter("approved").length})</TabsTrigger>
               <TabsTrigger value="rejected">Rejected ({filter("rejected").length})</TabsTrigger>
             </TabsList>
             <TabsContent value="pending" className="mt-4"><List items={filter("pending")} /></TabsContent>
+            <TabsContent value="needs_info" className="mt-4"><List items={filter("needs_info")} /></TabsContent>
             <TabsContent value="approved" className="mt-4"><List items={filter("approved")} /></TabsContent>
             <TabsContent value="rejected" className="mt-4"><List items={filter("rejected")} /></TabsContent>
           </Tabs>
