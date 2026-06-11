@@ -68,6 +68,11 @@ const DoctorProfileChanges = ({ user }: Props) => {
                 {c.rejection_reason && (
                   <p className="text-sm text-destructive">Reason: {c.rejection_reason}</p>
                 )}
+                {c.info_request_message && c.status === "needs_info" && (
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    Admin requested: {c.info_request_message}. Please update your profile and resubmit.
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   Submitted {new Date(c.created_at).toLocaleString()}
                   {c.reviewed_at && ` · Reviewed ${new Date(c.reviewed_at).toLocaleString()}`}
