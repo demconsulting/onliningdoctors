@@ -68,10 +68,15 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
               <span className="h-2 w-2 rounded-full bg-success-foreground animate-pulse" />
               Available Now
             </Badge>
+          ) : nextAvailableLabel ? (
+            <Badge variant="secondary" className="gap-1.5 border-0 shadow-md">
+              <Clock className="h-3 w-3" />
+              Next: {nextAvailableLabel}
+            </Badge>
           ) : (
             <Badge variant="secondary" className="gap-1.5 border-0 shadow-md">
               <Clock className="h-3 w-3" />
-              Scheduled Only
+              Not Available
             </Badge>
           )}
         </div>
