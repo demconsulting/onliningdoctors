@@ -29,6 +29,7 @@ const fmt = (v: any) => {
 const statusVariant = (s: string) =>
   s === "approved" ? "default" : s === "rejected" ? "destructive" : "secondary";
 
+
 const DoctorProfileChanges = ({ user }: Props) => {
   const [loading, setLoading] = useState(true);
   const [changes, setChanges] = useState<Change[]>([]);
