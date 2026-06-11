@@ -14,6 +14,7 @@ interface Doctor {
   rating: number | null;
   total_reviews: number | null;
   is_available: boolean | null;
+  next_available_at?: string | null;
   title: string | null;
   languages: string[] | null;
   hospital_affiliation: string | null;
@@ -23,11 +24,25 @@ interface Doctor {
   specialty: { name: string; icon: string | null } | null;
 }
 
+const formatNextAvailable = (iso?: string | null) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = d.toDateString() === tomorrow.toDateString();
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return `Today ${time}`;
+  if (isTomorrow) return `Tomorrow ${time}`;
+  return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + ` ${time}`;
+};
+
 const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
   const name = doctor.profile?.full_name || "Doctor";
   const currencySymbol = getCurrencySymbol(doctor.profile?.country);
   const displayName = `${doctor.title ? `${doctor.title} ` : "Dr. "}${name}`;
-  const isAvailable = doctor.is_available;
+  const isAvailable = !!doctor.is_available;
+  const nextAvailableLabel = formatNextAvailable(doctor.next_available_at);
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/60">
