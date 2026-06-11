@@ -1044,6 +1044,7 @@ export type Database = {
           doctor_id: string
           field_name: string
           id: string
+          info_request_message: string | null
           new_value: Json | null
           old_value: Json | null
           rejection_reason: string | null
@@ -1056,6 +1057,7 @@ export type Database = {
           doctor_id: string
           field_name: string
           id?: string
+          info_request_message?: string | null
           new_value?: Json | null
           old_value?: Json | null
           rejection_reason?: string | null
@@ -1068,6 +1070,7 @@ export type Database = {
           doctor_id?: string
           field_name?: string
           id?: string
+          info_request_message?: string | null
           new_value?: Json | null
           old_value?: Json | null
           rejection_reason?: string | null
@@ -3970,6 +3973,10 @@ export type Database = {
         Args: { _change_id: string; _reason: string }
         Returns: undefined
       }
+      request_profile_change_info: {
+        Args: { _change_id: string; _message: string }
+        Returns: undefined
+      }
       resolve_referral_reward_setting: {
         Args: {
           _country: string
@@ -4036,7 +4043,7 @@ export type Database = {
         | "receptionist"
         | "practice_admin"
       pricing_tier_type: "private" | "medical_aid" | "follow_up" | "specialist"
-      profile_change_status: "pending" | "approved" | "rejected"
+      profile_change_status: "pending" | "approved" | "rejected" | "needs_info"
       referral_flag_severity: "block" | "review"
       referral_flag_type:
         | "self_referral"
@@ -4227,7 +4234,7 @@ export const Constants = {
         "practice_admin",
       ],
       pricing_tier_type: ["private", "medical_aid", "follow_up", "specialist"],
-      profile_change_status: ["pending", "approved", "rejected"],
+      profile_change_status: ["pending", "approved", "rejected", "needs_info"],
       referral_flag_severity: ["block", "review"],
       referral_flag_type: [
         "self_referral",
