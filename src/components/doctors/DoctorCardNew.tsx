@@ -157,11 +157,19 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-1">
-          <Button asChild className="flex-1 gradient-primary border-0 text-primary-foreground shadow-md shadow-primary/10" size="default">
-            <Link to={`/doctors/${doctor.profile_id}`}>
-              Booking
-            </Link>
-          </Button>
+          {isAvailable ? (
+            <Button asChild className="flex-1 gradient-primary border-0 text-primary-foreground shadow-md shadow-primary/10" size="default">
+              <Link to={`/doctors/${doctor.profile_id}`}>Book Now</Link>
+            </Button>
+          ) : doctor.next_available_at ? (
+            <Button asChild variant="secondary" className="flex-1" size="default">
+              <Link to={`/doctors/${doctor.profile_id}#book`}>View Next Available</Link>
+            </Button>
+          ) : (
+            <Button disabled className="flex-1" size="default" variant="secondary">
+              Not Accepting Bookings
+            </Button>
+          )}
           <Button asChild variant="outline" size="default">
             <Link to={`/doctors/${doctor.profile_id}`}>Bio</Link>
           </Button>
