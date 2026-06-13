@@ -75,7 +75,23 @@ export function useImpersonation() {
           started_at: new Date().toISOString(),
         });
 
-        window.location.assign("/dashboard");
+        // Route to the appropriate dashboard for the target user's role.
+        let destination = "/dashboard";
+        try {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", payload.target.id);
+          const isAdmin = roles?.some((r) =>
+            ["admin", "super_admin", "platform_admin"].includes(r.role as string),
+          );
+          const isDoctor = roles?.some((r) => r.role === "doctor");
+          if (isAdmin) destination = "/admin";
+          else if (isDoctor) destination = "/doctor-dashboard";
+        } catch (e) {
+          console.warn("Could not resolve target role, defaulting to /dashboard", e);
+        }
+        window.location.assign(destination);
       } finally {
         setBusy(false);
       }
