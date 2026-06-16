@@ -165,19 +165,42 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     return () => { cancelled = true; };
   }, [preselectDoctorId]);
 
-  // Once doctors load and preselect is requested, select that doctor
+  // Once doctors load and preselect is requested, select that doctor.
+  // If not in the filtered list, fetch the doctor directly and merge so the
+  // preselected doctor is always available (matches public listing behaviour).
   useEffect(() => {
-    if (!preselectDoctorId || doctors.length === 0) return;
+    if (!preselectDoctorId) return;
     if (doctors.some(d => d.profile_id === preselectDoctorId)) {
       setSelectedDoctor(preselectDoctorId);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Doctor unavailable",
-        description: "This doctor is no longer available for booking. Please choose another doctor.",
-      });
+      return;
     }
-  }, [preselectDoctorId, doctors, toast]);
+    if (!selectedSpecialty || loadingDoctors) return;
+    let cancelled = false;
+    supabase
+      .from("public_doctors" as any)
+      .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
+      .eq("profile_id", preselectDoctorId)
+      .eq("is_suspended", false)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (cancelled) return;
+        if (!data) {
+          toast({
+            variant: "destructive",
+            title: "Doctor unavailable",
+            description: "This doctor is no longer available for booking. Please choose another available slot.",
+          });
+          return;
+        }
+        const merged = {
+          ...data,
+          profile: { id: data.profile_id, full_name: data.full_name, avatar_url: data.avatar_url, city: data.city, country: data.country },
+        };
+        setDoctors(prev => (prev.some(d => d.profile_id === preselectDoctorId) ? prev : [merged, ...prev]));
+        setSelectedDoctor(preselectDoctorId);
+      });
+    return () => { cancelled = true; };
+  }, [preselectDoctorId, doctors, selectedSpecialty, loadingDoctors, toast]);
 
   useEffect(() => {
     if (!selectedSpecialty) {
@@ -185,7 +208,8 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
       return;
     }
     setLoadingDoctors(true);
-    setSelectedDoctor("");
+    // Preserve preselect during reload; otherwise clear selection
+    if (!preselectDoctorId) setSelectedDoctor("");
     supabase
       .from("public_doctors" as any)
       .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
@@ -202,7 +226,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
         }
         setLoadingDoctors(false);
       });
-  }, [selectedSpecialty]);
+  }, [selectedSpecialty, preselectDoctorId]);
 
   // Fetch doctor availability when doctor is selected
   const [blockedTimes, setBlockedTimes] = useState<Array<{ start_time: string; end_time: string }>>([]);
