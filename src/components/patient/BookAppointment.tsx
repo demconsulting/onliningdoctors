@@ -180,7 +180,6 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
       .from("public_doctors" as any)
       .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
       .eq("profile_id", preselectDoctorId)
-      .eq("is_suspended", false)
       .maybeSingle()
       .then(({ data }: any) => {
         if (cancelled) return;
