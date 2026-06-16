@@ -214,7 +214,6 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
       .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
       .eq("specialty_id", selectedSpecialty)
       .eq("is_available", true)
-      .eq("is_suspended", false)
       .then(({ data }: any) => {
         if (data) {
           const mapped = (data as any[]).map((d) => ({
