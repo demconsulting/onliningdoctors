@@ -469,6 +469,135 @@ const AdminFinancialManagement = () => {
 };
 
 /* ===================== REVENUE TAB ===================== */
+/* ===================== PAYOUTS TAB ===================== */
+const PayoutsTab = ({ doctorSummary, appointments, patientNames }: any) => {
+  const [drillDown, setDrillDown] = useState<any | null>(null);
+  const totals = useMemo(() => {
+    return doctorSummary.reduce((acc: any, r: any) => ({
+      revenue: acc.revenue + r.revenue,
+      processing: acc.processing + r.processing,
+      platform: acc.platform + r.platform,
+      referral: acc.referral + r.referral,
+      net: acc.net + r.net,
+    }), { revenue: 0, processing: 0, platform: 0, referral: 0, net: 0 });
+  }, [doctorSummary]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <StatCard label="Revenue" value={fmt(totals.revenue)} icon={Receipt} />
+        <StatCard label="Processing Fees" value={fmt(totals.processing)} icon={Receipt} tone="bad" />
+        <StatCard label="Platform Fees" value={fmt(totals.platform)} icon={Receipt} tone="good" />
+        <StatCard label="Referral Commission" value={fmt(totals.referral)} icon={Receipt} />
+        <StatCard label="Net Doctor Earnings" value={fmt(totals.net)} icon={Wallet} tone="good" />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Doctor Payouts Summary</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Net Earnings = Revenue − Processing Fee − Platform Fee − Referral Commission. Click a doctor for per-consultation drill-down.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Doctor</TableHead>
+                  <TableHead>Consultations</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Processing Fee</TableHead>
+                  <TableHead>Platform Fee</TableHead>
+                  <TableHead>Referral Commission</TableHead>
+                  <TableHead>Net Earnings</TableHead>
+                  <TableHead>Pending Payout</TableHead>
+                  <TableHead>Completed Payout</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {doctorSummary.length === 0 ? (
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No data</TableCell></TableRow>
+                ) : doctorSummary.map((r: any) => (
+                  <TableRow key={r.doctor_id} className="cursor-pointer hover:bg-muted/40" onClick={() => setDrillDown(r)}>
+                    <TableCell className="font-medium">{r.name}</TableCell>
+                    <TableCell>{r.consultations}</TableCell>
+                    <TableCell>{fmt(r.revenue)}</TableCell>
+                    <TableCell className="text-destructive">{fmt(r.processing)}</TableCell>
+                    <TableCell>{fmt(r.platform)}</TableCell>
+                    <TableCell>{fmt(r.referral)}</TableCell>
+                    <TableCell className="font-semibold text-emerald-600">{fmt(r.net)}</TableCell>
+                    <TableCell>{fmt(r.pending || 0)}</TableCell>
+                    <TableCell>{fmt(r.completed || 0)}</TableCell>
+                    <TableCell><Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDrillDown(r); }}>View</Button></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!drillDown} onOpenChange={(o) => { if (!o) setDrillDown(null); }}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>{drillDown?.name} — Payout Breakdown</DialogTitle>
+          </DialogHeader>
+          {drillDown && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+                <div><p className="text-muted-foreground text-xs">Revenue</p><p className="font-semibold">{fmt(drillDown.revenue)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Processing</p><p className="font-semibold text-destructive">{fmt(drillDown.processing)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Platform</p><p className="font-semibold">{fmt(drillDown.platform)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Referral</p><p className="font-semibold">{fmt(drillDown.referral)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Net Earnings</p><p className="font-semibold text-emerald-600">{fmt(drillDown.net)}</p></div>
+              </div>
+              <div className="rounded-md border overflow-x-auto max-h-[60vh] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Appointment</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Consultation Fee</TableHead>
+                      <TableHead>Processing</TableHead>
+                      <TableHead>Platform</TableHead>
+                      <TableHead>Referral</TableHead>
+                      <TableHead>Doctor Net</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {drillDown.payments.map(({ p, c, referral }: any) => {
+                      const appt = p.appointment_id ? appointments[p.appointment_id] : null;
+                      const net = +(c.amount - c.processing_fee - c.platform_fee - referral).toFixed(2);
+                      return (
+                        <TableRow key={p.id}>
+                          <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
+                          <TableCell className="text-xs">{appt?.reason || (p.appointment_id ? String(p.appointment_id).slice(0, 8) : "—")}</TableCell>
+                          <TableCell className="text-xs">{(p.patient_id && patientNames[p.patient_id]) || "—"}</TableCell>
+                          <TableCell className="text-sm">{fmt(c.amount)}</TableCell>
+                          <TableCell className="text-sm text-destructive">{fmt(c.processing_fee)}</TableCell>
+                          <TableCell className="text-sm">{fmt(c.platform_fee)}</TableCell>
+                          <TableCell className="text-sm">{fmt(referral)}</TableCell>
+                          <TableCell className="text-sm font-semibold text-emerald-600">{fmt(net)}</TableCell>
+                          <TableCell><Badge variant={REVENUE_STATUSES.has(p.status) ? "default" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+/* ===================== REVENUE TAB ===================== */
 const RevenueTab = ({ payments, doctorNames, conversions, convMap, onChange }: any) => {
   const classified = useMemo(
     () => payments.map((p: any) => ({ ...p, _class: classifyPayment(p, convMap[p.id]) })),
