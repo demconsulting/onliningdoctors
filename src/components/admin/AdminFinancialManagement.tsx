@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, startOfDay, subMonths, addMonths, addYears, addWeeks } from "date-fns";
-import { Loader2, Plus, Pencil, Trash2, Download, Upload, FileText, Repeat, Receipt, TrendingUp, TrendingDown, Wallet, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Download, Upload, FileText, Repeat, Receipt, TrendingUp, TrendingDown, Wallet, AlertTriangle, RefreshCcw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from "recharts";
 
 type Category = { id: string; name: string; slug: string; parent_group: string; sort_order: number; is_active: boolean };
@@ -27,10 +28,17 @@ type Recurring = {
   amount: number; currency: string; frequency: string; next_due_date: string;
   reminder_days: number; is_active: boolean; notes: string | null;
 };
+export type CurrencyConversion = {
+  id: string; payment_id: string; original_currency: string; original_amount: number;
+  exchange_rate: number; converted_currency: string; converted_amount: number;
+  conversion_method: "fixed_rate" | "manual" | "excluded" | "test_payment";
+  converted_by: string | null; conversion_note: string | null;
+  include_in_totals: boolean; created_at: string;
+};
 
 // Platform operates from South Africa — ZAR is the canonical currency for all
 // aggregated revenue, fee, and earnings totals. Payments in other currencies are
-// excluded from revenue totals and flagged as currency mismatches.
+// excluded from revenue totals unless an admin has recorded a conversion.
 const PLATFORM_CURRENCY = "ZAR";
 
 // Statuses considered "successful / completed" for revenue accounting.
@@ -40,15 +48,34 @@ const PENDING_STATUSES = new Set(["pending", "processing", "awaiting_payment"]);
 const fmt = (n: number, cur: string = PLATFORM_CURRENCY) =>
   `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// Classifies a payment row against revenue inclusion rules.
-const classifyPayment = (p: any) => {
+// Classifies a payment row against revenue inclusion rules, factoring in any
+// admin-recorded currency conversion. Returns the effective ZAR amount/fee used
+// in totals.
+const classifyPayment = (p: any, conv?: CurrencyConversion | null) => {
+  const rawCur = p.currency || PLATFORM_CURRENCY;
+  const rawAmt = Number(p.amount || 0);
+  const rawFee = Number(p.fee_amount || 0);
+
   if (!REVENUE_STATUSES.has(p.status)) {
-    return { included: false, reason: `Excluded: status=${p.status}` };
+    return { included: false, reason: `Excluded: status=${p.status}`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null as CurrencyConversion | null };
   }
-  if ((p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY) {
-    return { included: false, reason: `Currency mismatch: ${p.currency} ≠ ${PLATFORM_CURRENCY}` };
+
+  if (rawCur === PLATFORM_CURRENCY) {
+    return { included: true, reason: "", amount: rawAmt, fee_amount: rawFee, currency: PLATFORM_CURRENCY, converted: false, conversion: null };
   }
-  return { included: true, reason: "" };
+
+  // Non-ZAR — check if an admin conversion exists
+  if (conv) {
+    if (conv.conversion_method === "excluded" || conv.conversion_method === "test_payment" || !conv.include_in_totals) {
+      return { included: false, reason: `Admin excluded (${conv.conversion_method})`, amount: 0, fee_amount: 0, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+    }
+    const rate = Number(conv.exchange_rate || 0);
+    const convAmt = Number(conv.converted_amount || 0);
+    const convFee = rate > 0 ? +(rawFee * rate).toFixed(2) : 0;
+    return { included: true, reason: "Converted to ZAR by admin", amount: convAmt, fee_amount: convFee, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+  }
+
+  return { included: false, reason: `Currency mismatch: ${rawCur} ≠ ${PLATFORM_CURRENCY} (no conversion)`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null };
 };
 
 const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
@@ -94,21 +121,24 @@ const AdminFinancialManagement = () => {
   const [recurring, setRecurring] = useState<Recurring[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [doctorNames, setDoctorNames] = useState<Record<string, string>>({});
+  const [conversions, setConversions] = useState<CurrencyConversion[]>([]);
 
   const loadAll = async () => {
     setLoading(true);
-    const [p, po, ex, rc, ct] = await Promise.all([
+    const [p, po, ex, rc, ct, cv] = await Promise.all([
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("payout_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("recurring_expenses").select("*").order("next_due_date"),
       supabase.from("expense_categories").select("*").order("sort_order"),
+      (supabase as any).from("financial_currency_conversions").select("*").order("created_at", { ascending: false }),
     ]);
     setPayments(p.data || []);
     setPayouts(po.data || []);
     setExpenses((ex.data as any) || []);
     setRecurring((rc.data as any) || []);
     setCategories((ct.data as any) || []);
+    setConversions((cv?.data as any) || []);
 
     const ids = [...new Set([...(p.data || []).map((x: any) => x.doctor_id), ...(po.data || []).map((x: any) => x.doctor_id)].filter(Boolean))];
     if (ids.length) {
@@ -122,25 +152,37 @@ const AdminFinancialManagement = () => {
 
   useEffect(() => { loadAll(); }, []);
 
-  // Derived stats — strictly ZAR, only successful/completed payments
+  const convMap = useMemo(() => {
+    const m: Record<string, CurrencyConversion> = {};
+    conversions.forEach((c) => { m[c.payment_id] = c; });
+    return m;
+  }, [conversions]);
+
+  // Derived stats — strictly ZAR, includes admin-converted legacy payments
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
     const monthStart = startOfMonth(new Date());
-    const successful = payments.filter((p) => classifyPayment(p).included);
+    const classified = payments.map((p) => ({ p, c: classifyPayment(p, convMap[p.id]) }));
+    const successful = classified.filter((x) => x.c.included);
     const pending = payments.filter((p) =>
       PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY
     );
-    const todayRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= today).reduce((s, p) => s + Number(p.amount), 0);
-    const monthRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= monthStart).reduce((s, p) => s + Number(p.amount), 0);
-    const totalRev = successful.reduce((s, p) => s + Number(p.amount), 0);
-    const platformFees = successful.reduce((s, p) => s + Number(p.fee_amount || 0), 0);
-    const medicalAidRev = successful.filter((p) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
-    const cardRev = successful.filter((p) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
+    const sumAmt = (arr: typeof successful) => arr.reduce((s, x) => s + x.c.amount, 0);
+    const todayRev = sumAmt(successful.filter((x) => new Date(x.p.paid_at || x.p.created_at) >= today));
+    const monthRev = sumAmt(successful.filter((x) => new Date(x.p.paid_at || x.p.created_at) >= monthStart));
+    const totalRev = sumAmt(successful);
+    const platformFees = successful.reduce((s, x) => s + x.c.fee_amount, 0);
+    const medicalAidRev = sumAmt(successful.filter((x) => x.p.payment_method === "medical_aid" || x.p.transaction_type === "medical_aid"));
+    const cardRev = sumAmt(successful.filter((x) => x.p.payment_method !== "medical_aid" && x.p.transaction_type !== "medical_aid"));
     const pendingRev = pending.reduce((s, p) => s + Number(p.amount), 0);
     const avgRev = successful.length ? totalRev / successful.length : 0;
     const consultations = successful.length;
     const doctorEarnings = totalRev - platformFees;
-    const mismatched = payments.filter((p) => REVENUE_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY).length;
+    const mismatched = payments.filter((p) =>
+      REVENUE_STATUSES.has(p.status)
+      && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY
+      && !convMap[p.id]
+    ).length;
 
     const monthExp = expenses.filter((e) => new Date(e.expense_date) >= monthStart).reduce((s, e) => s + Number(e.amount), 0);
     const totalExp = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -153,9 +195,9 @@ const AdminFinancialManagement = () => {
       monthExp, totalExp, netProfit: totalRev - totalExp,
       pendingPayouts, completedPayouts,
     };
-  }, [payments, expenses, payouts]);
+  }, [payments, expenses, payouts, convMap]);
 
-  // Monthly trend (last 12 months) — ZAR successful payments only
+  // Monthly trend (last 12 months) — includes converted ZAR
   const trend = useMemo(() => {
     const buckets: Record<string, { month: string; revenue: number; expenses: number; profit: number }> = {};
     for (let i = 11; i >= 0; i--) {
@@ -163,9 +205,11 @@ const AdminFinancialManagement = () => {
       const key = format(d, "yyyy-MM");
       buckets[key] = { month: format(d, "MMM yy"), revenue: 0, expenses: 0, profit: 0 };
     }
-    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
+    payments.forEach((p) => {
+      const c = classifyPayment(p, convMap[p.id]);
+      if (!c.included) return;
       const key = format(new Date(p.paid_at || p.created_at), "yyyy-MM");
-      if (buckets[key]) buckets[key].revenue += Number(p.amount);
+      if (buckets[key]) buckets[key].revenue += c.amount;
     });
     expenses.forEach((e) => {
       const key = format(new Date(e.expense_date), "yyyy-MM");
@@ -173,17 +217,19 @@ const AdminFinancialManagement = () => {
     });
     Object.values(buckets).forEach((b) => (b.profit = b.revenue - b.expenses));
     return Object.values(buckets);
-  }, [payments, expenses]);
+  }, [payments, expenses, convMap]);
 
   // Doctor payout summary
   const doctorSummary = useMemo(() => {
     const rows: Record<string, any> = {};
-    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
+    payments.forEach((p) => {
+      const c = classifyPayment(p, convMap[p.id]);
+      if (!c.included) return;
       const id = p.doctor_id;
       if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
       rows[id].consultations += 1;
-      rows[id].revenue += Number(p.amount);
-      rows[id].fees += Number(p.fee_amount || 0);
+      rows[id].revenue += c.amount;
+      rows[id].fees += c.fee_amount;
     });
     Object.values(rows).forEach((r: any) => (r.net = r.revenue - r.fees));
     payouts.forEach((po) => {
@@ -193,7 +239,8 @@ const AdminFinancialManagement = () => {
       if (po.status === "approved") r.completed = (r.completed || 0) + Number(po.amount);
     });
     return Object.values(rows);
-  }, [payments, payouts, doctorNames]);
+  }, [payments, payouts, doctorNames, convMap]);
+
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -292,7 +339,7 @@ const AdminFinancialManagement = () => {
 
         {/* REVENUE */}
         <TabsContent value="revenue" className="mt-6">
-          <RevenueTab payments={payments} doctorNames={doctorNames} />
+          <RevenueTab payments={payments} doctorNames={doctorNames} conversions={conversions} convMap={convMap} onChange={loadAll} />
         </TabsContent>
 
         {/* EXPENSES */}
@@ -383,16 +430,16 @@ const AdminFinancialManagement = () => {
 };
 
 /* ===================== REVENUE TAB ===================== */
-const RevenueTab = ({ payments, doctorNames }: any) => {
+const RevenueTab = ({ payments, doctorNames, conversions, convMap, onChange }: any) => {
   const classified = useMemo(
-    () => payments.map((p: any) => ({ ...p, _class: classifyPayment(p) })),
-    [payments]
+    () => payments.map((p: any) => ({ ...p, _class: classifyPayment(p, convMap[p.id]) })),
+    [payments, convMap]
   );
   const successful = classified.filter((p: any) => p._class.included);
 
   const totals = useMemo(() => {
-    const total = successful.reduce((s: number, p: any) => s + Number(p.amount), 0);
-    const platform = successful.reduce((s: number, p: any) => s + Number(p.fee_amount || 0), 0);
+    const total = successful.reduce((s: number, p: any) => s + p._class.amount, 0);
+    const platform = successful.reduce((s: number, p: any) => s + p._class.fee_amount, 0);
     return {
       total,
       platform,
@@ -400,13 +447,15 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
       consultations: successful.length,
       medicalAid: successful
         .filter((p: any) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid")
-        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+        .reduce((s: number, p: any) => s + p._class.amount, 0),
       card: successful
         .filter((p: any) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid")
-        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+        .reduce((s: number, p: any) => s + p._class.amount, 0),
       pending: classified
         .filter((p: any) => PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY)
         .reduce((s: number, p: any) => s + Number(p.amount), 0),
+      convertedCount: successful.filter((p: any) => p._class.converted).length,
+      convertedTotal: successful.filter((p: any) => p._class.converted).reduce((s: number, p: any) => s + p._class.amount, 0),
     };
   }, [classified, successful]);
 
@@ -424,6 +473,15 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
         <StatCard label="Pending Revenue" value={fmt(totals.pending)} icon={Receipt} tone="bad" />
         <StatCard label="Completed Revenue" value={fmt(totals.total)} icon={Receipt} tone="good" />
       </div>
+
+      {totals.convertedCount > 0 && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 text-sm px-3 py-2 text-foreground">
+          ℹ {totals.convertedCount} legacy non-{PLATFORM_CURRENCY} payment(s) — totalling {fmt(totals.convertedTotal)} — were converted by admin and are included in the totals above.
+        </div>
+      )}
+
+      <CurrencyConversionPanel payments={payments} doctorNames={doctorNames} conversions={conversions} convMap={convMap} onChange={onChange} />
+
       <Card>
         <CardHeader><CardTitle>Recent Payments</CardTitle></CardHeader>
         <CardContent>
@@ -436,20 +494,30 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
                 {classified.slice(0, 50).map((p: any) => {
                   const cur = p.currency || PLATFORM_CURRENCY;
                   const mismatch = cur !== PLATFORM_CURRENCY;
+                  const cls = p._class;
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
                       <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
-                      <TableCell className="text-sm">{fmt(p.amount, cur)}</TableCell>
-                      <TableCell className="text-sm">{fmt(p.fee_amount || 0, cur)}</TableCell>
+                      <TableCell className="text-sm">
+                        {cls.converted ? (
+                          <span>
+                            <span className="text-muted-foreground line-through mr-1">{fmt(Number(p.amount), cur)}</span>
+                            → {fmt(cls.amount)}
+                          </span>
+                        ) : fmt(Number(p.amount), cur)}
+                      </TableCell>
+                      <TableCell className="text-sm">{cls.converted ? fmt(cls.fee_amount) : fmt(Number(p.fee_amount || 0), cur)}</TableCell>
                       <TableCell className="text-sm capitalize">{p.payment_method || "—"}</TableCell>
                       <TableCell><Badge variant={REVENUE_STATUSES.has(p.status) ? "default" : p.status === "failed" ? "destructive" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
                       <TableCell>
-                        {mismatch
-                          ? <Badge variant="destructive" className="text-xs">Currency mismatch</Badge>
-                          : p._class.included
-                            ? <Badge variant="default" className="text-xs">In revenue</Badge>
-                            : <Badge variant="secondary" className="text-xs">Excluded</Badge>}
+                        {cls.converted
+                          ? <Badge variant="default" className="text-xs bg-emerald-600 hover:bg-emerald-600">Converted</Badge>
+                          : mismatch
+                            ? <Badge variant="destructive" className="text-xs">Currency mismatch</Badge>
+                            : cls.included
+                              ? <Badge variant="default" className="text-xs">In revenue</Badge>
+                              : <Badge variant="secondary" className="text-xs">Excluded</Badge>}
                       </TableCell>
                     </TableRow>
                   );
@@ -516,6 +584,280 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
         )}
       </Card>
     </div>
+  );
+};
+
+/* =============== CURRENCY CONVERSION PANEL =============== */
+const CurrencyConversionPanel = ({ payments, doctorNames, conversions, convMap, onChange }: any) => {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<any>({ method: "fixed_rate", rate: "", converted_amount: "", include_in_totals: true, note: "" });
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [bulkRate, setBulkRate] = useState("");
+  const [bulkNote, setBulkNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Legacy non-ZAR successful payments
+  const legacy = useMemo(() => {
+    return payments.filter((p: any) =>
+      REVENUE_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY
+    );
+  }, [payments]);
+
+  const unconverted = legacy.filter((p: any) => !convMap[p.id]);
+  const selectedIds = Object.keys(selected).filter((k) => selected[k]);
+
+  const openConvert = (p: any) => {
+    const existing = convMap[p.id];
+    setEditing(p);
+    setForm({
+      method: existing?.conversion_method || "fixed_rate",
+      rate: existing ? String(existing.exchange_rate || "") : "",
+      converted_amount: existing ? String(existing.converted_amount || "") : "",
+      include_in_totals: existing ? !!existing.include_in_totals : true,
+      note: existing?.conversion_note || "",
+    });
+    setOpen(true);
+  };
+
+  const computedAmount = useMemo(() => {
+    if (!editing) return 0;
+    if (form.method === "manual") return Number(form.converted_amount || 0);
+    if (form.method === "fixed_rate") return +(Number(editing.amount || 0) * Number(form.rate || 0)).toFixed(2);
+    return 0;
+  }, [editing, form]);
+
+  const handleSave = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const include = form.method !== "excluded" && form.method !== "test_payment" && !!form.include_in_totals;
+    const rate = form.method === "fixed_rate" ? Number(form.rate || 0)
+      : form.method === "manual" && Number(editing.amount) > 0 ? +(Number(form.converted_amount || 0) / Number(editing.amount)).toFixed(8)
+      : 0;
+    const payload: any = {
+      payment_id: editing.id,
+      original_currency: editing.currency || "UNKNOWN",
+      original_amount: Number(editing.amount || 0),
+      exchange_rate: rate,
+      converted_currency: PLATFORM_CURRENCY,
+      converted_amount: include ? computedAmount : 0,
+      conversion_method: form.method,
+      converted_by: user?.id || null,
+      conversion_note: form.note || null,
+      include_in_totals: include,
+    };
+    const existing = convMap[editing.id];
+    const { error } = existing
+      ? await (supabase as any).from("financial_currency_conversions").update(payload).eq("id", existing.id)
+      : await (supabase as any).from("financial_currency_conversions").insert(payload);
+    setSaving(false);
+    if (error) { toast({ variant: "destructive", title: "Save failed", description: error.message }); return; }
+    toast({ title: existing ? "Conversion updated" : "Payment converted" });
+    setOpen(false); setEditing(null); onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Remove this conversion record? The original payment will return to mismatched state.")) return;
+    const { error } = await (supabase as any).from("financial_currency_conversions").delete().eq("id", id);
+    if (error) { toast({ variant: "destructive", title: "Delete failed", description: error.message }); return; }
+    toast({ title: "Conversion removed" });
+    onChange();
+  };
+
+  const handleBulk = async () => {
+    const rate = Number(bulkRate);
+    if (!rate || rate <= 0) { toast({ variant: "destructive", title: "Enter a valid exchange rate" }); return; }
+    if (!selectedIds.length) { toast({ variant: "destructive", title: "Select at least one payment" }); return; }
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const rows = selectedIds.map((id) => {
+      const p = payments.find((x: any) => x.id === id);
+      return {
+        payment_id: id,
+        original_currency: p.currency || "UNKNOWN",
+        original_amount: Number(p.amount || 0),
+        exchange_rate: rate,
+        converted_currency: PLATFORM_CURRENCY,
+        converted_amount: +(Number(p.amount || 0) * rate).toFixed(2),
+        conversion_method: "fixed_rate",
+        converted_by: user?.id || null,
+        conversion_note: bulkNote || null,
+        include_in_totals: true,
+      };
+    });
+    const { error } = await (supabase as any).from("financial_currency_conversions").insert(rows);
+    setSaving(false);
+    if (error) { toast({ variant: "destructive", title: "Bulk conversion failed", description: error.message }); return; }
+    toast({ title: `Converted ${rows.length} payment(s)` });
+    setBulkOpen(false); setSelected({}); setBulkRate(""); setBulkNote(""); onChange();
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-2 flex-wrap">
+        <div>
+          <CardTitle className="text-base flex items-center gap-2"><RefreshCcw className="h-4 w-4 text-primary" />Currency Conversion</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            Manually convert legacy non-{PLATFORM_CURRENCY} successful payments into {PLATFORM_CURRENCY} so they are included in financial totals. No automatic conversion is performed.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => setBulkOpen(true)}>
+            Bulk convert ({selectedIds.length})
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatCard label="Legacy non-ZAR payments" value={legacy.length} icon={AlertTriangle} tone={legacy.length ? "bad" : "default"} />
+          <StatCard label="Awaiting conversion" value={unconverted.length} icon={RefreshCcw} tone={unconverted.length ? "bad" : "good"} />
+          <StatCard label="Conversions recorded" value={conversions.length} icon={Receipt} />
+        </div>
+
+        {legacy.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">No legacy non-{PLATFORM_CURRENCY} successful payments found.</p>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10"></TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Doctor</TableHead>
+                  <TableHead>Original</TableHead>
+                  <TableHead>Converted (ZAR)</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>In totals</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {legacy.map((p: any) => {
+                  const c = convMap[p.id];
+                  const cur = p.currency || "—";
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        {!c && (
+                          <Checkbox
+                            checked={!!selected[p.id]}
+                            onCheckedChange={(v) => setSelected((s) => ({ ...s, [p.id]: !!v }))}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
+                      <TableCell className="text-sm">{fmt(Number(p.amount), cur)}</TableCell>
+                      <TableCell className="text-sm">
+                        {c ? (c.include_in_totals ? fmt(Number(c.converted_amount)) : <span className="text-muted-foreground">excluded</span>) : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="text-xs capitalize">{c?.conversion_method?.replace("_", " ") || "—"}</TableCell>
+                      <TableCell className="text-xs">{c?.exchange_rate ? Number(c.exchange_rate).toFixed(4) : "—"}</TableCell>
+                      <TableCell>
+                        {c
+                          ? (c.include_in_totals
+                              ? <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">Yes</Badge>
+                              : <Badge variant="secondary" className="text-xs">No</Badge>)
+                          : <Badge variant="destructive" className="text-xs">Pending</Badge>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="ghost" onClick={() => openConvert(p)}>{c ? "Edit" : "Convert"}</Button>
+                        {c && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+
+      {/* Single conversion dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Convert Payment to {PLATFORM_CURRENCY}</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div className="rounded-md bg-muted/50 p-3 text-sm">
+                <div><strong>Original:</strong> {fmt(Number(editing.amount), editing.currency || "—")}</div>
+                <div className="text-xs text-muted-foreground">Payment {String(editing.id).slice(0, 8)} · {format(new Date(editing.paid_at || editing.created_at), "MMM dd, yyyy")}</div>
+              </div>
+              <div>
+                <Label>Conversion method</Label>
+                <Select value={form.method} onValueChange={(v) => setForm({ ...form, method: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed_rate">Fixed exchange rate</SelectItem>
+                    <SelectItem value="manual">Manual ZAR amount</SelectItem>
+                    <SelectItem value="excluded">Exclude from totals</SelectItem>
+                    <SelectItem value="test_payment">Mark as test payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.method === "fixed_rate" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Exchange rate ({editing.currency || "?"} → ZAR)</Label>
+                    <Input type="number" step="0.0001" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} placeholder="e.g. 0.011" />
+                  </div>
+                  <div>
+                    <Label>Computed ZAR</Label>
+                    <Input value={fmt(computedAmount)} disabled />
+                  </div>
+                </div>
+              )}
+              {form.method === "manual" && (
+                <div>
+                  <Label>Converted ZAR amount</Label>
+                  <Input type="number" step="0.01" value={form.converted_amount} onChange={(e) => setForm({ ...form, converted_amount: e.target.value })} />
+                </div>
+              )}
+              {(form.method === "fixed_rate" || form.method === "manual") && (
+                <div className="flex items-center gap-2">
+                  <Checkbox id="incl" checked={form.include_in_totals} onCheckedChange={(v) => setForm({ ...form, include_in_totals: !!v })} />
+                  <Label htmlFor="incl" className="font-normal">Include in financial totals</Label>
+                </div>
+              )}
+              <div>
+                <Label>Conversion note (optional)</Label>
+                <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save conversion"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk conversion dialog */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Bulk convert {selectedIds.length} payment(s)</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Applies one exchange rate to every selected payment using the fixed-rate method.</p>
+            <div>
+              <Label>Exchange rate → ZAR</Label>
+              <Input type="number" step="0.0001" value={bulkRate} onChange={(e) => setBulkRate(e.target.value)} placeholder="e.g. 0.011" />
+            </div>
+            <div>
+              <Label>Note (optional)</Label>
+              <Textarea rows={2} value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button onClick={handleBulk} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply rate"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 };
 

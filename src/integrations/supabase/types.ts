@@ -1505,6 +1505,62 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_currency_conversions: {
+        Row: {
+          conversion_method: string
+          conversion_note: string | null
+          converted_amount: number
+          converted_by: string | null
+          converted_currency: string
+          created_at: string
+          exchange_rate: number
+          id: string
+          include_in_totals: boolean
+          original_amount: number
+          original_currency: string
+          payment_id: string
+          updated_at: string
+        }
+        Insert: {
+          conversion_method?: string
+          conversion_note?: string | null
+          converted_amount?: number
+          converted_by?: string | null
+          converted_currency?: string
+          created_at?: string
+          exchange_rate?: number
+          id?: string
+          include_in_totals?: boolean
+          original_amount: number
+          original_currency: string
+          payment_id: string
+          updated_at?: string
+        }
+        Update: {
+          conversion_method?: string
+          conversion_note?: string | null
+          converted_amount?: number
+          converted_by?: string | null
+          converted_currency?: string
+          created_at?: string
+          exchange_rate?: number
+          id?: string
+          include_in_totals?: boolean
+          original_amount?: number
+          original_currency?: string
+          payment_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_currency_conversions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: true
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       founding_doctor_applications: {
         Row: {
           availability: string | null
