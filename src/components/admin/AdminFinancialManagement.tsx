@@ -121,21 +121,24 @@ const AdminFinancialManagement = () => {
   const [recurring, setRecurring] = useState<Recurring[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [doctorNames, setDoctorNames] = useState<Record<string, string>>({});
+  const [conversions, setConversions] = useState<CurrencyConversion[]>([]);
 
   const loadAll = async () => {
     setLoading(true);
-    const [p, po, ex, rc, ct] = await Promise.all([
+    const [p, po, ex, rc, ct, cv] = await Promise.all([
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("payout_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("recurring_expenses").select("*").order("next_due_date"),
       supabase.from("expense_categories").select("*").order("sort_order"),
+      (supabase as any).from("financial_currency_conversions").select("*").order("created_at", { ascending: false }),
     ]);
     setPayments(p.data || []);
     setPayouts(po.data || []);
     setExpenses((ex.data as any) || []);
     setRecurring((rc.data as any) || []);
     setCategories((ct.data as any) || []);
+    setConversions((cv?.data as any) || []);
 
     const ids = [...new Set([...(p.data || []).map((x: any) => x.doctor_id), ...(po.data || []).map((x: any) => x.doctor_id)].filter(Boolean))];
     if (ids.length) {
@@ -149,25 +152,37 @@ const AdminFinancialManagement = () => {
 
   useEffect(() => { loadAll(); }, []);
 
-  // Derived stats — strictly ZAR, only successful/completed payments
+  const convMap = useMemo(() => {
+    const m: Record<string, CurrencyConversion> = {};
+    conversions.forEach((c) => { m[c.payment_id] = c; });
+    return m;
+  }, [conversions]);
+
+  // Derived stats — strictly ZAR, includes admin-converted legacy payments
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
     const monthStart = startOfMonth(new Date());
-    const successful = payments.filter((p) => classifyPayment(p).included);
+    const classified = payments.map((p) => ({ p, c: classifyPayment(p, convMap[p.id]) }));
+    const successful = classified.filter((x) => x.c.included);
     const pending = payments.filter((p) =>
       PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY
     );
-    const todayRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= today).reduce((s, p) => s + Number(p.amount), 0);
-    const monthRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= monthStart).reduce((s, p) => s + Number(p.amount), 0);
-    const totalRev = successful.reduce((s, p) => s + Number(p.amount), 0);
-    const platformFees = successful.reduce((s, p) => s + Number(p.fee_amount || 0), 0);
-    const medicalAidRev = successful.filter((p) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
-    const cardRev = successful.filter((p) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
+    const sumAmt = (arr: typeof successful) => arr.reduce((s, x) => s + x.c.amount, 0);
+    const todayRev = sumAmt(successful.filter((x) => new Date(x.p.paid_at || x.p.created_at) >= today));
+    const monthRev = sumAmt(successful.filter((x) => new Date(x.p.paid_at || x.p.created_at) >= monthStart));
+    const totalRev = sumAmt(successful);
+    const platformFees = successful.reduce((s, x) => s + x.c.fee_amount, 0);
+    const medicalAidRev = sumAmt(successful.filter((x) => x.p.payment_method === "medical_aid" || x.p.transaction_type === "medical_aid"));
+    const cardRev = sumAmt(successful.filter((x) => x.p.payment_method !== "medical_aid" && x.p.transaction_type !== "medical_aid"));
     const pendingRev = pending.reduce((s, p) => s + Number(p.amount), 0);
     const avgRev = successful.length ? totalRev / successful.length : 0;
     const consultations = successful.length;
     const doctorEarnings = totalRev - platformFees;
-    const mismatched = payments.filter((p) => REVENUE_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY).length;
+    const mismatched = payments.filter((p) =>
+      REVENUE_STATUSES.has(p.status)
+      && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY
+      && !convMap[p.id]
+    ).length;
 
     const monthExp = expenses.filter((e) => new Date(e.expense_date) >= monthStart).reduce((s, e) => s + Number(e.amount), 0);
     const totalExp = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -180,9 +195,9 @@ const AdminFinancialManagement = () => {
       monthExp, totalExp, netProfit: totalRev - totalExp,
       pendingPayouts, completedPayouts,
     };
-  }, [payments, expenses, payouts]);
+  }, [payments, expenses, payouts, convMap]);
 
-  // Monthly trend (last 12 months) — ZAR successful payments only
+  // Monthly trend (last 12 months) — includes converted ZAR
   const trend = useMemo(() => {
     const buckets: Record<string, { month: string; revenue: number; expenses: number; profit: number }> = {};
     for (let i = 11; i >= 0; i--) {
@@ -190,9 +205,11 @@ const AdminFinancialManagement = () => {
       const key = format(d, "yyyy-MM");
       buckets[key] = { month: format(d, "MMM yy"), revenue: 0, expenses: 0, profit: 0 };
     }
-    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
+    payments.forEach((p) => {
+      const c = classifyPayment(p, convMap[p.id]);
+      if (!c.included) return;
       const key = format(new Date(p.paid_at || p.created_at), "yyyy-MM");
-      if (buckets[key]) buckets[key].revenue += Number(p.amount);
+      if (buckets[key]) buckets[key].revenue += c.amount;
     });
     expenses.forEach((e) => {
       const key = format(new Date(e.expense_date), "yyyy-MM");
@@ -200,17 +217,19 @@ const AdminFinancialManagement = () => {
     });
     Object.values(buckets).forEach((b) => (b.profit = b.revenue - b.expenses));
     return Object.values(buckets);
-  }, [payments, expenses]);
+  }, [payments, expenses, convMap]);
 
   // Doctor payout summary
   const doctorSummary = useMemo(() => {
     const rows: Record<string, any> = {};
-    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
+    payments.forEach((p) => {
+      const c = classifyPayment(p, convMap[p.id]);
+      if (!c.included) return;
       const id = p.doctor_id;
       if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
       rows[id].consultations += 1;
-      rows[id].revenue += Number(p.amount);
-      rows[id].fees += Number(p.fee_amount || 0);
+      rows[id].revenue += c.amount;
+      rows[id].fees += c.fee_amount;
     });
     Object.values(rows).forEach((r: any) => (r.net = r.revenue - r.fees));
     payouts.forEach((po) => {
@@ -220,7 +239,8 @@ const AdminFinancialManagement = () => {
       if (po.status === "approved") r.completed = (r.completed || 0) + Number(po.amount);
     });
     return Object.values(rows);
-  }, [payments, payouts, doctorNames]);
+  }, [payments, payouts, doctorNames, convMap]);
+
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
