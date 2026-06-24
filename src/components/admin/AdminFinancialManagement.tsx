@@ -422,41 +422,7 @@ const AdminFinancialManagement = () => {
 
         {/* PAYOUTS */}
         <TabsContent value="payouts" className="mt-6">
-          <Card>
-            <CardHeader><CardTitle>Doctor Payouts Summary</CardTitle></CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Consultations</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Platform Fees</TableHead>
-                      <TableHead>Net Earnings</TableHead>
-                      <TableHead>Pending</TableHead>
-                      <TableHead>Completed</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {doctorSummary.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No data</TableCell></TableRow>
-                    ) : doctorSummary.map((r: any) => (
-                      <TableRow key={r.doctor_id}>
-                        <TableCell className="font-medium">{r.name}</TableCell>
-                        <TableCell>{r.consultations}</TableCell>
-                        <TableCell>{fmt(r.revenue)}</TableCell>
-                        <TableCell>{fmt(r.fees)}</TableCell>
-                        <TableCell>{fmt(r.net)}</TableCell>
-                        <TableCell>{fmt(r.pending || 0)}</TableCell>
-                        <TableCell>{fmt(r.completed || 0)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <PayoutsTab doctorSummary={doctorSummary} appointments={appointments} patientNames={patientNames} />
         </TabsContent>
 
         {/* P&L */}
