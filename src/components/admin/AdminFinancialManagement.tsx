@@ -440,14 +440,25 @@ const AdminFinancialManagement = () => {
           <Card>
             <CardHeader><CardTitle>Export Reports</CardTitle></CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Button variant="outline" onClick={() => downloadCSV("revenue-report.csv", payments.filter(p => p.status === "success").map(p => ({
-                date: p.paid_at || p.created_at, doctor: doctorNames[p.doctor_id] || "", amount: p.amount, currency: p.currency, method: p.payment_method, fee: p.fee_amount, reference: p.paystack_reference,
-              })))}><Download className="h-4 w-4 mr-2" />Revenue Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("revenue-report.csv", payments.filter(p => p.status === "success").map(p => {
+                const c = classifyPayment(p, convMap[p.id]);
+                const ref = p.appointment_id ? (referralByAppt[p.appointment_id] || 0) : 0;
+                return {
+                  date: p.paid_at || p.created_at, doctor: doctorNames[p.doctor_id] || "",
+                  revenue: c.amount, processing_fee: c.processing_fee, platform_fee: c.platform_fee,
+                  referral_commission: ref, doctor_net: +(c.amount - c.processing_fee - c.platform_fee - ref).toFixed(2),
+                  currency: c.currency, method: p.payment_method, reference: p.paystack_reference,
+                };
+              }))}><Download className="h-4 w-4 mr-2" />Revenue Report (CSV)</Button>
               <Button variant="outline" onClick={() => downloadCSV("expense-report.csv", expenses.map(e => ({
                 date: e.expense_date, supplier: e.supplier, description: e.description, amount: e.amount, vat: e.vat_amount, status: e.status, tax_deductible: e.tax_deductible,
               })))}><Download className="h-4 w-4 mr-2" />Expense Report (CSV)</Button>
               <Button variant="outline" onClick={() => downloadCSV("profit-report.csv", trend)}><Download className="h-4 w-4 mr-2" />Profit Report (CSV)</Button>
-              <Button variant="outline" onClick={() => downloadCSV("doctor-payouts.csv", doctorSummary as any)}><Download className="h-4 w-4 mr-2" />Doctor Payout Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("doctor-payouts.csv", doctorSummary.map((r: any) => ({
+                doctor: r.name, consultations: r.consultations, revenue: r.revenue,
+                processing_fee: r.processing, platform_fee: r.platform, referral_commission: r.referral,
+                net_earnings: r.net, pending_payout: r.pending || 0, completed_payout: r.completed || 0,
+              })) as any)}><Download className="h-4 w-4 mr-2" />Doctor Payout Report (CSV)</Button>
               <Button variant="outline" onClick={() => {
                 const vatCollected = payments.filter(p => p.status === "success").reduce((s, p) => s + (Number(p.amount) * 0.15 / 1.15), 0);
                 const vatPaid = expenses.reduce((s, e) => s + Number(e.vat_amount || 0), 0);
