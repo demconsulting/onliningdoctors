@@ -28,8 +28,28 @@ type Recurring = {
   reminder_days: number; is_active: boolean; notes: string | null;
 };
 
-const fmt = (n: number, cur = "ZAR") =>
+// Platform operates from South Africa — ZAR is the canonical currency for all
+// aggregated revenue, fee, and earnings totals. Payments in other currencies are
+// excluded from revenue totals and flagged as currency mismatches.
+const PLATFORM_CURRENCY = "ZAR";
+
+// Statuses considered "successful / completed" for revenue accounting.
+const REVENUE_STATUSES = new Set(["success", "completed", "paid"]);
+const PENDING_STATUSES = new Set(["pending", "processing", "awaiting_payment"]);
+
+const fmt = (n: number, cur: string = PLATFORM_CURRENCY) =>
   `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Classifies a payment row against revenue inclusion rules.
+const classifyPayment = (p: any) => {
+  if (!REVENUE_STATUSES.has(p.status)) {
+    return { included: false, reason: `Excluded: status=${p.status}` };
+  }
+  if ((p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY) {
+    return { included: false, reason: `Currency mismatch: ${p.currency} ≠ ${PLATFORM_CURRENCY}` };
+  }
+  return { included: true, reason: "" };
+};
 
 const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
   <Card>
