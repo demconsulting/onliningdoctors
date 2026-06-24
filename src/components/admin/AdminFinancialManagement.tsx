@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfMonth, startOfDay, subMonths, addMonths, addYears, addWeeks } from "date-fns";
-import { Loader2, Plus, Pencil, Trash2, Download, Upload, FileText, Repeat, Receipt, TrendingUp, TrendingDown, Wallet, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Download, Upload, FileText, Repeat, Receipt, TrendingUp, TrendingDown, Wallet, AlertTriangle, RefreshCcw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from "recharts";
 
 type Category = { id: string; name: string; slug: string; parent_group: string; sort_order: number; is_active: boolean };
@@ -27,10 +28,17 @@ type Recurring = {
   amount: number; currency: string; frequency: string; next_due_date: string;
   reminder_days: number; is_active: boolean; notes: string | null;
 };
+export type CurrencyConversion = {
+  id: string; payment_id: string; original_currency: string; original_amount: number;
+  exchange_rate: number; converted_currency: string; converted_amount: number;
+  conversion_method: "fixed_rate" | "manual" | "excluded" | "test_payment";
+  converted_by: string | null; conversion_note: string | null;
+  include_in_totals: boolean; created_at: string;
+};
 
 // Platform operates from South Africa — ZAR is the canonical currency for all
 // aggregated revenue, fee, and earnings totals. Payments in other currencies are
-// excluded from revenue totals and flagged as currency mismatches.
+// excluded from revenue totals unless an admin has recorded a conversion.
 const PLATFORM_CURRENCY = "ZAR";
 
 // Statuses considered "successful / completed" for revenue accounting.
@@ -40,15 +48,34 @@ const PENDING_STATUSES = new Set(["pending", "processing", "awaiting_payment"]);
 const fmt = (n: number, cur: string = PLATFORM_CURRENCY) =>
   `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// Classifies a payment row against revenue inclusion rules.
-const classifyPayment = (p: any) => {
+// Classifies a payment row against revenue inclusion rules, factoring in any
+// admin-recorded currency conversion. Returns the effective ZAR amount/fee used
+// in totals.
+const classifyPayment = (p: any, conv?: CurrencyConversion | null) => {
+  const rawCur = p.currency || PLATFORM_CURRENCY;
+  const rawAmt = Number(p.amount || 0);
+  const rawFee = Number(p.fee_amount || 0);
+
   if (!REVENUE_STATUSES.has(p.status)) {
-    return { included: false, reason: `Excluded: status=${p.status}` };
+    return { included: false, reason: `Excluded: status=${p.status}`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null as CurrencyConversion | null };
   }
-  if ((p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY) {
-    return { included: false, reason: `Currency mismatch: ${p.currency} ≠ ${PLATFORM_CURRENCY}` };
+
+  if (rawCur === PLATFORM_CURRENCY) {
+    return { included: true, reason: "", amount: rawAmt, fee_amount: rawFee, currency: PLATFORM_CURRENCY, converted: false, conversion: null };
   }
-  return { included: true, reason: "" };
+
+  // Non-ZAR — check if an admin conversion exists
+  if (conv) {
+    if (conv.conversion_method === "excluded" || conv.conversion_method === "test_payment" || !conv.include_in_totals) {
+      return { included: false, reason: `Admin excluded (${conv.conversion_method})`, amount: 0, fee_amount: 0, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+    }
+    const rate = Number(conv.exchange_rate || 0);
+    const convAmt = Number(conv.converted_amount || 0);
+    const convFee = rate > 0 ? +(rawFee * rate).toFixed(2) : 0;
+    return { included: true, reason: "Converted to ZAR by admin", amount: convAmt, fee_amount: convFee, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+  }
+
+  return { included: false, reason: `Currency mismatch: ${rawCur} ≠ ${PLATFORM_CURRENCY} (no conversion)`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null };
 };
 
 const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
