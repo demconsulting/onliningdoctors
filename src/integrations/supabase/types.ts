@@ -1561,6 +1561,45 @@ export type Database = {
           },
         ]
       }
+      financial_recalculation_logs: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          new_processing_fee_percentage: number
+          notes: string | null
+          old_processing_fee_percentage: number | null
+          payment_ids: string[] | null
+          payments_updated: number
+          recalculation_date: string
+          scope: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          new_processing_fee_percentage: number
+          notes?: string | null
+          old_processing_fee_percentage?: number | null
+          payment_ids?: string[] | null
+          payments_updated?: number
+          recalculation_date?: string
+          scope: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          new_processing_fee_percentage?: number
+          notes?: string | null
+          old_processing_fee_percentage?: number | null
+          payment_ids?: string[] | null
+          payments_updated?: number
+          recalculation_date?: string
+          scope?: string
+        }
+        Relationships: []
+      }
       founding_doctor_applications: {
         Row: {
           availability: string | null
@@ -1954,15 +1993,21 @@ export type Database = {
           created_at: string
           currency: string
           doctor_id: string
+          doctor_net_amount: number | null
           fee_amount: number | null
           fee_bearer: string | null
           id: string
+          last_recalculated_at: string | null
+          last_recalculated_by: string | null
           metadata: Json | null
           paid_at: string | null
           patient_id: string
           payment_method: string | null
           paystack_access_code: string | null
           paystack_reference: string | null
+          platform_fee_amount: number | null
+          processing_fee_amount: number | null
+          processing_fee_percentage: number | null
           status: string
           transaction_type: string | null
           updated_at: string
@@ -1973,15 +2018,21 @@ export type Database = {
           created_at?: string
           currency?: string
           doctor_id: string
+          doctor_net_amount?: number | null
           fee_amount?: number | null
           fee_bearer?: string | null
           id?: string
+          last_recalculated_at?: string | null
+          last_recalculated_by?: string | null
           metadata?: Json | null
           paid_at?: string | null
           patient_id: string
           payment_method?: string | null
           paystack_access_code?: string | null
           paystack_reference?: string | null
+          platform_fee_amount?: number | null
+          processing_fee_amount?: number | null
+          processing_fee_percentage?: number | null
           status?: string
           transaction_type?: string | null
           updated_at?: string
@@ -1992,15 +2043,21 @@ export type Database = {
           created_at?: string
           currency?: string
           doctor_id?: string
+          doctor_net_amount?: number | null
           fee_amount?: number | null
           fee_bearer?: string | null
           id?: string
+          last_recalculated_at?: string | null
+          last_recalculated_by?: string | null
           metadata?: Json | null
           paid_at?: string | null
           patient_id?: string
           payment_method?: string | null
           paystack_access_code?: string | null
           paystack_reference?: string | null
+          platform_fee_amount?: number | null
+          processing_fee_amount?: number | null
+          processing_fee_percentage?: number | null
           status?: string
           transaction_type?: string | null
           updated_at?: string
@@ -3825,6 +3882,15 @@ export type Database = {
       admin_mark_payout_paid: {
         Args: { _ledger_id: string; _reference: string }
         Returns: undefined
+      }
+      admin_recalculate_processing_fees: {
+        Args: {
+          _new_pct: number
+          _notes?: string
+          _payment_ids?: string[]
+          _scope: string
+        }
+        Returns: Json
       }
       admin_recruitment_funnel: {
         Args: never
