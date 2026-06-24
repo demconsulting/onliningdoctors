@@ -15,6 +15,7 @@ import { format, startOfMonth, startOfDay, subMonths, addMonths, addYears, addWe
 import { Loader2, Plus, Pencil, Trash2, Download, Upload, FileText, Repeat, Receipt, TrendingUp, TrendingDown, Wallet, AlertTriangle, RefreshCcw } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Legend } from "recharts";
+import RecalcProcessingFees from "./RecalcProcessingFees";
 
 type Category = { id: string; name: string; slug: string; parent_group: string; sort_order: number; is_active: boolean };
 type Expense = {
