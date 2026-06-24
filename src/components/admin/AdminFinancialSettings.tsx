@@ -13,6 +13,7 @@ import {
 import { Loader2, Plus, Trash2, Star, DollarSign, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { calculateFees, type FeeSettings } from "@/lib/feeCalculator";
+import RecalcProcessingFees from "./RecalcProcessingFees";
 
 const BLANK: Omit<FeeSettings, "id"> = {
   name: "",
@@ -97,6 +98,7 @@ const AdminFinancialSettings = () => {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      <RecalcProcessingFees />
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
           <div>
