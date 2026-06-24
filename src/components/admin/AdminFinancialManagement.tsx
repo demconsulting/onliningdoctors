@@ -49,6 +49,28 @@ const PENDING_STATUSES = new Set(["pending", "processing", "awaiting_payment"]);
 const fmt = (n: number, cur: string = PLATFORM_CURRENCY) =>
   `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const DEFAULT_PROCESSING_FEE_PCT = 3.5;
+
+// Derive granular processing/platform fees for a payment in its native currency.
+const deriveGranularFees = (p: any, amount: number, totalFee: number) => {
+  const hasProc = p.processing_fee_amount !== null && p.processing_fee_amount !== undefined;
+  const hasPlat = p.platform_fee_amount !== null && p.platform_fee_amount !== undefined;
+  let processing = hasProc ? Number(p.processing_fee_amount) : 0;
+  let platform = hasPlat ? Number(p.platform_fee_amount) : 0;
+  if (!hasProc && !hasPlat) {
+    // Legacy estimate: assume default processing %; remainder is platform fee.
+    const pct = p.processing_fee_percentage !== null && p.processing_fee_percentage !== undefined
+      ? Number(p.processing_fee_percentage) : DEFAULT_PROCESSING_FEE_PCT;
+    processing = +(amount * pct / 100).toFixed(2);
+    platform = Math.max(0, +(totalFee - processing).toFixed(2));
+  } else if (!hasProc) {
+    processing = Math.max(0, +(totalFee - platform).toFixed(2));
+  } else if (!hasPlat) {
+    platform = Math.max(0, +(totalFee - processing).toFixed(2));
+  }
+  return { processing, platform };
+};
+
 // Classifies a payment row against revenue inclusion rules, factoring in any
 // admin-recorded currency conversion. Returns the effective ZAR amount/fee used
 // in totals.
@@ -56,27 +78,33 @@ const classifyPayment = (p: any, conv?: CurrencyConversion | null) => {
   const rawCur = p.currency || PLATFORM_CURRENCY;
   const rawAmt = Number(p.amount || 0);
   const rawFee = Number(p.fee_amount || 0);
+  const granular = deriveGranularFees(p, rawAmt, rawFee);
+
+  const base = (incl: boolean, reason: string, amt: number, fee: number, proc: number, plat: number, cur: string, converted: boolean, conversion: CurrencyConversion | null) =>
+    ({ included: incl, reason, amount: amt, fee_amount: fee, processing_fee: proc, platform_fee: plat, currency: cur, converted, conversion });
 
   if (!REVENUE_STATUSES.has(p.status)) {
-    return { included: false, reason: `Excluded: status=${p.status}`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null as CurrencyConversion | null };
+    return base(false, `Excluded: status=${p.status}`, rawAmt, rawFee, granular.processing, granular.platform, rawCur, false, null);
   }
 
   if (rawCur === PLATFORM_CURRENCY) {
-    return { included: true, reason: "", amount: rawAmt, fee_amount: rawFee, currency: PLATFORM_CURRENCY, converted: false, conversion: null };
+    return base(true, "", rawAmt, rawFee, granular.processing, granular.platform, PLATFORM_CURRENCY, false, null);
   }
 
   // Non-ZAR — check if an admin conversion exists
   if (conv) {
     if (conv.conversion_method === "excluded" || conv.conversion_method === "test_payment" || !conv.include_in_totals) {
-      return { included: false, reason: `Admin excluded (${conv.conversion_method})`, amount: 0, fee_amount: 0, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+      return base(false, `Admin excluded (${conv.conversion_method})`, 0, 0, 0, 0, PLATFORM_CURRENCY, true, conv);
     }
     const rate = Number(conv.exchange_rate || 0);
     const convAmt = Number(conv.converted_amount || 0);
     const convFee = rate > 0 ? +(rawFee * rate).toFixed(2) : 0;
-    return { included: true, reason: "Converted to ZAR by admin", amount: convAmt, fee_amount: convFee, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+    const convProc = rate > 0 ? +(granular.processing * rate).toFixed(2) : 0;
+    const convPlat = rate > 0 ? +(granular.platform * rate).toFixed(2) : 0;
+    return base(true, "Converted to ZAR by admin", convAmt, convFee, convProc, convPlat, PLATFORM_CURRENCY, true, conv);
   }
 
-  return { included: false, reason: `Currency mismatch: ${rawCur} ≠ ${PLATFORM_CURRENCY} (no conversion)`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null };
+  return base(false, `Currency mismatch: ${rawCur} ≠ ${PLATFORM_CURRENCY} (no conversion)`, rawAmt, rawFee, granular.processing, granular.platform, rawCur, false, null);
 };
 
 const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
@@ -123,16 +151,20 @@ const AdminFinancialManagement = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [doctorNames, setDoctorNames] = useState<Record<string, string>>({});
   const [conversions, setConversions] = useState<CurrencyConversion[]>([]);
+  const [referralByAppt, setReferralByAppt] = useState<Record<string, number>>({});
+  const [appointments, setAppointments] = useState<Record<string, any>>({});
+  const [patientNames, setPatientNames] = useState<Record<string, string>>({});
 
   const loadAll = async () => {
     setLoading(true);
-    const [p, po, ex, rc, ct, cv] = await Promise.all([
+    const [p, po, ex, rc, ct, cv, rr] = await Promise.all([
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("payout_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("recurring_expenses").select("*").order("next_due_date"),
       supabase.from("expense_categories").select("*").order("sort_order"),
       (supabase as any).from("financial_currency_conversions").select("*").order("created_at", { ascending: false }),
+      (supabase as any).from("referral_reward_calculations").select("appointment_id, applied_amount, decision"),
     ]);
     setPayments(p.data || []);
     setPayouts(po.data || []);
@@ -141,12 +173,36 @@ const AdminFinancialManagement = () => {
     setCategories((ct.data as any) || []);
     setConversions((cv?.data as any) || []);
 
-    const ids = [...new Set([...(p.data || []).map((x: any) => x.doctor_id), ...(po.data || []).map((x: any) => x.doctor_id)].filter(Boolean))];
+    // Aggregate referral commissions per appointment
+    const refMap: Record<string, number> = {};
+    ((rr?.data as any) || []).forEach((r: any) => {
+      if (!r.appointment_id) return;
+      if (r.decision === 'credited' || r.decision === 'partial') {
+        refMap[r.appointment_id] = (refMap[r.appointment_id] || 0) + Number(r.applied_amount || 0);
+      }
+    });
+    setReferralByAppt(refMap);
+
+    const apptIds = [...new Set((p.data || []).map((x: any) => x.appointment_id).filter(Boolean))];
+    if (apptIds.length) {
+      const { data: appts } = await supabase.from("appointments").select("id, scheduled_at, reason, patient_id").in("id", apptIds);
+      const aMap: Record<string, any> = {};
+      (appts || []).forEach((a: any) => (aMap[a.id] = a));
+      setAppointments(aMap);
+    }
+
+    const ids = [...new Set([
+      ...(p.data || []).map((x: any) => x.doctor_id),
+      ...(p.data || []).map((x: any) => x.patient_id),
+      ...(po.data || []).map((x: any) => x.doctor_id),
+    ].filter(Boolean))];
     if (ids.length) {
       const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", ids);
       const map: Record<string, string> = {};
-      (profiles || []).forEach((pr: any) => (map[pr.id] = pr.full_name || "Unknown"));
+      const pmap: Record<string, string> = {};
+      (profiles || []).forEach((pr: any) => { map[pr.id] = pr.full_name || "Unknown"; pmap[pr.id] = pr.full_name || "Unknown"; });
       setDoctorNames(map);
+      setPatientNames(pmap);
     }
     setLoading(false);
   };
@@ -227,12 +283,28 @@ const AdminFinancialManagement = () => {
       const c = classifyPayment(p, convMap[p.id]);
       if (!c.included) return;
       const id = p.doctor_id;
-      if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
+      if (!rows[id]) rows[id] = {
+        doctor_id: id, name: doctorNames[id] || "—",
+        consultations: 0, revenue: 0, fees: 0,
+        processing: 0, platform: 0, referral: 0, payments: [] as any[],
+      };
+      const refCommission = p.appointment_id ? Number(referralByAppt[p.appointment_id] || 0) : 0;
       rows[id].consultations += 1;
       rows[id].revenue += c.amount;
       rows[id].fees += c.fee_amount;
+      rows[id].processing += c.processing_fee;
+      rows[id].platform += c.platform_fee;
+      rows[id].referral += refCommission;
+      rows[id].payments.push({ p, c, referral: refCommission });
     });
-    Object.values(rows).forEach((r: any) => (r.net = r.revenue - r.fees));
+    Object.values(rows).forEach((r: any) => {
+      r.net = +(r.revenue - r.processing - r.platform - r.referral).toFixed(2);
+      r.processing = +r.processing.toFixed(2);
+      r.platform = +r.platform.toFixed(2);
+      r.referral = +r.referral.toFixed(2);
+      r.revenue = +r.revenue.toFixed(2);
+      r.fees = +r.fees.toFixed(2);
+    });
     payouts.forEach((po) => {
       const r = rows[po.doctor_id];
       if (!r) return;
@@ -240,7 +312,7 @@ const AdminFinancialManagement = () => {
       if (po.status === "approved") r.completed = (r.completed || 0) + Number(po.amount);
     });
     return Object.values(rows);
-  }, [payments, payouts, doctorNames, convMap]);
+  }, [payments, payouts, doctorNames, convMap, referralByAppt]);
 
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -350,41 +422,7 @@ const AdminFinancialManagement = () => {
 
         {/* PAYOUTS */}
         <TabsContent value="payouts" className="mt-6">
-          <Card>
-            <CardHeader><CardTitle>Doctor Payouts Summary</CardTitle></CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Consultations</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Platform Fees</TableHead>
-                      <TableHead>Net Earnings</TableHead>
-                      <TableHead>Pending</TableHead>
-                      <TableHead>Completed</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {doctorSummary.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No data</TableCell></TableRow>
-                    ) : doctorSummary.map((r: any) => (
-                      <TableRow key={r.doctor_id}>
-                        <TableCell className="font-medium">{r.name}</TableCell>
-                        <TableCell>{r.consultations}</TableCell>
-                        <TableCell>{fmt(r.revenue)}</TableCell>
-                        <TableCell>{fmt(r.fees)}</TableCell>
-                        <TableCell>{fmt(r.net)}</TableCell>
-                        <TableCell>{fmt(r.pending || 0)}</TableCell>
-                        <TableCell>{fmt(r.completed || 0)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <PayoutsTab doctorSummary={doctorSummary} appointments={appointments} patientNames={patientNames} />
         </TabsContent>
 
         {/* P&L */}
@@ -402,14 +440,25 @@ const AdminFinancialManagement = () => {
           <Card>
             <CardHeader><CardTitle>Export Reports</CardTitle></CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Button variant="outline" onClick={() => downloadCSV("revenue-report.csv", payments.filter(p => p.status === "success").map(p => ({
-                date: p.paid_at || p.created_at, doctor: doctorNames[p.doctor_id] || "", amount: p.amount, currency: p.currency, method: p.payment_method, fee: p.fee_amount, reference: p.paystack_reference,
-              })))}><Download className="h-4 w-4 mr-2" />Revenue Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("revenue-report.csv", payments.filter(p => p.status === "success").map(p => {
+                const c = classifyPayment(p, convMap[p.id]);
+                const ref = p.appointment_id ? (referralByAppt[p.appointment_id] || 0) : 0;
+                return {
+                  date: p.paid_at || p.created_at, doctor: doctorNames[p.doctor_id] || "",
+                  revenue: c.amount, processing_fee: c.processing_fee, platform_fee: c.platform_fee,
+                  referral_commission: ref, doctor_net: +(c.amount - c.processing_fee - c.platform_fee - ref).toFixed(2),
+                  currency: c.currency, method: p.payment_method, reference: p.paystack_reference,
+                };
+              }))}><Download className="h-4 w-4 mr-2" />Revenue Report (CSV)</Button>
               <Button variant="outline" onClick={() => downloadCSV("expense-report.csv", expenses.map(e => ({
                 date: e.expense_date, supplier: e.supplier, description: e.description, amount: e.amount, vat: e.vat_amount, status: e.status, tax_deductible: e.tax_deductible,
               })))}><Download className="h-4 w-4 mr-2" />Expense Report (CSV)</Button>
               <Button variant="outline" onClick={() => downloadCSV("profit-report.csv", trend)}><Download className="h-4 w-4 mr-2" />Profit Report (CSV)</Button>
-              <Button variant="outline" onClick={() => downloadCSV("doctor-payouts.csv", doctorSummary as any)}><Download className="h-4 w-4 mr-2" />Doctor Payout Report (CSV)</Button>
+              <Button variant="outline" onClick={() => downloadCSV("doctor-payouts.csv", doctorSummary.map((r: any) => ({
+                doctor: r.name, consultations: r.consultations, revenue: r.revenue,
+                processing_fee: r.processing, platform_fee: r.platform, referral_commission: r.referral,
+                net_earnings: r.net, pending_payout: r.pending || 0, completed_payout: r.completed || 0,
+              })) as any)}><Download className="h-4 w-4 mr-2" />Doctor Payout Report (CSV)</Button>
               <Button variant="outline" onClick={() => {
                 const vatCollected = payments.filter(p => p.status === "success").reduce((s, p) => s + (Number(p.amount) * 0.15 / 1.15), 0);
                 const vatPaid = expenses.reduce((s, e) => s + Number(e.vat_amount || 0), 0);
@@ -426,6 +475,135 @@ const AdminFinancialManagement = () => {
           <CategoriesTab categories={categories} onChange={loadAll} />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+};
+
+/* ===================== REVENUE TAB ===================== */
+/* ===================== PAYOUTS TAB ===================== */
+const PayoutsTab = ({ doctorSummary, appointments, patientNames }: any) => {
+  const [drillDown, setDrillDown] = useState<any | null>(null);
+  const totals = useMemo(() => {
+    return doctorSummary.reduce((acc: any, r: any) => ({
+      revenue: acc.revenue + r.revenue,
+      processing: acc.processing + r.processing,
+      platform: acc.platform + r.platform,
+      referral: acc.referral + r.referral,
+      net: acc.net + r.net,
+    }), { revenue: 0, processing: 0, platform: 0, referral: 0, net: 0 });
+  }, [doctorSummary]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <StatCard label="Revenue" value={fmt(totals.revenue)} icon={Receipt} />
+        <StatCard label="Processing Fees" value={fmt(totals.processing)} icon={Receipt} tone="bad" />
+        <StatCard label="Platform Fees" value={fmt(totals.platform)} icon={Receipt} tone="good" />
+        <StatCard label="Referral Commission" value={fmt(totals.referral)} icon={Receipt} />
+        <StatCard label="Net Doctor Earnings" value={fmt(totals.net)} icon={Wallet} tone="good" />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Doctor Payouts Summary</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Net Earnings = Revenue − Processing Fee − Platform Fee − Referral Commission. Click a doctor for per-consultation drill-down.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Doctor</TableHead>
+                  <TableHead>Consultations</TableHead>
+                  <TableHead>Revenue</TableHead>
+                  <TableHead>Processing Fee</TableHead>
+                  <TableHead>Platform Fee</TableHead>
+                  <TableHead>Referral Commission</TableHead>
+                  <TableHead>Net Earnings</TableHead>
+                  <TableHead>Pending Payout</TableHead>
+                  <TableHead>Completed Payout</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {doctorSummary.length === 0 ? (
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">No data</TableCell></TableRow>
+                ) : doctorSummary.map((r: any) => (
+                  <TableRow key={r.doctor_id} className="cursor-pointer hover:bg-muted/40" onClick={() => setDrillDown(r)}>
+                    <TableCell className="font-medium">{r.name}</TableCell>
+                    <TableCell>{r.consultations}</TableCell>
+                    <TableCell>{fmt(r.revenue)}</TableCell>
+                    <TableCell className="text-destructive">{fmt(r.processing)}</TableCell>
+                    <TableCell>{fmt(r.platform)}</TableCell>
+                    <TableCell>{fmt(r.referral)}</TableCell>
+                    <TableCell className="font-semibold text-emerald-600">{fmt(r.net)}</TableCell>
+                    <TableCell>{fmt(r.pending || 0)}</TableCell>
+                    <TableCell>{fmt(r.completed || 0)}</TableCell>
+                    <TableCell><Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDrillDown(r); }}>View</Button></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!drillDown} onOpenChange={(o) => { if (!o) setDrillDown(null); }}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>{drillDown?.name} — Payout Breakdown</DialogTitle>
+          </DialogHeader>
+          {drillDown && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+                <div><p className="text-muted-foreground text-xs">Revenue</p><p className="font-semibold">{fmt(drillDown.revenue)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Processing</p><p className="font-semibold text-destructive">{fmt(drillDown.processing)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Platform</p><p className="font-semibold">{fmt(drillDown.platform)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Referral</p><p className="font-semibold">{fmt(drillDown.referral)}</p></div>
+                <div><p className="text-muted-foreground text-xs">Net Earnings</p><p className="font-semibold text-emerald-600">{fmt(drillDown.net)}</p></div>
+              </div>
+              <div className="rounded-md border overflow-x-auto max-h-[60vh] overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Appointment</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Consultation Fee</TableHead>
+                      <TableHead>Processing</TableHead>
+                      <TableHead>Platform</TableHead>
+                      <TableHead>Referral</TableHead>
+                      <TableHead>Doctor Net</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {drillDown.payments.map(({ p, c, referral }: any) => {
+                      const appt = p.appointment_id ? appointments[p.appointment_id] : null;
+                      const net = +(c.amount - c.processing_fee - c.platform_fee - referral).toFixed(2);
+                      return (
+                        <TableRow key={p.id}>
+                          <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
+                          <TableCell className="text-xs">{appt?.reason || (p.appointment_id ? String(p.appointment_id).slice(0, 8) : "—")}</TableCell>
+                          <TableCell className="text-xs">{(p.patient_id && patientNames[p.patient_id]) || "—"}</TableCell>
+                          <TableCell className="text-sm">{fmt(c.amount)}</TableCell>
+                          <TableCell className="text-sm text-destructive">{fmt(c.processing_fee)}</TableCell>
+                          <TableCell className="text-sm">{fmt(c.platform_fee)}</TableCell>
+                          <TableCell className="text-sm">{fmt(referral)}</TableCell>
+                          <TableCell className="text-sm font-semibold text-emerald-600">{fmt(net)}</TableCell>
+                          <TableCell><Badge variant={REVENUE_STATUSES.has(p.status) ? "default" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
