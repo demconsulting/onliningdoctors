@@ -283,12 +283,28 @@ const AdminFinancialManagement = () => {
       const c = classifyPayment(p, convMap[p.id]);
       if (!c.included) return;
       const id = p.doctor_id;
-      if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
+      if (!rows[id]) rows[id] = {
+        doctor_id: id, name: doctorNames[id] || "—",
+        consultations: 0, revenue: 0, fees: 0,
+        processing: 0, platform: 0, referral: 0, payments: [] as any[],
+      };
+      const refCommission = p.appointment_id ? Number(referralByAppt[p.appointment_id] || 0) : 0;
       rows[id].consultations += 1;
       rows[id].revenue += c.amount;
       rows[id].fees += c.fee_amount;
+      rows[id].processing += c.processing_fee;
+      rows[id].platform += c.platform_fee;
+      rows[id].referral += refCommission;
+      rows[id].payments.push({ p, c, referral: refCommission });
     });
-    Object.values(rows).forEach((r: any) => (r.net = r.revenue - r.fees));
+    Object.values(rows).forEach((r: any) => {
+      r.net = +(r.revenue - r.processing - r.platform - r.referral).toFixed(2);
+      r.processing = +r.processing.toFixed(2);
+      r.platform = +r.platform.toFixed(2);
+      r.referral = +r.referral.toFixed(2);
+      r.revenue = +r.revenue.toFixed(2);
+      r.fees = +r.fees.toFixed(2);
+    });
     payouts.forEach((po) => {
       const r = rows[po.doctor_id];
       if (!r) return;
@@ -296,7 +312,7 @@ const AdminFinancialManagement = () => {
       if (po.status === "approved") r.completed = (r.completed || 0) + Number(po.amount);
     });
     return Object.values(rows);
-  }, [payments, payouts, doctorNames, convMap]);
+  }, [payments, payouts, doctorNames, convMap, referralByAppt]);
 
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
