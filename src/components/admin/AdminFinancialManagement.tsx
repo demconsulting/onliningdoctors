@@ -151,16 +151,20 @@ const AdminFinancialManagement = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [doctorNames, setDoctorNames] = useState<Record<string, string>>({});
   const [conversions, setConversions] = useState<CurrencyConversion[]>([]);
+  const [referralByAppt, setReferralByAppt] = useState<Record<string, number>>({});
+  const [appointments, setAppointments] = useState<Record<string, any>>({});
+  const [patientNames, setPatientNames] = useState<Record<string, string>>({});
 
   const loadAll = async () => {
     setLoading(true);
-    const [p, po, ex, rc, ct, cv] = await Promise.all([
+    const [p, po, ex, rc, ct, cv, rr] = await Promise.all([
       supabase.from("payments").select("*").order("created_at", { ascending: false }),
       supabase.from("payout_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("recurring_expenses").select("*").order("next_due_date"),
       supabase.from("expense_categories").select("*").order("sort_order"),
       (supabase as any).from("financial_currency_conversions").select("*").order("created_at", { ascending: false }),
+      (supabase as any).from("referral_reward_calculations").select("appointment_id, applied_amount, decision"),
     ]);
     setPayments(p.data || []);
     setPayouts(po.data || []);
@@ -169,12 +173,36 @@ const AdminFinancialManagement = () => {
     setCategories((ct.data as any) || []);
     setConversions((cv?.data as any) || []);
 
-    const ids = [...new Set([...(p.data || []).map((x: any) => x.doctor_id), ...(po.data || []).map((x: any) => x.doctor_id)].filter(Boolean))];
+    // Aggregate referral commissions per appointment
+    const refMap: Record<string, number> = {};
+    ((rr?.data as any) || []).forEach((r: any) => {
+      if (!r.appointment_id) return;
+      if (r.decision === 'credited' || r.decision === 'partial') {
+        refMap[r.appointment_id] = (refMap[r.appointment_id] || 0) + Number(r.applied_amount || 0);
+      }
+    });
+    setReferralByAppt(refMap);
+
+    const apptIds = [...new Set((p.data || []).map((x: any) => x.appointment_id).filter(Boolean))];
+    if (apptIds.length) {
+      const { data: appts } = await supabase.from("appointments").select("id, scheduled_at, reason, patient_id").in("id", apptIds);
+      const aMap: Record<string, any> = {};
+      (appts || []).forEach((a: any) => (aMap[a.id] = a));
+      setAppointments(aMap);
+    }
+
+    const ids = [...new Set([
+      ...(p.data || []).map((x: any) => x.doctor_id),
+      ...(p.data || []).map((x: any) => x.patient_id),
+      ...(po.data || []).map((x: any) => x.doctor_id),
+    ].filter(Boolean))];
     if (ids.length) {
       const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", ids);
       const map: Record<string, string> = {};
-      (profiles || []).forEach((pr: any) => (map[pr.id] = pr.full_name || "Unknown"));
+      const pmap: Record<string, string> = {};
+      (profiles || []).forEach((pr: any) => { map[pr.id] = pr.full_name || "Unknown"; pmap[pr.id] = pr.full_name || "Unknown"; });
       setDoctorNames(map);
+      setPatientNames(pmap);
     }
     setLoading(false);
   };
