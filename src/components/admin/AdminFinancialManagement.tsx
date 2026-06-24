@@ -178,7 +178,7 @@ const AdminFinancialManagement = () => {
   // Doctor payout summary
   const doctorSummary = useMemo(() => {
     const rows: Record<string, any> = {};
-    payments.filter((p) => p.status === "success").forEach((p) => {
+    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
       const id = p.doctor_id;
       if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
       rows[id].consultations += 1;
@@ -199,10 +199,26 @@ const AdminFinancialManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground font-display">Financial Management</h2>
-        <p className="text-sm text-muted-foreground">Track revenue, expenses, profitability, and payouts.</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground font-display">Financial Management</h2>
+          <p className="text-sm text-muted-foreground">
+            All totals are reported in <strong>{PLATFORM_CURRENCY}</strong>. Only successful / completed payments
+            in {PLATFORM_CURRENCY} are included in revenue.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={loadAll} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Repeat className="h-4 w-4 mr-1" />}
+          Recalculate Financial Totals
+        </Button>
       </div>
+
+      {stats.mismatched > 0 && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-sm px-3 py-2">
+          ⚠ {stats.mismatched} successful payment(s) found in a non-{PLATFORM_CURRENCY} currency. These are excluded
+          from revenue totals — see the Revenue tab → Diagnostic panel for details.
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
