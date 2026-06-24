@@ -13,6 +13,7 @@ import {
 import { Loader2, Plus, Trash2, Star, DollarSign, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { calculateFees, type FeeSettings } from "@/lib/feeCalculator";
+import RecalcProcessingFees from "./RecalcProcessingFees";
 
 const BLANK: Omit<FeeSettings, "id"> = {
   name: "",
