@@ -339,7 +339,7 @@ const AdminFinancialManagement = () => {
 
         {/* REVENUE */}
         <TabsContent value="revenue" className="mt-6">
-          <RevenueTab payments={payments} doctorNames={doctorNames} />
+          <RevenueTab payments={payments} doctorNames={doctorNames} conversions={conversions} convMap={convMap} onChange={loadAll} />
         </TabsContent>
 
         {/* EXPENSES */}
