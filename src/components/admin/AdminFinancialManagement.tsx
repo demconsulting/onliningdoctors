@@ -587,6 +587,280 @@ const RevenueTab = ({ payments, doctorNames, conversions, convMap, onChange }: a
   );
 };
 
+/* =============== CURRENCY CONVERSION PANEL =============== */
+const CurrencyConversionPanel = ({ payments, doctorNames, conversions, convMap, onChange }: any) => {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<any>({ method: "fixed_rate", rate: "", converted_amount: "", include_in_totals: true, note: "" });
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [bulkRate, setBulkRate] = useState("");
+  const [bulkNote, setBulkNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  // Legacy non-ZAR successful payments
+  const legacy = useMemo(() => {
+    return payments.filter((p: any) =>
+      REVENUE_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY
+    );
+  }, [payments]);
+
+  const unconverted = legacy.filter((p: any) => !convMap[p.id]);
+  const selectedIds = Object.keys(selected).filter((k) => selected[k]);
+
+  const openConvert = (p: any) => {
+    const existing = convMap[p.id];
+    setEditing(p);
+    setForm({
+      method: existing?.conversion_method || "fixed_rate",
+      rate: existing ? String(existing.exchange_rate || "") : "",
+      converted_amount: existing ? String(existing.converted_amount || "") : "",
+      include_in_totals: existing ? !!existing.include_in_totals : true,
+      note: existing?.conversion_note || "",
+    });
+    setOpen(true);
+  };
+
+  const computedAmount = useMemo(() => {
+    if (!editing) return 0;
+    if (form.method === "manual") return Number(form.converted_amount || 0);
+    if (form.method === "fixed_rate") return +(Number(editing.amount || 0) * Number(form.rate || 0)).toFixed(2);
+    return 0;
+  }, [editing, form]);
+
+  const handleSave = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const include = form.method !== "excluded" && form.method !== "test_payment" && !!form.include_in_totals;
+    const rate = form.method === "fixed_rate" ? Number(form.rate || 0)
+      : form.method === "manual" && Number(editing.amount) > 0 ? +(Number(form.converted_amount || 0) / Number(editing.amount)).toFixed(8)
+      : 0;
+    const payload: any = {
+      payment_id: editing.id,
+      original_currency: editing.currency || "UNKNOWN",
+      original_amount: Number(editing.amount || 0),
+      exchange_rate: rate,
+      converted_currency: PLATFORM_CURRENCY,
+      converted_amount: include ? computedAmount : 0,
+      conversion_method: form.method,
+      converted_by: user?.id || null,
+      conversion_note: form.note || null,
+      include_in_totals: include,
+    };
+    const existing = convMap[editing.id];
+    const { error } = existing
+      ? await (supabase as any).from("financial_currency_conversions").update(payload).eq("id", existing.id)
+      : await (supabase as any).from("financial_currency_conversions").insert(payload);
+    setSaving(false);
+    if (error) { toast({ variant: "destructive", title: "Save failed", description: error.message }); return; }
+    toast({ title: existing ? "Conversion updated" : "Payment converted" });
+    setOpen(false); setEditing(null); onChange();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Remove this conversion record? The original payment will return to mismatched state.")) return;
+    const { error } = await (supabase as any).from("financial_currency_conversions").delete().eq("id", id);
+    if (error) { toast({ variant: "destructive", title: "Delete failed", description: error.message }); return; }
+    toast({ title: "Conversion removed" });
+    onChange();
+  };
+
+  const handleBulk = async () => {
+    const rate = Number(bulkRate);
+    if (!rate || rate <= 0) { toast({ variant: "destructive", title: "Enter a valid exchange rate" }); return; }
+    if (!selectedIds.length) { toast({ variant: "destructive", title: "Select at least one payment" }); return; }
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const rows = selectedIds.map((id) => {
+      const p = payments.find((x: any) => x.id === id);
+      return {
+        payment_id: id,
+        original_currency: p.currency || "UNKNOWN",
+        original_amount: Number(p.amount || 0),
+        exchange_rate: rate,
+        converted_currency: PLATFORM_CURRENCY,
+        converted_amount: +(Number(p.amount || 0) * rate).toFixed(2),
+        conversion_method: "fixed_rate",
+        converted_by: user?.id || null,
+        conversion_note: bulkNote || null,
+        include_in_totals: true,
+      };
+    });
+    const { error } = await (supabase as any).from("financial_currency_conversions").insert(rows);
+    setSaving(false);
+    if (error) { toast({ variant: "destructive", title: "Bulk conversion failed", description: error.message }); return; }
+    toast({ title: `Converted ${rows.length} payment(s)` });
+    setBulkOpen(false); setSelected({}); setBulkRate(""); setBulkNote(""); onChange();
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-2 flex-wrap">
+        <div>
+          <CardTitle className="text-base flex items-center gap-2"><RefreshCcw className="h-4 w-4 text-primary" />Currency Conversion</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            Manually convert legacy non-{PLATFORM_CURRENCY} successful payments into {PLATFORM_CURRENCY} so they are included in financial totals. No automatic conversion is performed.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" disabled={selectedIds.length === 0} onClick={() => setBulkOpen(true)}>
+            Bulk convert ({selectedIds.length})
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatCard label="Legacy non-ZAR payments" value={legacy.length} icon={AlertTriangle} tone={legacy.length ? "bad" : "default"} />
+          <StatCard label="Awaiting conversion" value={unconverted.length} icon={RefreshCcw} tone={unconverted.length ? "bad" : "good"} />
+          <StatCard label="Conversions recorded" value={conversions.length} icon={Receipt} />
+        </div>
+
+        {legacy.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-4 text-center">No legacy non-{PLATFORM_CURRENCY} successful payments found.</p>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10"></TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Doctor</TableHead>
+                  <TableHead>Original</TableHead>
+                  <TableHead>Converted (ZAR)</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>In totals</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {legacy.map((p: any) => {
+                  const c = convMap[p.id];
+                  const cur = p.currency || "—";
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        {!c && (
+                          <Checkbox
+                            checked={!!selected[p.id]}
+                            onCheckedChange={(v) => setSelected((s) => ({ ...s, [p.id]: !!v }))}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
+                      <TableCell className="text-sm">{fmt(Number(p.amount), cur)}</TableCell>
+                      <TableCell className="text-sm">
+                        {c ? (c.include_in_totals ? fmt(Number(c.converted_amount)) : <span className="text-muted-foreground">excluded</span>) : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="text-xs capitalize">{c?.conversion_method?.replace("_", " ") || "—"}</TableCell>
+                      <TableCell className="text-xs">{c?.exchange_rate ? Number(c.exchange_rate).toFixed(4) : "—"}</TableCell>
+                      <TableCell>
+                        {c
+                          ? (c.include_in_totals
+                              ? <Badge className="text-xs bg-emerald-600 hover:bg-emerald-600">Yes</Badge>
+                              : <Badge variant="secondary" className="text-xs">No</Badge>)
+                          : <Badge variant="destructive" className="text-xs">Pending</Badge>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="ghost" onClick={() => openConvert(p)}>{c ? "Edit" : "Convert"}</Button>
+                        {c && <Button size="icon" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+
+      {/* Single conversion dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Convert Payment to {PLATFORM_CURRENCY}</DialogTitle></DialogHeader>
+          {editing && (
+            <div className="space-y-3">
+              <div className="rounded-md bg-muted/50 p-3 text-sm">
+                <div><strong>Original:</strong> {fmt(Number(editing.amount), editing.currency || "—")}</div>
+                <div className="text-xs text-muted-foreground">Payment {String(editing.id).slice(0, 8)} · {format(new Date(editing.paid_at || editing.created_at), "MMM dd, yyyy")}</div>
+              </div>
+              <div>
+                <Label>Conversion method</Label>
+                <Select value={form.method} onValueChange={(v) => setForm({ ...form, method: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed_rate">Fixed exchange rate</SelectItem>
+                    <SelectItem value="manual">Manual ZAR amount</SelectItem>
+                    <SelectItem value="excluded">Exclude from totals</SelectItem>
+                    <SelectItem value="test_payment">Mark as test payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.method === "fixed_rate" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Exchange rate ({editing.currency || "?"} → ZAR)</Label>
+                    <Input type="number" step="0.0001" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} placeholder="e.g. 0.011" />
+                  </div>
+                  <div>
+                    <Label>Computed ZAR</Label>
+                    <Input value={fmt(computedAmount)} disabled />
+                  </div>
+                </div>
+              )}
+              {form.method === "manual" && (
+                <div>
+                  <Label>Converted ZAR amount</Label>
+                  <Input type="number" step="0.01" value={form.converted_amount} onChange={(e) => setForm({ ...form, converted_amount: e.target.value })} />
+                </div>
+              )}
+              {(form.method === "fixed_rate" || form.method === "manual") && (
+                <div className="flex items-center gap-2">
+                  <Checkbox id="incl" checked={form.include_in_totals} onCheckedChange={(v) => setForm({ ...form, include_in_totals: !!v })} />
+                  <Label htmlFor="incl" className="font-normal">Include in financial totals</Label>
+                </div>
+              )}
+              <div>
+                <Label>Conversion note (optional)</Label>
+                <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save conversion"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk conversion dialog */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Bulk convert {selectedIds.length} payment(s)</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Applies one exchange rate to every selected payment using the fixed-rate method.</p>
+            <div>
+              <Label>Exchange rate → ZAR</Label>
+              <Input type="number" step="0.0001" value={bulkRate} onChange={(e) => setBulkRate(e.target.value)} placeholder="e.g. 0.011" />
+            </div>
+            <div>
+              <Label>Note (optional)</Label>
+              <Textarea rows={2} value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Cancel</Button>
+            <Button onClick={handleBulk} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply rate"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+};
+
 /* ===================== EXPENSES TAB ===================== */
 const ExpensesTab = ({ expenses, categories, onChange }: { expenses: Expense[]; categories: Category[]; onChange: () => void }) => {
   const { toast } = useToast();
