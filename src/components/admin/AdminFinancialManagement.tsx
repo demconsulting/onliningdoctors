@@ -49,6 +49,28 @@ const PENDING_STATUSES = new Set(["pending", "processing", "awaiting_payment"]);
 const fmt = (n: number, cur: string = PLATFORM_CURRENCY) =>
   `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+const DEFAULT_PROCESSING_FEE_PCT = 3.5;
+
+// Derive granular processing/platform fees for a payment in its native currency.
+const deriveGranularFees = (p: any, amount: number, totalFee: number) => {
+  const hasProc = p.processing_fee_amount !== null && p.processing_fee_amount !== undefined;
+  const hasPlat = p.platform_fee_amount !== null && p.platform_fee_amount !== undefined;
+  let processing = hasProc ? Number(p.processing_fee_amount) : 0;
+  let platform = hasPlat ? Number(p.platform_fee_amount) : 0;
+  if (!hasProc && !hasPlat) {
+    // Legacy estimate: assume default processing %; remainder is platform fee.
+    const pct = p.processing_fee_percentage !== null && p.processing_fee_percentage !== undefined
+      ? Number(p.processing_fee_percentage) : DEFAULT_PROCESSING_FEE_PCT;
+    processing = +(amount * pct / 100).toFixed(2);
+    platform = Math.max(0, +(totalFee - processing).toFixed(2));
+  } else if (!hasProc) {
+    processing = Math.max(0, +(totalFee - platform).toFixed(2));
+  } else if (!hasPlat) {
+    platform = Math.max(0, +(totalFee - processing).toFixed(2));
+  }
+  return { processing, platform };
+};
+
 // Classifies a payment row against revenue inclusion rules, factoring in any
 // admin-recorded currency conversion. Returns the effective ZAR amount/fee used
 // in totals.
@@ -56,27 +78,33 @@ const classifyPayment = (p: any, conv?: CurrencyConversion | null) => {
   const rawCur = p.currency || PLATFORM_CURRENCY;
   const rawAmt = Number(p.amount || 0);
   const rawFee = Number(p.fee_amount || 0);
+  const granular = deriveGranularFees(p, rawAmt, rawFee);
+
+  const base = (incl: boolean, reason: string, amt: number, fee: number, proc: number, plat: number, cur: string, converted: boolean, conversion: CurrencyConversion | null) =>
+    ({ included: incl, reason, amount: amt, fee_amount: fee, processing_fee: proc, platform_fee: plat, currency: cur, converted, conversion });
 
   if (!REVENUE_STATUSES.has(p.status)) {
-    return { included: false, reason: `Excluded: status=${p.status}`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null as CurrencyConversion | null };
+    return base(false, `Excluded: status=${p.status}`, rawAmt, rawFee, granular.processing, granular.platform, rawCur, false, null);
   }
 
   if (rawCur === PLATFORM_CURRENCY) {
-    return { included: true, reason: "", amount: rawAmt, fee_amount: rawFee, currency: PLATFORM_CURRENCY, converted: false, conversion: null };
+    return base(true, "", rawAmt, rawFee, granular.processing, granular.platform, PLATFORM_CURRENCY, false, null);
   }
 
   // Non-ZAR — check if an admin conversion exists
   if (conv) {
     if (conv.conversion_method === "excluded" || conv.conversion_method === "test_payment" || !conv.include_in_totals) {
-      return { included: false, reason: `Admin excluded (${conv.conversion_method})`, amount: 0, fee_amount: 0, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+      return base(false, `Admin excluded (${conv.conversion_method})`, 0, 0, 0, 0, PLATFORM_CURRENCY, true, conv);
     }
     const rate = Number(conv.exchange_rate || 0);
     const convAmt = Number(conv.converted_amount || 0);
     const convFee = rate > 0 ? +(rawFee * rate).toFixed(2) : 0;
-    return { included: true, reason: "Converted to ZAR by admin", amount: convAmt, fee_amount: convFee, currency: PLATFORM_CURRENCY, converted: true, conversion: conv };
+    const convProc = rate > 0 ? +(granular.processing * rate).toFixed(2) : 0;
+    const convPlat = rate > 0 ? +(granular.platform * rate).toFixed(2) : 0;
+    return base(true, "Converted to ZAR by admin", convAmt, convFee, convProc, convPlat, PLATFORM_CURRENCY, true, conv);
   }
 
-  return { included: false, reason: `Currency mismatch: ${rawCur} ≠ ${PLATFORM_CURRENCY} (no conversion)`, amount: rawAmt, fee_amount: rawFee, currency: rawCur, converted: false, conversion: null };
+  return base(false, `Currency mismatch: ${rawCur} ≠ ${PLATFORM_CURRENCY} (no conversion)`, rawAmt, rawFee, granular.processing, granular.platform, rawCur, false, null);
 };
 
 const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
