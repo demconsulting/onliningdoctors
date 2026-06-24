@@ -98,6 +98,7 @@ const AdminFinancialSettings = () => {
 
   return (
     <div className="space-y-6 max-w-5xl">
+      <RecalcProcessingFees />
       <Card>
         <CardHeader className="flex-row items-start justify-between gap-3">
           <div>
