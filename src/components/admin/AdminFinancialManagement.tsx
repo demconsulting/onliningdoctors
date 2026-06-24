@@ -483,6 +483,8 @@ const RevenueTab = ({ payments, doctorNames, conversions, convMap, onChange }: a
 
       <CurrencyConversionPanel payments={payments} doctorNames={doctorNames} conversions={conversions} convMap={convMap} onChange={onChange} />
 
+      <RecalcProcessingFees onComplete={onChange} />
+
       <Card>
         <CardHeader><CardTitle>Recent Payments</CardTitle></CardHeader>
         <CardContent>
