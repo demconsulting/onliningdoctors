@@ -430,16 +430,16 @@ const AdminFinancialManagement = () => {
 };
 
 /* ===================== REVENUE TAB ===================== */
-const RevenueTab = ({ payments, doctorNames }: any) => {
+const RevenueTab = ({ payments, doctorNames, conversions, convMap, onChange }: any) => {
   const classified = useMemo(
-    () => payments.map((p: any) => ({ ...p, _class: classifyPayment(p) })),
-    [payments]
+    () => payments.map((p: any) => ({ ...p, _class: classifyPayment(p, convMap[p.id]) })),
+    [payments, convMap]
   );
   const successful = classified.filter((p: any) => p._class.included);
 
   const totals = useMemo(() => {
-    const total = successful.reduce((s: number, p: any) => s + Number(p.amount), 0);
-    const platform = successful.reduce((s: number, p: any) => s + Number(p.fee_amount || 0), 0);
+    const total = successful.reduce((s: number, p: any) => s + p._class.amount, 0);
+    const platform = successful.reduce((s: number, p: any) => s + p._class.fee_amount, 0);
     return {
       total,
       platform,
@@ -447,13 +447,15 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
       consultations: successful.length,
       medicalAid: successful
         .filter((p: any) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid")
-        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+        .reduce((s: number, p: any) => s + p._class.amount, 0),
       card: successful
         .filter((p: any) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid")
-        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+        .reduce((s: number, p: any) => s + p._class.amount, 0),
       pending: classified
         .filter((p: any) => PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY)
         .reduce((s: number, p: any) => s + Number(p.amount), 0),
+      convertedCount: successful.filter((p: any) => p._class.converted).length,
+      convertedTotal: successful.filter((p: any) => p._class.converted).reduce((s: number, p: any) => s + p._class.amount, 0),
     };
   }, [classified, successful]);
 
@@ -471,6 +473,15 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
         <StatCard label="Pending Revenue" value={fmt(totals.pending)} icon={Receipt} tone="bad" />
         <StatCard label="Completed Revenue" value={fmt(totals.total)} icon={Receipt} tone="good" />
       </div>
+
+      {totals.convertedCount > 0 && (
+        <div className="rounded-md border border-primary/30 bg-primary/5 text-sm px-3 py-2 text-foreground">
+          ℹ {totals.convertedCount} legacy non-{PLATFORM_CURRENCY} payment(s) — totalling {fmt(totals.convertedTotal)} — were converted by admin and are included in the totals above.
+        </div>
+      )}
+
+      <CurrencyConversionPanel payments={payments} doctorNames={doctorNames} conversions={conversions} convMap={convMap} onChange={onChange} />
+
       <Card>
         <CardHeader><CardTitle>Recent Payments</CardTitle></CardHeader>
         <CardContent>
@@ -483,20 +494,30 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
                 {classified.slice(0, 50).map((p: any) => {
                   const cur = p.currency || PLATFORM_CURRENCY;
                   const mismatch = cur !== PLATFORM_CURRENCY;
+                  const cls = p._class;
                   return (
                     <TableRow key={p.id}>
                       <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
                       <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
-                      <TableCell className="text-sm">{fmt(p.amount, cur)}</TableCell>
-                      <TableCell className="text-sm">{fmt(p.fee_amount || 0, cur)}</TableCell>
+                      <TableCell className="text-sm">
+                        {cls.converted ? (
+                          <span>
+                            <span className="text-muted-foreground line-through mr-1">{fmt(Number(p.amount), cur)}</span>
+                            → {fmt(cls.amount)}
+                          </span>
+                        ) : fmt(Number(p.amount), cur)}
+                      </TableCell>
+                      <TableCell className="text-sm">{cls.converted ? fmt(cls.fee_amount) : fmt(Number(p.fee_amount || 0), cur)}</TableCell>
                       <TableCell className="text-sm capitalize">{p.payment_method || "—"}</TableCell>
                       <TableCell><Badge variant={REVENUE_STATUSES.has(p.status) ? "default" : p.status === "failed" ? "destructive" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
                       <TableCell>
-                        {mismatch
-                          ? <Badge variant="destructive" className="text-xs">Currency mismatch</Badge>
-                          : p._class.included
-                            ? <Badge variant="default" className="text-xs">In revenue</Badge>
-                            : <Badge variant="secondary" className="text-xs">Excluded</Badge>}
+                        {cls.converted
+                          ? <Badge variant="default" className="text-xs bg-emerald-600 hover:bg-emerald-600">Converted</Badge>
+                          : mismatch
+                            ? <Badge variant="destructive" className="text-xs">Currency mismatch</Badge>
+                            : cls.included
+                              ? <Badge variant="default" className="text-xs">In revenue</Badge>
+                              : <Badge variant="secondary" className="text-xs">Excluded</Badge>}
                       </TableCell>
                     </TableRow>
                   );
