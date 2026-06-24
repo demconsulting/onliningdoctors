@@ -122,18 +122,25 @@ const AdminFinancialManagement = () => {
 
   useEffect(() => { loadAll(); }, []);
 
-  // Derived stats
+  // Derived stats — strictly ZAR, only successful/completed payments
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
     const monthStart = startOfMonth(new Date());
-    const successful = payments.filter((p) => p.status === "success");
+    const successful = payments.filter((p) => classifyPayment(p).included);
+    const pending = payments.filter((p) =>
+      PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY
+    );
     const todayRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= today).reduce((s, p) => s + Number(p.amount), 0);
     const monthRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= monthStart).reduce((s, p) => s + Number(p.amount), 0);
     const totalRev = successful.reduce((s, p) => s + Number(p.amount), 0);
     const platformFees = successful.reduce((s, p) => s + Number(p.fee_amount || 0), 0);
     const medicalAidRev = successful.filter((p) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
     const cardRev = successful.filter((p) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
+    const pendingRev = pending.reduce((s, p) => s + Number(p.amount), 0);
     const avgRev = successful.length ? totalRev / successful.length : 0;
+    const consultations = successful.length;
+    const doctorEarnings = totalRev - platformFees;
+    const mismatched = payments.filter((p) => REVENUE_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY).length;
 
     const monthExp = expenses.filter((e) => new Date(e.expense_date) >= monthStart).reduce((s, e) => s + Number(e.amount), 0);
     const totalExp = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -142,13 +149,13 @@ const AdminFinancialManagement = () => {
     const completedPayouts = payouts.filter((p) => p.status === "approved").reduce((s, p) => s + Number(p.amount), 0);
 
     return {
-      todayRev, monthRev, totalRev, platformFees, medicalAidRev, cardRev, avgRev,
+      todayRev, monthRev, totalRev, platformFees, doctorEarnings, medicalAidRev, cardRev, pendingRev, avgRev, consultations, mismatched,
       monthExp, totalExp, netProfit: totalRev - totalExp,
       pendingPayouts, completedPayouts,
     };
   }, [payments, expenses, payouts]);
 
-  // Monthly trend (last 12 months)
+  // Monthly trend (last 12 months) — ZAR successful payments only
   const trend = useMemo(() => {
     const buckets: Record<string, { month: string; revenue: number; expenses: number; profit: number }> = {};
     for (let i = 11; i >= 0; i--) {
@@ -156,7 +163,7 @@ const AdminFinancialManagement = () => {
       const key = format(d, "yyyy-MM");
       buckets[key] = { month: format(d, "MMM yy"), revenue: 0, expenses: 0, profit: 0 };
     }
-    payments.filter((p) => p.status === "success").forEach((p) => {
+    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
       const key = format(new Date(p.paid_at || p.created_at), "yyyy-MM");
       if (buckets[key]) buckets[key].revenue += Number(p.amount);
     });
