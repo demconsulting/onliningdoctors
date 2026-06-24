@@ -28,8 +28,28 @@ type Recurring = {
   reminder_days: number; is_active: boolean; notes: string | null;
 };
 
-const fmt = (n: number, cur = "ZAR") =>
+// Platform operates from South Africa — ZAR is the canonical currency for all
+// aggregated revenue, fee, and earnings totals. Payments in other currencies are
+// excluded from revenue totals and flagged as currency mismatches.
+const PLATFORM_CURRENCY = "ZAR";
+
+// Statuses considered "successful / completed" for revenue accounting.
+const REVENUE_STATUSES = new Set(["success", "completed", "paid"]);
+const PENDING_STATUSES = new Set(["pending", "processing", "awaiting_payment"]);
+
+const fmt = (n: number, cur: string = PLATFORM_CURRENCY) =>
   `${cur} ${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Classifies a payment row against revenue inclusion rules.
+const classifyPayment = (p: any) => {
+  if (!REVENUE_STATUSES.has(p.status)) {
+    return { included: false, reason: `Excluded: status=${p.status}` };
+  }
+  if ((p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY) {
+    return { included: false, reason: `Currency mismatch: ${p.currency} ≠ ${PLATFORM_CURRENCY}` };
+  }
+  return { included: true, reason: "" };
+};
 
 const StatCard = ({ label, value, icon: Icon, tone = "default" }: any) => (
   <Card>
@@ -102,18 +122,25 @@ const AdminFinancialManagement = () => {
 
   useEffect(() => { loadAll(); }, []);
 
-  // Derived stats
+  // Derived stats — strictly ZAR, only successful/completed payments
   const stats = useMemo(() => {
     const today = startOfDay(new Date());
     const monthStart = startOfMonth(new Date());
-    const successful = payments.filter((p) => p.status === "success");
+    const successful = payments.filter((p) => classifyPayment(p).included);
+    const pending = payments.filter((p) =>
+      PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY
+    );
     const todayRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= today).reduce((s, p) => s + Number(p.amount), 0);
     const monthRev = successful.filter((p) => new Date(p.paid_at || p.created_at) >= monthStart).reduce((s, p) => s + Number(p.amount), 0);
     const totalRev = successful.reduce((s, p) => s + Number(p.amount), 0);
     const platformFees = successful.reduce((s, p) => s + Number(p.fee_amount || 0), 0);
     const medicalAidRev = successful.filter((p) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
     const cardRev = successful.filter((p) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s, p) => s + Number(p.amount), 0);
+    const pendingRev = pending.reduce((s, p) => s + Number(p.amount), 0);
     const avgRev = successful.length ? totalRev / successful.length : 0;
+    const consultations = successful.length;
+    const doctorEarnings = totalRev - platformFees;
+    const mismatched = payments.filter((p) => REVENUE_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) !== PLATFORM_CURRENCY).length;
 
     const monthExp = expenses.filter((e) => new Date(e.expense_date) >= monthStart).reduce((s, e) => s + Number(e.amount), 0);
     const totalExp = expenses.reduce((s, e) => s + Number(e.amount), 0);
@@ -122,13 +149,13 @@ const AdminFinancialManagement = () => {
     const completedPayouts = payouts.filter((p) => p.status === "approved").reduce((s, p) => s + Number(p.amount), 0);
 
     return {
-      todayRev, monthRev, totalRev, platformFees, medicalAidRev, cardRev, avgRev,
+      todayRev, monthRev, totalRev, platformFees, doctorEarnings, medicalAidRev, cardRev, pendingRev, avgRev, consultations, mismatched,
       monthExp, totalExp, netProfit: totalRev - totalExp,
       pendingPayouts, completedPayouts,
     };
   }, [payments, expenses, payouts]);
 
-  // Monthly trend (last 12 months)
+  // Monthly trend (last 12 months) — ZAR successful payments only
   const trend = useMemo(() => {
     const buckets: Record<string, { month: string; revenue: number; expenses: number; profit: number }> = {};
     for (let i = 11; i >= 0; i--) {
@@ -136,7 +163,7 @@ const AdminFinancialManagement = () => {
       const key = format(d, "yyyy-MM");
       buckets[key] = { month: format(d, "MMM yy"), revenue: 0, expenses: 0, profit: 0 };
     }
-    payments.filter((p) => p.status === "success").forEach((p) => {
+    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
       const key = format(new Date(p.paid_at || p.created_at), "yyyy-MM");
       if (buckets[key]) buckets[key].revenue += Number(p.amount);
     });
@@ -151,7 +178,7 @@ const AdminFinancialManagement = () => {
   // Doctor payout summary
   const doctorSummary = useMemo(() => {
     const rows: Record<string, any> = {};
-    payments.filter((p) => p.status === "success").forEach((p) => {
+    payments.filter((p) => classifyPayment(p).included).forEach((p) => {
       const id = p.doctor_id;
       if (!rows[id]) rows[id] = { doctor_id: id, name: doctorNames[id] || "—", consultations: 0, revenue: 0, fees: 0 };
       rows[id].consultations += 1;
@@ -172,10 +199,26 @@ const AdminFinancialManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground font-display">Financial Management</h2>
-        <p className="text-sm text-muted-foreground">Track revenue, expenses, profitability, and payouts.</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground font-display">Financial Management</h2>
+          <p className="text-sm text-muted-foreground">
+            All totals are reported in <strong>{PLATFORM_CURRENCY}</strong>. Only successful / completed payments
+            in {PLATFORM_CURRENCY} are included in revenue.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={loadAll} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Repeat className="h-4 w-4 mr-1" />}
+          Recalculate Financial Totals
+        </Button>
       </div>
+
+      {stats.mismatched > 0 && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200 text-sm px-3 py-2">
+          ⚠ {stats.mismatched} successful payment(s) found in a non-{PLATFORM_CURRENCY} currency. These are excluded
+          from revenue totals — see the Revenue tab → Diagnostic panel for details.
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex-wrap h-auto">
@@ -341,22 +384,40 @@ const AdminFinancialManagement = () => {
 
 /* ===================== REVENUE TAB ===================== */
 const RevenueTab = ({ payments, doctorNames }: any) => {
-  const successful = payments.filter((p: any) => p.status === "success");
-  const totals = useMemo(() => ({
-    total: successful.reduce((s: number, p: any) => s + Number(p.amount), 0),
-    platform: successful.reduce((s: number, p: any) => s + Number(p.fee_amount || 0), 0),
-    consultations: successful.length,
-    medicalAid: successful.filter((p: any) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid").reduce((s: number, p: any) => s + Number(p.amount), 0),
-    card: successful.filter((p: any) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid").reduce((s: number, p: any) => s + Number(p.amount), 0),
-    pending: payments.filter((p: any) => p.status === "pending").reduce((s: number, p: any) => s + Number(p.amount), 0),
-  }), [payments]);
+  const classified = useMemo(
+    () => payments.map((p: any) => ({ ...p, _class: classifyPayment(p) })),
+    [payments]
+  );
+  const successful = classified.filter((p: any) => p._class.included);
+
+  const totals = useMemo(() => {
+    const total = successful.reduce((s: number, p: any) => s + Number(p.amount), 0);
+    const platform = successful.reduce((s: number, p: any) => s + Number(p.fee_amount || 0), 0);
+    return {
+      total,
+      platform,
+      doctorEarnings: total - platform,
+      consultations: successful.length,
+      medicalAid: successful
+        .filter((p: any) => p.payment_method === "medical_aid" || p.transaction_type === "medical_aid")
+        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+      card: successful
+        .filter((p: any) => p.payment_method !== "medical_aid" && p.transaction_type !== "medical_aid")
+        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+      pending: classified
+        .filter((p: any) => PENDING_STATUSES.has(p.status) && (p.currency || PLATFORM_CURRENCY) === PLATFORM_CURRENCY)
+        .reduce((s: number, p: any) => s + Number(p.amount), 0),
+    };
+  }, [classified, successful]);
+
+  const [showDiag, setShowDiag] = useState(false);
 
   return (
     <div className="space-y-4">
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Revenue" value={fmt(totals.total)} icon={Receipt} />
         <StatCard label="Platform Fees" value={fmt(totals.platform)} icon={Receipt} tone="good" />
-        <StatCard label="Doctor Earnings" value={fmt(totals.total - totals.platform)} icon={Wallet} />
+        <StatCard label="Doctor Earnings" value={fmt(totals.doctorEarnings)} icon={Wallet} />
         <StatCard label="Consultations" value={totals.consultations} icon={Receipt} />
         <StatCard label="Medical Aid Revenue" value={fmt(totals.medicalAid)} icon={Receipt} />
         <StatCard label="Card Revenue" value={fmt(totals.card)} icon={Receipt} />
@@ -369,23 +430,90 @@ const RevenueTab = ({ payments, doctorNames }: any) => {
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader><TableRow>
-                <TableHead>Date</TableHead><TableHead>Doctor</TableHead><TableHead>Amount</TableHead><TableHead>Fee</TableHead><TableHead>Method</TableHead><TableHead>Status</TableHead>
+                <TableHead>Date</TableHead><TableHead>Doctor</TableHead><TableHead>Amount</TableHead><TableHead>Fee</TableHead><TableHead>Method</TableHead><TableHead>Status</TableHead><TableHead>Flag</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {payments.slice(0, 50).map((p: any) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
-                    <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
-                    <TableCell className="text-sm">{fmt(p.amount, p.currency)}</TableCell>
-                    <TableCell className="text-sm">{fmt(p.fee_amount || 0, p.currency)}</TableCell>
-                    <TableCell className="text-sm capitalize">{p.payment_method || "—"}</TableCell>
-                    <TableCell><Badge variant={p.status === "success" ? "default" : p.status === "failed" ? "destructive" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
-                  </TableRow>
-                ))}
+                {classified.slice(0, 50).map((p: any) => {
+                  const cur = p.currency || PLATFORM_CURRENCY;
+                  const mismatch = cur !== PLATFORM_CURRENCY;
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-xs whitespace-nowrap">{format(new Date(p.paid_at || p.created_at), "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="text-sm">{doctorNames[p.doctor_id] || "—"}</TableCell>
+                      <TableCell className="text-sm">{fmt(p.amount, cur)}</TableCell>
+                      <TableCell className="text-sm">{fmt(p.fee_amount || 0, cur)}</TableCell>
+                      <TableCell className="text-sm capitalize">{p.payment_method || "—"}</TableCell>
+                      <TableCell><Badge variant={REVENUE_STATUSES.has(p.status) ? "default" : p.status === "failed" ? "destructive" : "secondary"} className="capitalize text-xs">{p.status}</Badge></TableCell>
+                      <TableCell>
+                        {mismatch
+                          ? <Badge variant="destructive" className="text-xs">Currency mismatch</Badge>
+                          : p._class.included
+                            ? <Badge variant="default" className="text-xs">In revenue</Badge>
+                            : <Badge variant="secondary" className="text-xs">Excluded</Badge>}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">Financial Diagnostic Panel (admin)</CardTitle>
+          <Button size="sm" variant="ghost" onClick={() => setShowDiag((v) => !v)}>
+            {showDiag ? "Hide" : "Show"} details
+          </Button>
+        </CardHeader>
+        {showDiag && (
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-2">
+              Shows how each payment is classified for revenue accounting.
+              Only rows where <strong>Included = yes</strong> contribute to {PLATFORM_CURRENCY} totals.
+            </p>
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Payment</TableHead><TableHead>Appointment</TableHead><TableHead>Doctor</TableHead>
+                  <TableHead>Patient</TableHead><TableHead>Amount</TableHead><TableHead>Currency</TableHead>
+                  <TableHead>Status</TableHead><TableHead>Fee</TableHead><TableHead>Processing</TableHead>
+                  <TableHead>Doctor Net</TableHead><TableHead>Included</TableHead><TableHead>Reason</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {classified.slice(0, 200).map((p: any) => {
+                    const fee = Number(p.fee_amount || 0);
+                    const amt = Number(p.amount || 0);
+                    const proc = Number(p.metadata?.processing_fee || 0);
+                    const feePct = amt ? ((fee / amt) * 100).toFixed(1) + "%" : "—";
+                    const net = amt - fee - proc;
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="text-xs font-mono">{String(p.id).slice(0, 8)}</TableCell>
+                        <TableCell className="text-xs font-mono">{p.appointment_id ? String(p.appointment_id).slice(0, 8) : "—"}</TableCell>
+                        <TableCell className="text-xs">{doctorNames[p.doctor_id] || "—"}</TableCell>
+                        <TableCell className="text-xs font-mono">{p.patient_id ? String(p.patient_id).slice(0, 8) : "—"}</TableCell>
+                        <TableCell className="text-xs">{amt.toFixed(2)}</TableCell>
+                        <TableCell className="text-xs">{p.currency || "—"}</TableCell>
+                        <TableCell className="text-xs capitalize">{p.status}</TableCell>
+                        <TableCell className="text-xs">{fee.toFixed(2)} ({feePct})</TableCell>
+                        <TableCell className="text-xs">{proc.toFixed(2)}</TableCell>
+                        <TableCell className="text-xs">{net.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={p._class.included ? "default" : "secondary"} className="text-xs">
+                            {p._class.included ? "yes" : "no"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{p._class.reason || "—"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
