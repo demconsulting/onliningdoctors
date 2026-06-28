@@ -33,13 +33,19 @@ const round = (n: number) => Math.round(n * 100) / 100;
 
 /** Resolve the effective fee plan for a given doctor (founding → override → default). */
 export async function resolveFeeSettings(doctorProfileId?: string | null): Promise<FeeSettings | null> {
+  // For the calling user, use the secure RPC (doctors no longer have direct SELECT).
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user && (!doctorProfileId || doctorProfileId === user.id)) {
+    const { data } = await (supabase as any).rpc("get_my_fee_settings");
+    if (data) return data as FeeSettings;
+  }
+  // Admin/server contexts (or other doctors) can still read directly when RLS permits.
   if (doctorProfileId) {
     const { data: doc } = await supabase
       .from("doctors")
       .select("fee_settings_id, founding_pricing_plan_id, founding_locked, is_founding_doctor")
       .eq("profile_id", doctorProfileId)
       .maybeSingle();
-    // Founding pricing wins when locked
     const foundingId = (doc as any)?.is_founding_doctor && (doc as any)?.founding_locked ? (doc as any)?.founding_pricing_plan_id : null;
     const overrideId = foundingId || doc?.fee_settings_id;
     if (overrideId) {

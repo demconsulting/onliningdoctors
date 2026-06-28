@@ -4019,6 +4019,7 @@ export type Database = {
         }[]
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_default_platform_fee_percent: { Args: never; Returns: number }
       get_doctor_blocked_slots: {
         Args: { _doctor_id: string }
         Returns: {
@@ -4030,7 +4031,43 @@ export type Database = {
         Args: { _doctor: string }
         Returns: string
       }
+      get_fee_plan_summary: {
+        Args: { _plan_id: string }
+        Returns: {
+          is_default: boolean
+          name: string
+          platform_fee_percent: number
+        }[]
+      }
       get_founding_slots: { Args: never; Returns: Json }
+      get_my_fee_settings: {
+        Args: never
+        Returns: {
+          created_at: string
+          description: string | null
+          fee_bearer: string
+          fixed_transaction_fee: number
+          id: string
+          is_active: boolean
+          is_default: boolean
+          is_founding_plan: boolean
+          minimum_payout: number
+          name: string
+          payout_schedule: string
+          platform_fee_percent: number
+          processing_fee_fixed: number
+          processing_fee_percent: number
+          updated_at: string
+          vat_enabled: boolean
+          vat_percent: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_fee_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_patient_id_verification_status: {
         Args: { _user: string }
         Returns: string
