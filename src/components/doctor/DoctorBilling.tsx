@@ -78,11 +78,10 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
         .select("is_founding_doctor, founding_doctor_since, founding_expiry, founding_pricing_plan_id")
         .eq("profile_id", user.id).maybeSingle();
       if ((docRow as any)?.is_founding_doctor && (docRow as any)?.founding_pricing_plan_id) {
-        const { data: plan } = await supabase.from("platform_fee_settings" as any)
-          .select("name, platform_fee_percent").eq("id", (docRow as any).founding_pricing_plan_id).maybeSingle();
-        const { data: defPlan } = await supabase.from("platform_fee_settings" as any)
-          .select("platform_fee_percent").eq("is_default", true).eq("is_active", true).maybeSingle();
-        setFoundingInfo({ doctor: docRow, plan: { ...(plan as any), default_percent: (defPlan as any)?.platform_fee_percent ?? 15 } });
+        const { data: planRows } = await (supabase as any).rpc("get_fee_plan_summary", { _plan_id: (docRow as any).founding_pricing_plan_id });
+        const plan = Array.isArray(planRows) ? planRows[0] : planRows;
+        const { data: defPct } = await (supabase as any).rpc("get_default_platform_fee_percent");
+        setFoundingInfo({ doctor: docRow, plan: { ...(plan as any), default_percent: (defPct as any) ?? 15 } });
       }
       setLoading(false);
     };
