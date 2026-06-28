@@ -562,7 +562,7 @@ const ProgramSettings = () => {
   const toggle = async (field: string, value: boolean) => {
     if (!row) return;
     setRow({ ...row, [field]: value });
-    const { error } = await supabase.from("referral_program_settings").update({ [field]: value }).eq("id", row.id);
+    const { error } = await supabase.from("referral_program_settings").update({ [field]: value } as any).eq("id", row.id);
     if (error) toast({ variant: "destructive", title: "Save failed", description: error.message });
     else toast({ title: "Updated" });
   };

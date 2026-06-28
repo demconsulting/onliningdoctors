@@ -34,7 +34,7 @@ export const useBranding = () => {
       });
 
     const channel = supabase
-      .channel("branding-content")
+      .channel(`branding-content-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "site_content", filter: "key=eq.branding" },
