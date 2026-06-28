@@ -79,8 +79,8 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
       // Founding doctor extras
       const doc: any = docRes.data;
       if (doc?.is_founding_doctor && doc?.founding_pricing_plan_id) {
-        const { data: planRow } = await supabase.from("platform_fee_settings" as any)
-          .select("name, platform_fee_percent").eq("id", doc.founding_pricing_plan_id).maybeSingle();
+        const { data: planRows } = await (supabase as any).rpc("get_fee_plan_summary", { _plan_id: doc.founding_pricing_plan_id });
+        const planRow = Array.isArray(planRows) ? planRows[0] : planRows;
         setFoundingPlan(planRow);
       }
       const { data: appRow } = await supabase.from("founding_doctor_applications" as any)
