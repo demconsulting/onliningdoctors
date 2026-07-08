@@ -117,20 +117,28 @@ const Navbar = () => {
             <Link to="/wellness-plus" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Wellness+</Link>
             <a href="/#how-it-works" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>How It Works</a>
             <a href="/#for-doctors" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>For Doctors</a>
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               {user ? (
                 <>
+                  <div className="flex items-center justify-end pb-1">
+                    <Suspense fallback={null}>
+                      <NotificationBell />
+                    </Suspense>
+                  </div>
                   {isAdmin && (
-                    <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate("/admin"); setIsOpen(false); }}>Admin</Button>
+                    <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/admin"); setIsOpen(false); }}>Admin</Button>
                   )}
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
-                  <Button variant="outline" size="sm" className="flex-1" onClick={handleLogout}>Log out</Button>
+                  {isDoctor && (
+                    <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice/team"); setIsOpen(false); }}>Practice</Button>
+                  )}
+                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>Log out</Button>
                 </>
               ) : (
-                <>
+                <div className="flex gap-2">
                   <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate("/login"); setIsOpen(false); }}>Log in</Button>
                   <Button size="sm" className="flex-1" onClick={() => { navigate("/signup"); setIsOpen(false); }}>Sign up</Button>
-                </>
+                </div>
               )}
             </div>
           </div>
