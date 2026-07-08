@@ -100,12 +100,12 @@ const AdminFinancialSettings = () => {
     <div className="space-y-6 max-w-5xl">
       <RecalcProcessingFees />
       <Card>
-        <CardHeader className="flex-row items-start justify-between gap-3">
-          <div>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="min-w-0">
             <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5 text-primary" /> Financial Settings</CardTitle>
             <CardDescription>Configure platform fees, processing fees, fixed fees, VAT and payout rules. Assign per-doctor overrides from the doctor's profile.</CardDescription>
           </div>
-          <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> New Plan</Button>
+          <Button onClick={openNew} className="w-full sm:w-auto shrink-0"><Plus className="mr-2 h-4 w-4" /> New Plan</Button>
         </CardHeader>
         <CardContent className="space-y-3">
           {plans.map((p) => {
