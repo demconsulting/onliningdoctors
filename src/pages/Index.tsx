@@ -115,8 +115,8 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Seo
-        title="Doctors Onlining | Video Consultations in South Africa"
-        description="Doctors Onlining is a video consultation platform connecting patients with qualified doctors for fast, secure, non-emergency care anywhere in South Africa."
+        title="Online Doctors South Africa | Talk to a Doctor Online 24/7"
+        description="Consult qualified online doctors in South Africa. Book a doctor online for secure video consultations, prescriptions and non-emergency healthcare — anytime, anywhere."
         path="/"
       />
       <MedicalDisclaimerBanner />
