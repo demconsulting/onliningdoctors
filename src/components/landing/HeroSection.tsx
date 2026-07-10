@@ -161,6 +161,8 @@ const HeroSection = () => {
               {hero.title}{" "}
               <span className="text-gradient">{hero.highlight}</span>
             </h1>
+            <h2 className="sr-only">Online doctors and virtual healthcare in South Africa</h2>
+            <p className="sr-only">Talk to a doctor online in minutes. Doctors Onlining connects you with verified online doctors for video consultations, online prescriptions and non-emergency healthcare across South Africa.</p>
             <p className="mb-8 max-w-lg text-base text-white/80 md:text-lg">{hero.subtitle}</p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="gap-2 gradient-primary border-0 text-primary-foreground" onClick={() => navigate("/doctors")}>
