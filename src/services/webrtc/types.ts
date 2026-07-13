@@ -27,6 +27,10 @@ export type CallStatus =
   | "waiting-remote"
   | "connecting"
   | "connected"
+  | "connected-waiting-remote-audio"
+  | "connected-remote-camera-off"
+  | "microphone-not-transmitting"
+  | "remote-sound-blocked"
   | "poor-network"
   | "reconnecting"
   | "connection-timeout"
@@ -39,6 +43,22 @@ export interface DiagnosticsSnapshot {
   hasLocalVideo: boolean;
   hasRemoteAudio: boolean;
   hasRemoteVideo: boolean;
+  selectedMicrophone?: string;
+  localAudioTrackExists?: boolean;
+  localAudioTrackEnabled?: boolean;
+  localAudioTrackMuted?: boolean;
+  localAudioTrackReadyState?: MediaStreamTrackState;
+  localAudioTrackLabel?: string;
+  audioSenderAttached?: boolean;
+  audioSenderTrackId?: string;
+  audioBytesSent?: number;
+  remoteAudioTrackReceived?: boolean;
+  audioBytesReceived?: number;
+  remoteMediaElementMuted?: boolean;
+  remoteMediaElementVolume?: number;
+  remoteMediaPlaybackState?: "playing" | "paused" | "blocked" | "not-ready";
+  chatSubscriptionStatus?: "idle" | "subscribing" | "subscribed" | "error";
+  chatSubscriptionError?: string;
   connectionState: RTCPeerConnectionState | "closed" | "new";
   iceConnectionState: RTCIceConnectionState | "new";
   signalingState: RTCSignalingState | "closed";
