@@ -112,7 +112,7 @@ const VideoCall = ({ appointmentId, localUserId, remoteUserId, isInitiator, onEn
       sender_id: localUserId,
       receiver_id: remoteUserId,
       type,
-      payload,
+      payload: payload as any,
     });
     if (error) log("send error", error);
   }, [appointmentId, localUserId, remoteUserId]);
