@@ -31,7 +31,6 @@ const CallPage = () => {
   const [remoteName, setRemoteName] = useState("");
   const [error, setError] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatUnread, setChatUnread] = useState(0);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsSnapshot | null>(null);
 
   useEffect(() => {
