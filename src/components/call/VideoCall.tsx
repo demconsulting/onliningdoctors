@@ -93,6 +93,10 @@ const VideoCall = ({
     if (call.status === "connected") onConnected?.();
   }, [call.status, onConnected]);
 
+  useEffect(() => {
+    onDiagnostics?.(call.diagnostics);
+  }, [call.diagnostics, onDiagnostics]);
+
   // Bind local stream to the preview video element.
   useEffect(() => {
     if (!call.localStream) return;
