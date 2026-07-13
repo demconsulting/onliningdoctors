@@ -9,6 +9,7 @@ import DiagnosticsPanel from "@/components/call/DiagnosticsPanel";
 import { Loader2, ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { DiagnosticsSnapshot } from "@/services/webrtc/types";
 import { useConsultationChat } from "@/services/webrtc/useConsultationChat";
@@ -31,6 +32,7 @@ const CallPage = () => {
   const [remoteName, setRemoteName] = useState("");
   const [error, setError] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const [sideTab, setSideTab] = useState<"notes" | "chat">("notes");
   const [diagnostics, setDiagnostics] = useState<DiagnosticsSnapshot | null>(null);
 
   useEffect(() => {
@@ -98,6 +100,12 @@ const CallPage = () => {
     visible: chatOpen,
   });
 
+  const diagnosticsWithChat: DiagnosticsSnapshot | null = diagnostics ? {
+    ...diagnostics,
+    chatSubscriptionStatus: chat.subscriptionStatus,
+    chatSubscriptionError: chat.subscriptionError,
+  } : null;
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -125,7 +133,17 @@ const CallPage = () => {
     <Button
       variant="outline"
       size="icon"
-      onClick={() => setChatOpen((o) => !o)}
+      onClick={() => {
+        if (isMobile) {
+          setChatOpen((o) => !o);
+          return;
+        }
+        setSideTab((current) => {
+          const next = current === "chat" && chatOpen ? "notes" : "chat";
+          setChatOpen(next === "chat");
+          return next;
+        });
+      }}
       className="relative rounded-full h-12 w-12"
       aria-label={chatOpen ? "Close chat" : `Open chat${chat.unread ? `, ${chat.unread} unread` : ""}`}
     >
@@ -172,42 +190,60 @@ const CallPage = () => {
               rightControls={chatToggleButton}
               onDiagnostics={isAdmin ? onDiagnostics : undefined}
             />
-            {isAdmin && diagnostics && (
+            {isAdmin && diagnosticsWithChat && (
               <div className="mt-4">
-                <DiagnosticsPanel snapshot={diagnostics} />
+                <DiagnosticsPanel snapshot={diagnosticsWithChat} />
               </div>
             )}
           </div>
 
-          {/* Desktop: chat sits beside the video, replacing the notes column
-              when open. Mobile: chat opens as a bottom sheet — the call
-              keeps running underneath. Message state is preserved because
-              the subscription lives in useConsultationChat above. */}
-          {chatOpen && !isMobile ? (
-            <div className="lg:col-span-1 h-[600px]">
-              {chatView}
-            </div>
-          ) : (
-            <div className="lg:col-span-1 space-y-4">
-              <ConsultationNotes
-                appointmentId={appointmentId!}
-                doctorId={doctorId}
-                isDoctor={isDoctor}
-              />
-              {isDoctor && (
-                <div className="flex gap-2">
-                  <Suspense fallback={null}>
-                    <PrescriptionForm
-                      appointmentId={appointmentId!}
-                      doctorId={doctorId}
-                      patientId={patientId}
-                      patientName={patientName}
-                    />
-                  </Suspense>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Desktop: Notes and Chat share the right panel as tabs. Mobile: chat
+              opens as a bottom sheet and keeps the call mounted underneath. */}
+          <div className="lg:col-span-1 space-y-4">
+            <Tabs
+              value={sideTab}
+              onValueChange={(value) => {
+                const next = value as "notes" | "chat";
+                setSideTab(next);
+                setChatOpen(next === "chat");
+              }}
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="notes">Consultation Notes</TabsTrigger>
+                <TabsTrigger value="chat" className="relative">
+                  Chat
+                  {chat.unread > 0 && sideTab !== "chat" && (
+                    <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                      {chat.unread > 9 ? "9+" : chat.unread}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="notes" className="space-y-4">
+                <ConsultationNotes
+                  appointmentId={appointmentId!}
+                  doctorId={doctorId}
+                  isDoctor={isDoctor}
+                />
+                {isDoctor && (
+                  <div className="flex gap-2">
+                    <Suspense fallback={null}>
+                      <PrescriptionForm
+                        appointmentId={appointmentId!}
+                        doctorId={doctorId}
+                        patientId={patientId}
+                        patientName={patientName}
+                      />
+                    </Suspense>
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="chat" className="h-[600px]">
+                {chatView}
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </main>
 
