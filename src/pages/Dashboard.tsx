@@ -57,6 +57,9 @@ const Dashboard = () => {
         toast({ variant: "destructive", title: "Payment verification failed", description: data?.error || error?.message });
       } else if (data?.status === "success") {
         toast({ title: "Payment successful!", description: `${data.currency} ${data.amount} paid via ${data.channel}` });
+        setActiveTab("appointments");
+        setAppointmentsRefreshKey((k) => k + 1);
+
       } else {
         toast({ variant: "destructive", title: "Payment not completed", description: "Please try again or contact support." });
       }
