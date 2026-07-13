@@ -78,10 +78,10 @@ const DoctorsFilters = ({
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="availability">Availability</SelectItem>
+          <SelectItem value="earliest">Earliest Available</SelectItem>
           <SelectItem value="rating">Rating</SelectItem>
-          <SelectItem value="price_low">Price: Low to High</SelectItem>
-          <SelectItem value="price_high">Price: High to Low</SelectItem>
+          <SelectItem value="price_low">Fee: Lowest First</SelectItem>
+          <SelectItem value="price_high">Fee: Highest First</SelectItem>
           <SelectItem value="experience">Experience</SelectItem>
         </SelectContent>
       </Select>

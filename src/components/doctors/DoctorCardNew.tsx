@@ -37,7 +37,12 @@ const formatNextAvailable = (iso?: string | null) => {
   return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + ` ${time}`;
 };
 
-const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
+interface DoctorCardNewProps {
+  doctor: Doctor;
+  onBookNextAvailable?: (doctor: Doctor) => void;
+}
+
+const DoctorCardNew = ({ doctor, onBookNextAvailable }: DoctorCardNewProps) => {
   const name = doctor.profile?.full_name || "Doctor";
   const currencySymbol = getCurrencySymbol(doctor.profile?.country);
   const displayName = `${doctor.title ? `${doctor.title} ` : "Dr. "}${name}`;
@@ -157,21 +162,21 @@ const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-1">
-          {isAvailable ? (
-            <Button asChild className="flex-1 gradient-primary border-0 text-primary-foreground shadow-md shadow-primary/10" size="default">
-              <Link to={`/doctors/${doctor.profile_id}`}>Book Now</Link>
-            </Button>
-          ) : doctor.next_available_at ? (
-            <Button asChild variant="secondary" className="flex-1" size="default">
-              <Link to={`/doctors/${doctor.profile_id}#book`}>View Next Available</Link>
+          {isAvailable || doctor.next_available_at ? (
+            <Button
+              onClick={() => onBookNextAvailable?.(doctor)}
+              className="flex-1 gradient-primary border-0 text-primary-foreground shadow-md shadow-primary/10"
+              size="default"
+            >
+              {isAvailable ? "Book Now" : "Book Next Available"}
             </Button>
           ) : (
             <Button disabled className="flex-1" size="default" variant="secondary">
-              Not Accepting Bookings
+              No appointments available
             </Button>
           )}
           <Button asChild variant="outline" size="default">
-            <Link to={`/doctors/${doctor.profile_id}`}>Bio</Link>
+            <Link to={`/doctors/${doctor.profile_id}`}>Profile</Link>
           </Button>
         </div>
       </CardContent>

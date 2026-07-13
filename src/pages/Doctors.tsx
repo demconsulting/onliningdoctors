@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +9,7 @@ import TrustStrip from "@/components/doctors/TrustStrip";
 import DoctorsFilters from "@/components/doctors/DoctorsFilters";
 import AvailableNowSection from "@/components/doctors/AvailableNowSection";
 import DoctorCardNew from "@/components/doctors/DoctorCardNew";
+import QuickBookDrawer from "@/components/doctors/QuickBookDrawer";
 import WhatsAppButton from "@/components/doctors/WhatsAppButton";
 import type { Doctor } from "@/components/doctors/DoctorCardNew";
 import { Loader2, Stethoscope } from "lucide-react";
@@ -22,14 +23,18 @@ interface Specialty {
 
 const Doctors = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("all");
-  const [sortBy, setSortBy] = useState("availability");
+  const [sortBy, setSortBy] = useState("earliest");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [bookDoctor, setBookDoctor] = useState<Doctor | null>(null);
+  const [bookAt, setBookAt] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,6 +79,34 @@ const Doctors = () => {
     [doctors]
   );
 
+  // Handle ?book=<doctorId>&at=<iso> — used to resume booking after login
+  useEffect(() => {
+    if (loading) return;
+    const bookId = searchParams.get("book");
+    if (!bookId) return;
+    const doc = doctors.find((d) => d.profile_id === bookId);
+    if (!doc) return;
+    setBookDoctor(doc);
+    setBookAt(searchParams.get("at"));
+    setDrawerOpen(true);
+    // Clear the params so a refresh doesn't reopen it unexpectedly
+    const next = new URLSearchParams(searchParams);
+    next.delete("book"); next.delete("at");
+    setSearchParams(next, { replace: true });
+  }, [loading, doctors, searchParams, setSearchParams]);
+
+  const handleOpenBooking = (d: Doctor) => {
+    setBookDoctor(d);
+    setBookAt(d.next_available_at || null);
+    setDrawerOpen(true);
+  };
+
+  const earliestTimestamp = (d: Doctor): number => {
+    if (d.is_available) return 0; // available now → absolute top
+    if (d.next_available_at) return new Date(d.next_available_at).getTime();
+    return Number.POSITIVE_INFINITY; // no slots → bottom
+  };
+
   const filtered = useMemo(() => {
     let result = doctors.filter((d) => {
       const name = d.profile?.full_name?.toLowerCase() || "";
@@ -84,11 +117,15 @@ const Doctors = () => {
       return matchesSearch && matchesSpecialty && matchesCountry && matchesAvailable;
     });
 
-    // Sort
+    // Sort — default is earliest genuine appointment; doctors with no slot go last
     result.sort((a, b) => {
+      const aHas = a.next_available_at || a.is_available;
+      const bHas = b.next_available_at || b.is_available;
+      // Doctors without any availability always at the bottom, regardless of sort
+      if (!aHas && bHas) return 1;
+      if (aHas && !bHas) return -1;
+
       switch (sortBy) {
-        case "availability":
-          return (b.is_available ? 1 : 0) - (a.is_available ? 1 : 0);
         case "rating":
           return (Number(b.rating) || 0) - (Number(a.rating) || 0);
         case "price_low":
@@ -97,8 +134,9 @@ const Doctors = () => {
           return (Number(b.consultation_fee) || 0) - (Number(a.consultation_fee) || 0);
         case "experience":
           return (b.experience_years || 0) - (a.experience_years || 0);
+        case "earliest":
         default:
-          return 0;
+          return earliestTimestamp(a) - earliestTimestamp(b);
       }
     });
 
@@ -176,7 +214,7 @@ const Doctors = () => {
             </div>
           ) : (
             <>
-              {!availableOnly && <AvailableNowSection doctors={availableNow} />}
+              {!availableOnly && <AvailableNowSection doctors={availableNow} onBookNextAvailable={handleOpenBooking} />}
 
               <p className="mb-5 text-sm text-muted-foreground">
                 {filtered.length} doctor{filtered.length !== 1 ? "s" : ""} found
@@ -184,13 +222,20 @@ const Doctors = () => {
 
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {allOthers.map((doc) => (
-                  <DoctorCardNew key={doc.id} doctor={doc} />
+                  <DoctorCardNew key={doc.id} doctor={doc} onBookNextAvailable={handleOpenBooking} />
                 ))}
               </div>
             </>
           )}
         </div>
       </section>
+
+      <QuickBookDrawer
+        doctor={bookDoctor}
+        defaultAt={bookAt}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
 
       <Footer />
       <WhatsAppButton />

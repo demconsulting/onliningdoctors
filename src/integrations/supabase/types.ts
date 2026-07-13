@@ -3669,6 +3669,50 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_reservations: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          doctor_id: string
+          end_at: string
+          expires_at: string
+          id: string
+          patient_id: string
+          released_at: string | null
+          start_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          doctor_id: string
+          end_at: string
+          expires_at?: string
+          id?: string
+          patient_id: string
+          released_at?: string | null
+          start_at: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          doctor_id?: string
+          end_at?: string
+          expires_at?: string
+          id?: string
+          patient_id?: string
+          released_at?: string | null
+          start_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slot_reservations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       specialties: {
         Row: {
           created_at: string
@@ -4132,9 +4176,17 @@ export type Database = {
         Args: { _change_id: string; _reason: string }
         Returns: undefined
       }
+      release_appointment_slot: {
+        Args: { _reservation_id: string }
+        Returns: undefined
+      }
       request_profile_change_info: {
         Args: { _change_id: string; _message: string }
         Returns: undefined
+      }
+      reserve_appointment_slot: {
+        Args: { _doctor_id: string; _end: string; _start: string }
+        Returns: string
       }
       resolve_referral_reward_setting: {
         Args: {
