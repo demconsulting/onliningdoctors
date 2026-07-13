@@ -93,7 +93,11 @@ const ConsultationChat = ({
   // Auto-scroll + unread accounting
   useEffect(() => {
     if (open) {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+      const el = scrollRef.current;
+      if (el) {
+        const scroller = el.closest("[data-radix-scroll-area-viewport]") as HTMLElement | null;
+        (scroller ?? el).scrollTo({ top: (scroller ?? el).scrollHeight, behavior: "smooth" });
+      }
       setUnread(0);
     } else {
       const last = messages[messages.length - 1];
