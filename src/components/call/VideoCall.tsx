@@ -37,6 +37,8 @@ interface VideoCallProps {
   onConnected?: () => void;
   /** Optional slot on the right of the controls (e.g. chat toggle button). */
   rightControls?: React.ReactNode;
+  /** Live diagnostics stream — parent may forward this to an admin-only panel. */
+  onDiagnostics?: (snapshot: import("@/services/webrtc/types").DiagnosticsSnapshot) => void;
 }
 
 const STATUS_LABEL: Record<CallStatus, string> = {
