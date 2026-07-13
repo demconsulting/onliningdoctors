@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { DiagnosticsSnapshot } from "@/services/webrtc/types";
+import { useConsultationChat } from "@/services/webrtc/useConsultationChat";
 
 const PrescriptionForm = lazy(() => import("@/components/doctor/PrescriptionForm"));
 
