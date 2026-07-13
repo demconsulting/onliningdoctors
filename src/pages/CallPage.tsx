@@ -166,7 +166,10 @@ const CallPage = () => {
       remoteName={remoteName}
       maxLength={chat.maxLength}
       onSend={chat.send}
-      onClose={() => setChatOpen(false)}
+      onClose={() => {
+        setChatOpen(false);
+        setSideTab("notes");
+      }}
     />
   );
 
