@@ -139,8 +139,8 @@ const ConsultationChat = ({
         </Button>
       </header>
 
-      <ScrollArea className="flex-1" viewportRef={scrollRef}>
-        <div className="flex flex-col gap-2 px-3 py-3">
+      <ScrollArea className="flex-1">
+        <div ref={scrollRef} className="flex flex-col gap-2 px-3 py-3">
           {grouped.length === 0 ? (
             <p className="py-6 text-center text-xs text-muted-foreground">
               Messages sent here are visible to the doctor, patient, and authorised admins only.
