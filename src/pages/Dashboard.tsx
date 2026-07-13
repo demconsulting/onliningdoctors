@@ -34,6 +34,8 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const preselectDoctorId = searchParams.get("doctor");
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "appointments");
+  const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
+
   const { toast } = useToast();
 
   // Verify payment on return from Paystack
