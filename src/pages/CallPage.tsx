@@ -113,21 +113,39 @@ const CallPage = () => {
 
   const localRole: "doctor" | "patient" = isDoctor ? "doctor" : "patient";
 
+  const chat = useConsultationChat({
+    appointmentId: appointmentId!,
+    localUserId: userId,
+    localRole,
+    visible: chatOpen,
+  });
+
   const chatToggleButton = (
     <Button
       variant="outline"
       size="icon"
       onClick={() => setChatOpen((o) => !o)}
       className="relative rounded-full h-12 w-12"
-      aria-label={chatOpen ? "Close chat" : `Open chat${chatUnread ? `, ${chatUnread} unread` : ""}`}
+      aria-label={chatOpen ? "Close chat" : `Open chat${chat.unread ? `, ${chat.unread} unread` : ""}`}
     >
       <MessageSquare className="h-5 w-5" />
-      {chatUnread > 0 && !chatOpen && (
+      {chat.unread > 0 && !chatOpen && (
         <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-          {chatUnread > 9 ? "9+" : chatUnread}
+          {chat.unread > 9 ? "9+" : chat.unread}
         </span>
       )}
     </Button>
+  );
+
+  const chatView = (
+    <ConsultationChat
+      messages={chat.messages}
+      localUserId={userId}
+      remoteName={remoteName}
+      maxLength={chat.maxLength}
+      onSend={chat.send}
+      onClose={() => setChatOpen(false)}
+    />
   );
 
   return (
@@ -162,18 +180,11 @@ const CallPage = () => {
 
           {/* Desktop: chat sits beside the video, replacing the notes column
               when open. Mobile: chat opens as a bottom sheet — the call
-              keeps running underneath. */}
+              keeps running underneath. Message state is preserved because
+              the subscription lives in useConsultationChat above. */}
           {chatOpen && !isMobile ? (
             <div className="lg:col-span-1 h-[600px]">
-              <ConsultationChat
-                appointmentId={appointmentId!}
-                localUserId={userId}
-                localRole={localRole}
-                remoteName={remoteName}
-                open={chatOpen}
-                onOpenChange={setChatOpen}
-                onUnreadChange={setChatUnread}
-              />
+              {chatView}
             </div>
           ) : (
             <div className="lg:col-span-1 space-y-4">
@@ -207,15 +218,7 @@ const CallPage = () => {
               <SheetTitle className="text-left">Consultation chat</SheetTitle>
             </SheetHeader>
             <div className="flex-1 min-h-0 px-4 pb-4">
-              <ConsultationChat
-                appointmentId={appointmentId!}
-                localUserId={userId}
-                localRole={localRole}
-                remoteName={remoteName}
-                open={chatOpen}
-                onOpenChange={setChatOpen}
-                onUnreadChange={setChatUnread}
-              />
+              {chatView}
             </div>
           </SheetContent>
         </Sheet>
