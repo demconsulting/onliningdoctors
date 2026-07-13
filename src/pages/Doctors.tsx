@@ -23,14 +23,18 @@ interface Specialty {
 
 const Doctors = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("all");
-  const [sortBy, setSortBy] = useState("availability");
+  const [sortBy, setSortBy] = useState("earliest");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [bookDoctor, setBookDoctor] = useState<Doctor | null>(null);
+  const [bookAt, setBookAt] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +79,34 @@ const Doctors = () => {
     [doctors]
   );
 
+  // Handle ?book=<doctorId>&at=<iso> — used to resume booking after login
+  useEffect(() => {
+    if (loading) return;
+    const bookId = searchParams.get("book");
+    if (!bookId) return;
+    const doc = doctors.find((d) => d.profile_id === bookId);
+    if (!doc) return;
+    setBookDoctor(doc);
+    setBookAt(searchParams.get("at"));
+    setDrawerOpen(true);
+    // Clear the params so a refresh doesn't reopen it unexpectedly
+    const next = new URLSearchParams(searchParams);
+    next.delete("book"); next.delete("at");
+    setSearchParams(next, { replace: true });
+  }, [loading, doctors, searchParams, setSearchParams]);
+
+  const handleOpenBooking = (d: Doctor) => {
+    setBookDoctor(d);
+    setBookAt(d.next_available_at || null);
+    setDrawerOpen(true);
+  };
+
+  const earliestTimestamp = (d: Doctor): number => {
+    if (d.is_available) return 0; // available now → absolute top
+    if (d.next_available_at) return new Date(d.next_available_at).getTime();
+    return Number.POSITIVE_INFINITY; // no slots → bottom
+  };
+
   const filtered = useMemo(() => {
     let result = doctors.filter((d) => {
       const name = d.profile?.full_name?.toLowerCase() || "";
@@ -85,11 +117,15 @@ const Doctors = () => {
       return matchesSearch && matchesSpecialty && matchesCountry && matchesAvailable;
     });
 
-    // Sort
+    // Sort — default is earliest genuine appointment; doctors with no slot go last
     result.sort((a, b) => {
+      const aHas = a.next_available_at || a.is_available;
+      const bHas = b.next_available_at || b.is_available;
+      // Doctors without any availability always at the bottom, regardless of sort
+      if (!aHas && bHas) return 1;
+      if (aHas && !bHas) return -1;
+
       switch (sortBy) {
-        case "availability":
-          return (b.is_available ? 1 : 0) - (a.is_available ? 1 : 0);
         case "rating":
           return (Number(b.rating) || 0) - (Number(a.rating) || 0);
         case "price_low":
@@ -98,8 +134,9 @@ const Doctors = () => {
           return (Number(b.consultation_fee) || 0) - (Number(a.consultation_fee) || 0);
         case "experience":
           return (b.experience_years || 0) - (a.experience_years || 0);
+        case "earliest":
         default:
-          return 0;
+          return earliestTimestamp(a) - earliestTimestamp(b);
       }
     });
 
