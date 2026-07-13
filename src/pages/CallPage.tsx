@@ -1,26 +1,37 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import VideoCall from "@/components/call/VideoCall";
 import ConsultationNotes from "@/components/call/ConsultationNotes";
-import { Loader2, ArrowLeft } from "lucide-react";
+import ConsultationChat from "@/components/call/ConsultationChat";
+import DiagnosticsPanel from "@/components/call/DiagnosticsPanel";
+import { Loader2, ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { DiagnosticsSnapshot } from "@/services/webrtc/types";
 
 const PrescriptionForm = lazy(() => import("@/components/doctor/PrescriptionForm"));
 
 const CallPage = () => {
   const { appointmentId } = useParams<{ appointmentId: string }>();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState("");
   const [remoteUserId, setRemoteUserId] = useState("");
   const [isInitiator, setIsInitiator] = useState(false);
   const [isDoctor, setIsDoctor] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [doctorId, setDoctorId] = useState("");
   const [patientId, setPatientId] = useState("");
   const [patientName, setPatientName] = useState("");
+  const [remoteName, setRemoteName] = useState("");
   const [error, setError] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
+  const [diagnostics, setDiagnostics] = useState<DiagnosticsSnapshot | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -39,8 +50,22 @@ const CallPage = () => {
         .single();
 
       if (aptErr || !apt) { setError("Appointment not found"); setLoading(false); return; }
-      if (apt.patient_id !== uid && apt.doctor_id !== uid) { setError("Not authorized"); setLoading(false); return; }
-      if (!["confirmed", "completed"].includes(apt.status)) { setError("Appointment must be confirmed to start a call"); setLoading(false); return; }
+
+      // Admins can observe the room (they still see diagnostics-only surfaces).
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid)
+        .in("role", ["admin", "super_admin", "platform_admin"]);
+      const admin = !!adminRoles && adminRoles.length > 0;
+      setIsAdmin(admin);
+
+      if (apt.patient_id !== uid && apt.doctor_id !== uid && !admin) {
+        setError("Not authorized"); setLoading(false); return;
+      }
+      if (!["confirmed", "completed"].includes(apt.status)) {
+        setError("Appointment must be confirmed to start a call"); setLoading(false); return;
+      }
 
       const remote = uid === apt.doctor_id ? apt.patient_id : apt.doctor_id;
       setRemoteUserId(remote);
@@ -48,13 +73,21 @@ const CallPage = () => {
       setIsDoctor(uid === apt.doctor_id);
       setDoctorId(apt.doctor_id);
       setPatientId(apt.patient_id);
-      // Fetch patient name for prescription
-      const { data: patProfile } = await supabase.from("profiles").select("full_name").eq("id", apt.patient_id).single();
+
+      const [{ data: patProfile }, { data: docProfile }] = await Promise.all([
+        supabase.from("profiles").select("full_name").eq("id", apt.patient_id).maybeSingle(),
+        supabase.from("profiles").select("full_name").eq("id", apt.doctor_id).maybeSingle(),
+      ]);
       setPatientName(patProfile?.full_name || "Patient");
+      const docLabel = docProfile?.full_name ? `Dr. ${docProfile.full_name}` : "Doctor";
+      setRemoteName(uid === apt.doctor_id ? (patProfile?.full_name || "Patient") : docLabel);
+
       setLoading(false);
     };
     init();
   }, [appointmentId, navigate]);
+
+  const onDiagnostics = useCallback((snap: DiagnosticsSnapshot) => setDiagnostics(snap), []);
 
   if (loading) {
     return (
@@ -78,6 +111,25 @@ const CallPage = () => {
     );
   }
 
+  const localRole: "doctor" | "patient" = isDoctor ? "doctor" : "patient";
+
+  const chatToggleButton = (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => setChatOpen((o) => !o)}
+      className="relative rounded-full h-12 w-12"
+      aria-label={chatOpen ? "Close chat" : `Open chat${chatUnread ? `, ${chatUnread} unread` : ""}`}
+    >
+      <MessageSquare className="h-5 w-5" />
+      {chatUnread > 0 && !chatOpen && (
+        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+          {chatUnread > 9 ? "9+" : chatUnread}
+        </span>
+      )}
+    </Button>
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
@@ -91,36 +143,83 @@ const CallPage = () => {
           </span>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+          <div className={`lg:col-span-2 ${chatOpen && !isMobile ? "lg:col-span-1" : ""}`}>
             <VideoCall
               appointmentId={appointmentId!}
               localUserId={userId}
               remoteUserId={remoteUserId}
               isInitiator={isInitiator}
               onEnd={() => navigate(-1)}
+              rightControls={chatToggleButton}
+              onDiagnostics={isAdmin ? onDiagnostics : undefined}
             />
-          </div>
-          <div className="lg:col-span-1 space-y-4">
-            <ConsultationNotes
-              appointmentId={appointmentId!}
-              doctorId={doctorId}
-              isDoctor={isDoctor}
-            />
-            {isDoctor && (
-              <div className="flex gap-2">
-                <Suspense fallback={null}>
-                  <PrescriptionForm
-                    appointmentId={appointmentId!}
-                    doctorId={doctorId}
-                    patientId={patientId}
-                    patientName={patientName}
-                  />
-                </Suspense>
+            {isAdmin && diagnostics && (
+              <div className="mt-4">
+                <DiagnosticsPanel snapshot={diagnostics} />
               </div>
             )}
           </div>
+
+          {/* Desktop: chat sits beside the video, replacing the notes column
+              when open. Mobile: chat opens as a bottom sheet — the call
+              keeps running underneath. */}
+          {chatOpen && !isMobile ? (
+            <div className="lg:col-span-1 h-[600px]">
+              <ConsultationChat
+                appointmentId={appointmentId!}
+                localUserId={userId}
+                localRole={localRole}
+                remoteName={remoteName}
+                open={chatOpen}
+                onOpenChange={setChatOpen}
+                onUnreadChange={setChatUnread}
+              />
+            </div>
+          ) : (
+            <div className="lg:col-span-1 space-y-4">
+              <ConsultationNotes
+                appointmentId={appointmentId!}
+                doctorId={doctorId}
+                isDoctor={isDoctor}
+              />
+              {isDoctor && (
+                <div className="flex gap-2">
+                  <Suspense fallback={null}>
+                    <PrescriptionForm
+                      appointmentId={appointmentId!}
+                      doctorId={doctorId}
+                      patientId={patientId}
+                      patientName={patientName}
+                    />
+                  </Suspense>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Mobile chat drawer — full-height sheet that keeps the video mounted. */}
+      {isMobile && (
+        <Sheet open={chatOpen} onOpenChange={setChatOpen}>
+          <SheetContent side="bottom" className="h-[85vh] p-0 flex flex-col">
+            <SheetHeader className="px-4 pt-4 pb-2">
+              <SheetTitle className="text-left">Consultation chat</SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 min-h-0 px-4 pb-4">
+              <ConsultationChat
+                appointmentId={appointmentId!}
+                localUserId={userId}
+                localRole={localRole}
+                remoteName={remoteName}
+                open={chatOpen}
+                onOpenChange={setChatOpen}
+                onUnreadChange={setChatUnread}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 };
