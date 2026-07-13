@@ -60,7 +60,7 @@ const isRecoveryStatus = (s: CallStatus) =>
   s === "connection-timeout" || s === "connection-failed";
 
 const VideoCall = ({
-  appointmentId, localUserId, remoteUserId, isInitiator, onEnd, onConnected, rightControls,
+  appointmentId, localUserId, remoteUserId, isInitiator, onEnd, onConnected, rightControls, onDiagnostics,
 }: VideoCallProps) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
