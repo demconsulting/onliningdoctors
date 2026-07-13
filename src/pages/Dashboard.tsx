@@ -34,6 +34,8 @@ const Dashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const preselectDoctorId = searchParams.get("doctor");
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "appointments");
+  const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
+
   const { toast } = useToast();
 
   // Verify payment on return from Paystack
@@ -55,6 +57,9 @@ const Dashboard = () => {
         toast({ variant: "destructive", title: "Payment verification failed", description: data?.error || error?.message });
       } else if (data?.status === "success") {
         toast({ title: "Payment successful!", description: `${data.currency} ${data.amount} paid via ${data.channel}` });
+        setActiveTab("appointments");
+        setAppointmentsRefreshKey((k) => k + 1);
+
       } else {
         toast({ variant: "destructive", title: "Payment not completed", description: "Please try again or contact support." });
       }
@@ -141,8 +146,9 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="appointments">
-            <AppointmentList user={user} />
+            <AppointmentList key={appointmentsRefreshKey} user={user} />
           </TabsContent>
+
           <TabsContent value="book">
             <Suspense fallback={<TabFallback />}>
               <BookAppointment user={user} preselectDoctorId={preselectDoctorId} onBooked={() => setActiveTab("appointments")} />
