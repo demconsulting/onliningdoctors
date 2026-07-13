@@ -19,11 +19,12 @@ import { Card } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff, Phone, MonitorUp, MonitorOff,
-  Maximize, Minimize, RefreshCw, Settings2,
+  Maximize, Minimize, RefreshCw, Settings2, Volume2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useConsultation } from "@/services/webrtc/useConsultation";
 import type { CallStatus } from "@/services/webrtc/types";
+import MediaDeviceTestDialog from "@/components/call/MediaDeviceTestDialog";
 
 interface VideoCallProps {
   /** Consultation room ID — MUST be the Supabase appointment.id. */
@@ -47,7 +48,11 @@ const STATUS_LABEL: Record<CallStatus, string> = {
   "permission-denied": "Camera or microphone access blocked",
   "waiting-remote": "Waiting for the other participant…",
   "connecting": "Connecting…",
-  "connected": "Connected",
+  "connected": "Connected — audio and video active",
+  "connected-waiting-remote-audio": "Connected — waiting for remote audio",
+  "connected-remote-camera-off": "Connected — remote camera off",
+  "microphone-not-transmitting": "Microphone not transmitting",
+  "remote-sound-blocked": "Remote sound blocked — tap to enable",
   "poor-network": "Poor network",
   "reconnecting": "Reconnecting…",
   "connection-timeout": "The connection is taking longer than expected.",
@@ -71,6 +76,8 @@ const VideoCall = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [soundBlocked, setSoundBlocked] = useState(false);
+  const [deviceTestOpen, setDeviceTestOpen] = useState(false);
   const { toast } = useToast();
 
   const call = useConsultation({ appointmentId, localUserId, remoteUserId, isInitiator });
@@ -110,15 +117,45 @@ const VideoCall = ({
   // Bind remote stream — attach immediately, do not wait for ICE.
   useEffect(() => {
     if (!call.remoteStream) return;
+    const playbackElements: HTMLMediaElement[] = [];
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = call.remoteStream;
-      remoteVideoRef.current.play().catch((err) => console.warn("[VideoCall] remote video play blocked", err));
+      remoteVideoRef.current.autoplay = true;
+      remoteVideoRef.current.playsInline = true;
+      remoteVideoRef.current.muted = false;
+      remoteVideoRef.current.volume = 1;
+      playbackElements.push(remoteVideoRef.current);
     }
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = call.remoteStream;
-      remoteAudioRef.current.play().catch((err) => console.warn("[VideoCall] remote audio play blocked", err));
+      remoteAudioRef.current.autoplay = true;
+      remoteAudioRef.current.muted = false;
+      remoteAudioRef.current.volume = 1;
+      playbackElements.push(remoteAudioRef.current);
     }
-  }, [call.remoteStream]);
+    Promise.allSettled(playbackElements.map((element) => element.play())).then((results) => {
+      const blocked = results.some((result) => result.status === "rejected");
+      setSoundBlocked(blocked);
+      call.webrtc?.setRemotePlaybackBlocked(blocked);
+      call.webrtc?.recordRemoteMediaElement({
+        muted: remoteVideoRef.current?.muted,
+        volume: remoteVideoRef.current?.volume,
+        playbackState: blocked ? "blocked" : remoteVideoRef.current?.paused ? "paused" : "playing",
+      });
+      if (blocked) console.error("Remote media autoplay failed:", results);
+    });
+  }, [call.remoteStream, call.webrtc]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      call.webrtc?.recordRemoteMediaElement({
+        muted: remoteVideoRef.current?.muted,
+        volume: remoteVideoRef.current?.volume,
+        playbackState: !remoteVideoRef.current ? "not-ready" : soundBlocked ? "blocked" : remoteVideoRef.current.paused ? "paused" : "playing",
+      });
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [call.webrtc, soundBlocked]);
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -131,6 +168,18 @@ const VideoCall = ({
     if (!document.fullscreenElement) await containerRef.current.requestFullscreen();
     else await document.exitFullscreen();
   }, []);
+
+  const enableConsultationSound = useCallback(async () => {
+    const elements = [remoteVideoRef.current, remoteAudioRef.current].filter(Boolean) as HTMLMediaElement[];
+    for (const element of elements) {
+      element.muted = false;
+      element.volume = 1;
+      await element.play();
+    }
+    setSoundBlocked(false);
+    call.webrtc?.setRemotePlaybackBlocked(false);
+    call.webrtc?.recordRemoteMediaElement({ muted: false, volume: 1, playbackState: "playing" });
+  }, [call.webrtc]);
 
   const hangUp = useCallback(async () => {
     if (!window.confirm("End this consultation?")) return;
@@ -185,9 +234,10 @@ const VideoCall = ({
     [status],
   );
 
-  const overlayText = STATUS_LABEL[status];
+  const overlayText = soundBlocked ? STATUS_LABEL["remote-sound-blocked"] : STATUS_LABEL[status];
   const isMuted = !call.isAudioEnabled;
   const isVideoOff = !call.isVideoEnabled;
+  const showOverlay = !["connected", "poor-network", "connected-remote-camera-off"].includes(status) || soundBlocked;
 
   return (
     <div ref={containerRef} className={`flex flex-col items-center gap-4 ${isFullscreen ? "bg-background p-4 justify-center h-full" : ""}`}>
@@ -197,9 +247,15 @@ const VideoCall = ({
             video element is hidden or its audio track is momentarily blocked. */}
         <audio ref={remoteAudioRef} autoPlay />
 
-        {status !== "connected" && status !== "poor-network" && (
+        {showOverlay && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-muted px-4 text-center">
             <p className="text-lg font-display text-muted-foreground">{overlayText}</p>
+
+            {soundBlocked && (
+              <Button size="lg" onClick={() => void enableConsultationSound()} className="gap-2">
+                <Volume2 className="h-5 w-5" /> Tap to enable consultation sound
+              </Button>
+            )}
 
             {status === "permission-denied" && call.mediaError && (
               <p className="max-w-md text-sm text-destructive">{call.mediaError.message}</p>
@@ -214,6 +270,9 @@ const VideoCall = ({
                 )}
                 <Button size="sm" variant="outline" onClick={() => void call.retryMedia()} className="gap-1">
                   <Settings2 className="h-4 w-4" /> Check microphone and camera
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setDeviceTestOpen(true)} className="gap-1">
+                  <Mic className="h-4 w-4" /> Test audio devices
                 </Button>
                 <Button size="sm" variant="destructive" onClick={() => void call.hangUp()} className="gap-1">
                   <PhoneOff className="h-4 w-4" /> Leave consultation
@@ -233,7 +292,8 @@ const VideoCall = ({
         {isActiveCall && (
           <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-lg bg-background/80 backdrop-blur px-2.5 py-1 text-xs font-medium shadow-lg">
             <span className={`inline-block h-2 w-2 rounded-full ${
-              status === "connected" ? "bg-green-500" :
+              status === "connected" || status === "connected-remote-camera-off" ? "bg-green-500" :
+              status === "connected-waiting-remote-audio" || status === "microphone-not-transmitting" || status === "remote-sound-blocked" ? "bg-yellow-500" :
               status === "poor-network" ? "bg-yellow-500" :
               status === "reconnecting" || status === "connection-failed" || status === "connection-timeout" ? "bg-red-500 animate-pulse" :
               "bg-blue-500 animate-pulse"
@@ -310,6 +370,20 @@ const VideoCall = ({
                 <Button
                   variant="outline"
                   size="icon"
+                  onClick={() => setDeviceTestOpen(true)}
+                  className="rounded-full h-12 w-12"
+                  aria-label="Test microphone and speaker"
+                >
+                  <Settings2 className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Test audio devices</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => void toggleFullscreen()}
                   className="rounded-full h-12 w-12"
                   aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
@@ -331,6 +405,7 @@ const VideoCall = ({
           </>
         )}
       </Card>
+      <MediaDeviceTestDialog open={deviceTestOpen} onOpenChange={setDeviceTestOpen} />
     </div>
   );
 };
