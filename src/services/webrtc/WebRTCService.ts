@@ -61,6 +61,7 @@ export class WebRTCService {
   private pcRecreationCount = 0;
   private connectTimeout: ReturnType<typeof setTimeout> | null = null;
   private reconnectGrace: ReturnType<typeof setTimeout> | null = null;
+  private healthTimer: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
 
   private readonly listeners: { [K in keyof EventMap]: Set<Listener<EventMap[K]>> } = {
@@ -93,7 +94,15 @@ export class WebRTCService {
   }
 
   private armConnectTimeout(status: CallStatus): void {
-    if (status === "connected" || status === "connection-timeout" || status === "ended") {
+    if (
+      status === "connected" ||
+      status === "connected-waiting-remote-audio" ||
+      status === "connected-remote-camera-off" ||
+      status === "microphone-not-transmitting" ||
+      status === "remote-sound-blocked" ||
+      status === "connection-timeout" ||
+      status === "ended"
+    ) {
       if (this.connectTimeout) { clearTimeout(this.connectTimeout); this.connectTimeout = null; }
       return;
     }
@@ -137,6 +146,7 @@ export class WebRTCService {
       const stream = event.streams[0] ?? this.remoteStream;
       if (!event.streams[0]) stream.addTrack(event.track);
       this.remoteStream = stream;
+      this.evaluateMediaHealth();
       this.emit("remotestream", stream);
     };
 
@@ -166,7 +176,7 @@ export class WebRTCService {
         case "completed":
           this.iceRestartCount = 0;
           this.pcRecreationCount = 0;
-          this.setStatus("connected");
+          this.evaluateMediaHealth();
           break;
         case "disconnected":
           this.scheduleReconnect();
@@ -178,24 +188,100 @@ export class WebRTCService {
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === "connected") this.setStatus("connected");
+      if (pc.connectionState === "connected") this.evaluateMediaHealth();
       if (pc.connectionState === "failed") void this.recoverFromFailure();
     };
 
-    this.attachLocalTracks(pc);
+    void this.attachLocalTracks(pc);
     this.opts.diagnostics.attach(pc);
+    this.startHealthChecks();
     return pc;
   }
 
-  private attachLocalTracks(pc: RTCPeerConnection): void {
+  private async attachLocalTracks(pc: RTCPeerConnection): Promise<void> {
     const stream = this.opts.media.getStream();
-    if (!stream) return;
+    if (!stream) {
+      this.opts.diagnostics.recordLocalMedia(null);
+      return;
+    }
+    const audioTrack = stream.getAudioTracks()[0] ?? null;
+    if (audioTrack) {
+      console.info("[WebRTCService] attaching local audio track", {
+        exists: Boolean(audioTrack),
+        enabled: audioTrack.enabled,
+        muted: audioTrack.muted,
+        readyState: audioTrack.readyState,
+        label: audioTrack.label,
+      });
+    }
     for (const track of stream.getTracks()) {
       // Add every local track (audio + video). If a track is muted the
       // *enabled* flag flips but the track stays on the peer connection,
       // so the remote still sees the sender.
-      pc.addTrack(track, stream);
+      const existingSender = pc.getSenders().find((sender) => sender.track?.kind === track.kind);
+      if (existingSender) {
+        await existingSender.replaceTrack(track);
+      } else {
+        pc.addTrack(track, stream);
+      }
     }
+    this.opts.diagnostics.recordLocalMedia(stream);
+    this.evaluateMediaHealth();
+  }
+
+  async refreshLocalTracks(): Promise<void> {
+    if (!this.pc) return;
+    await this.attachLocalTracks(this.pc);
+  }
+
+  private startHealthChecks(): void {
+    if (this.healthTimer) clearInterval(this.healthTimer);
+    this.healthTimer = setInterval(() => this.evaluateMediaHealth(), 1000);
+  }
+
+  private hasConnectedTransport(): boolean {
+    const pc = this.pc;
+    if (!pc) return false;
+    return pc.connectionState === "connected" || pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed";
+  }
+
+  private evaluateMediaHealth(): void {
+    const pc = this.pc;
+    if (!pc || !this.hasConnectedTransport()) return;
+    const localAudioTrack = this.opts.media.getAudioTrack();
+    const localMicLive = !!localAudioTrack && localAudioTrack.enabled && !localAudioTrack.muted && localAudioTrack.readyState === "live";
+    const audioSender = pc.getSenders().find((sender) => sender.track?.kind === "audio") ?? null;
+    const audioSenderActive = !!audioSender?.track && audioSender.track.readyState === "live";
+    const remoteTracks = this.remoteStream.getTracks();
+    const remoteAudioReceived = remoteTracks.some((track) => track.kind === "audio" && track.readyState === "live");
+    const remoteVideoReceived = remoteTracks.some((track) => track.kind === "video" && track.readyState === "live");
+
+    this.opts.diagnostics.update({
+      localAudioTrackExists: Boolean(localAudioTrack),
+      localAudioTrackEnabled: localAudioTrack?.enabled,
+      localAudioTrackMuted: localAudioTrack?.muted,
+      localAudioTrackReadyState: localAudioTrack?.readyState,
+      selectedMicrophone: localAudioTrack?.label,
+      audioSenderAttached: Boolean(audioSender?.track),
+      audioSenderTrackId: audioSender?.track?.id,
+      remoteAudioTrackReceived: remoteAudioReceived,
+      hasRemoteAudio: remoteAudioReceived,
+      hasRemoteVideo: remoteVideoReceived,
+    });
+
+    if (!localMicLive || !audioSenderActive) {
+      this.setStatus("microphone-not-transmitting");
+      return;
+    }
+    if (!remoteAudioReceived) {
+      this.setStatus("connected-waiting-remote-audio");
+      return;
+    }
+    if (!remoteVideoReceived) {
+      this.setStatus("connected-remote-camera-off");
+      return;
+    }
+    this.setStatus("connected");
   }
 
   private async onRemotePresence(present: boolean): Promise<void> {
@@ -353,6 +439,15 @@ export class WebRTCService {
   toggleAudio(enabled: boolean): void { this.opts.media.setAudioEnabled(enabled); }
   toggleVideo(enabled: boolean): void { this.opts.media.setVideoEnabled(enabled); }
 
+  setRemotePlaybackBlocked(blocked: boolean): void {
+    if (blocked) this.setStatus("remote-sound-blocked");
+    else this.evaluateMediaHealth();
+  }
+
+  recordRemoteMediaElement(state: Parameters<ConnectionDiagnostics["recordRemoteMediaElement"]>[0]): void {
+    this.opts.diagnostics.recordRemoteMediaElement(state);
+  }
+
   /** Peer connection sender for the outgoing video track (screen-share swap). */
   getVideoSender(): RTCRtpSender | null {
     return this.pc?.getSenders().find((s) => s.track?.kind === "video") ?? null;
@@ -380,6 +475,7 @@ export class WebRTCService {
   }
 
   private closePc(): void {
+    if (this.healthTimer) { clearInterval(this.healthTimer); this.healthTimer = null; }
     if (!this.pc) return;
     this.pc.onicecandidate = null;
     this.pc.ontrack = null;

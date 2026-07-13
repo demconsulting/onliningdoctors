@@ -29,6 +29,20 @@ const DiagnosticsPanel = ({ snapshot }: DiagnosticsPanelProps) => (
       <span className="flex items-center gap-2"><Dot ok={snapshot.hasRemoteVideo} /> Remote video</span>
     </div>
     <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-muted-foreground">
+      <dt>Selected microphone</dt><dd className="text-foreground">{snapshot.selectedMicrophone || "—"}</dd>
+      <dt>Local audio exists</dt><dd className="text-foreground">{snapshot.localAudioTrackExists ? "Yes" : "No"}</dd>
+      <dt>Local audio enabled</dt><dd className="text-foreground">{snapshot.localAudioTrackEnabled == null ? "—" : snapshot.localAudioTrackEnabled ? "Yes" : "No"}</dd>
+      <dt>Local audio muted</dt><dd className="text-foreground">{snapshot.localAudioTrackMuted == null ? "—" : snapshot.localAudioTrackMuted ? "Yes" : "No"}</dd>
+      <dt>Local audio readyState</dt><dd className="text-foreground">{snapshot.localAudioTrackReadyState ?? "—"}</dd>
+      <dt>Audio sender attached</dt><dd className="text-foreground">{snapshot.audioSenderAttached ? "Yes" : "No"}</dd>
+      <dt>Audio sender track ID</dt><dd className="break-all text-foreground">{snapshot.audioSenderTrackId ?? "—"}</dd>
+      <dt>Audio bytes sent</dt><dd className="text-foreground">{snapshot.audioBytesSent ?? "—"}</dd>
+      <dt>Remote audio received</dt><dd className="text-foreground">{snapshot.remoteAudioTrackReceived ? "Yes" : "No"}</dd>
+      <dt>Audio bytes received</dt><dd className="text-foreground">{snapshot.audioBytesReceived ?? "—"}</dd>
+      <dt>Remote media muted</dt><dd className="text-foreground">{snapshot.remoteMediaElementMuted == null ? "—" : snapshot.remoteMediaElementMuted ? "Yes" : "No"}</dd>
+      <dt>Remote media volume</dt><dd className="text-foreground">{snapshot.remoteMediaElementVolume ?? "—"}</dd>
+      <dt>Remote playback</dt><dd className="text-foreground">{snapshot.remoteMediaPlaybackState ?? "—"}</dd>
+      <dt>Chat subscription</dt><dd className="text-foreground">{snapshot.chatSubscriptionStatus ?? "—"}</dd>
       <dt>Connection</dt><dd className="text-foreground">{snapshot.connectionState}</dd>
       <dt>ICE</dt><dd className="text-foreground">{snapshot.iceConnectionState}</dd>
       <dt>Signalling</dt><dd className="text-foreground">{snapshot.signalingState}</dd>
@@ -39,6 +53,11 @@ const DiagnosticsPanel = ({ snapshot }: DiagnosticsPanelProps) => (
     {snapshot.lastError && (
       <p className="mt-2 rounded bg-destructive/10 px-2 py-1 text-destructive">
         Last error: {snapshot.lastError}
+      </p>
+    )}
+    {snapshot.chatSubscriptionError && (
+      <p className="mt-2 rounded bg-destructive/10 px-2 py-1 text-destructive">
+        Chat error: {snapshot.chatSubscriptionError}
       </p>
     )}
   </div>

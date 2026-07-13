@@ -38,6 +38,8 @@ export interface ConsultationChatState {
   send: (draft: string) => Promise<{ ok: boolean; error?: string }>;
   markRead: () => void;
   maxLength: number;
+  subscriptionStatus: "idle" | "subscribing" | "subscribed" | "error";
+  subscriptionError?: string;
 }
 
 export const useConsultationChat = ({
@@ -45,6 +47,8 @@ export const useConsultationChat = ({
 }: UseConsultationChatOptions): ConsultationChatState => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [unread, setUnread] = useState(0);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<ConsultationChatState["subscriptionStatus"]>("idle");
+  const [subscriptionError, setSubscriptionError] = useState<string | undefined>();
   const visibleRef = useRef(visible);
   visibleRef.current = visible;
 
@@ -52,20 +56,25 @@ export const useConsultationChat = ({
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (!appointmentId || !localUserId) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("consultation_messages")
         .select("*")
         .eq("appointment_id", appointmentId)
         .order("created_at", { ascending: true })
         .limit(500);
+      if (error && !cancelled) setSubscriptionError(error.message);
       if (!cancelled && Array.isArray(data)) setMessages(data as ChatMessage[]);
     })();
     return () => { cancelled = true; };
-  }, [appointmentId]);
+  }, [appointmentId, localUserId]);
 
   // Realtime subscription; runs for the lifetime of the consultation page.
   useEffect(() => {
+    if (!appointmentId || !localUserId) return;
+    setSubscriptionStatus("subscribing");
+    setSubscriptionError(undefined);
     const channel = supabase
       .channel(`consultation-chat-${appointmentId}`)
       .on(
@@ -79,8 +88,14 @@ export const useConsultationChat = ({
           }
         },
       )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+      .subscribe((status, err) => {
+        if (status === "SUBSCRIBED") setSubscriptionStatus("subscribed");
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          setSubscriptionStatus("error");
+          setSubscriptionError(err?.message ?? "Chat realtime subscription failed.");
+        }
+      });
+    return () => { supabase.removeChannel(channel); setSubscriptionStatus("idle"); };
   }, [appointmentId, localUserId]);
 
   useEffect(() => { if (visible) setUnread(0); }, [visible]);
@@ -100,5 +115,5 @@ export const useConsultationChat = ({
 
   const markRead = useCallback(() => setUnread(0), []);
 
-  return { messages, unread, send, markRead, maxLength: MAX_LEN };
+  return { messages, unread, send, markRead, maxLength: MAX_LEN, subscriptionStatus, subscriptionError };
 };

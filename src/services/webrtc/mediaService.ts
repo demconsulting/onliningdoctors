@@ -66,6 +66,17 @@ export class MediaService {
           ? { width: { ideal: videoWidth }, height: { ideal: videoHeight }, frameRate: { ideal: videoFrameRate } }
           : false,
       });
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = true;
+        console.info("[MediaService] local audio track", {
+          exists: Boolean(audioTrack),
+          enabled: audioTrack.enabled,
+          muted: audioTrack.muted,
+          readyState: audioTrack.readyState,
+          label: audioTrack.label,
+        });
+      }
       this.stream = stream;
       return stream;
     } catch (err) {
@@ -93,6 +104,8 @@ export class MediaService {
   isVideoEnabled(): boolean { return this.stream?.getVideoTracks()[0]?.enabled ?? false; }
   hasCamera(): boolean { return (this.stream?.getVideoTracks().length ?? 0) > 0; }
   hasMicrophone(): boolean { return (this.stream?.getAudioTracks().length ?? 0) > 0; }
+  getAudioTrack(): MediaStreamTrack | null { return this.stream?.getAudioTracks()[0] ?? null; }
+  getVideoTrack(): MediaStreamTrack | null { return this.stream?.getVideoTracks()[0] ?? null; }
 
   release(): void {
     this.stream?.getTracks().forEach((t) => t.stop());
