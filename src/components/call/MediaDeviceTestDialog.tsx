@@ -60,6 +60,7 @@ const MediaDeviceTestDialog = ({ open, onOpenChange }: MediaDeviceTestDialogProp
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const heardSoundRef = useRef(false);
+  const recordingUrlRef = useRef<string | null>(null);
 
   const cleanup = useCallback(() => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -70,10 +71,11 @@ const MediaDeviceTestDialog = ({ open, onOpenChange }: MediaDeviceTestDialogProp
     streamRef.current = null;
     void audioContextRef.current?.close();
     audioContextRef.current = null;
-    if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+    if (recordingUrlRef.current) URL.revokeObjectURL(recordingUrlRef.current);
+    recordingUrlRef.current = null;
     setRecordingUrl(null);
     setLevel(0);
-  }, [recordingUrl]);
+  }, []);
 
   useEffect(() => () => cleanup(), [cleanup]);
 
@@ -154,8 +156,10 @@ const MediaDeviceTestDialog = ({ open, onOpenChange }: MediaDeviceTestDialogProp
     };
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-      if (recordingUrl) URL.revokeObjectURL(recordingUrl);
-      setRecordingUrl(URL.createObjectURL(blob));
+      if (recordingUrlRef.current) URL.revokeObjectURL(recordingUrlRef.current);
+      const nextUrl = URL.createObjectURL(blob);
+      recordingUrlRef.current = nextUrl;
+      setRecordingUrl(nextUrl);
       setMicStatus(level > 3 ? "playback" : "no-sound");
     };
     recorder.start();
@@ -237,6 +241,7 @@ const MediaDeviceTestDialog = ({ open, onOpenChange }: MediaDeviceTestDialogProp
                 src={recordingUrl}
                 onEnded={() => {
                   URL.revokeObjectURL(recordingUrl);
+                  recordingUrlRef.current = null;
                   setRecordingUrl(null);
                   setMicStatus("working");
                 }}
