@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +9,7 @@ import TrustStrip from "@/components/doctors/TrustStrip";
 import DoctorsFilters from "@/components/doctors/DoctorsFilters";
 import AvailableNowSection from "@/components/doctors/AvailableNowSection";
 import DoctorCardNew from "@/components/doctors/DoctorCardNew";
+import QuickBookDrawer from "@/components/doctors/QuickBookDrawer";
 import WhatsAppButton from "@/components/doctors/WhatsAppButton";
 import type { Doctor } from "@/components/doctors/DoctorCardNew";
 import { Loader2, Stethoscope } from "lucide-react";
