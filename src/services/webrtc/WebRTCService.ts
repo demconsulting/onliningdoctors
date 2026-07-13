@@ -94,7 +94,15 @@ export class WebRTCService {
   }
 
   private armConnectTimeout(status: CallStatus): void {
-    if (status === "connected" || status === "connection-timeout" || status === "ended") {
+    if (
+      status === "connected" ||
+      status === "connected-waiting-remote-audio" ||
+      status === "connected-remote-camera-off" ||
+      status === "microphone-not-transmitting" ||
+      status === "remote-sound-blocked" ||
+      status === "connection-timeout" ||
+      status === "ended"
+    ) {
       if (this.connectTimeout) { clearTimeout(this.connectTimeout); this.connectTimeout = null; }
       return;
     }
