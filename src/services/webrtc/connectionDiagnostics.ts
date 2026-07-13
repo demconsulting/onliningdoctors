@@ -41,6 +41,35 @@ export class ConnectionDiagnostics {
     this.emit();
   }
 
+  recordLocalMedia(stream: MediaStream | null): void {
+    const audioTrack = stream?.getAudioTracks()[0] ?? null;
+    this.update({
+      selectedMicrophone: audioTrack?.label,
+      localAudioTrackExists: Boolean(audioTrack),
+      localAudioTrackEnabled: audioTrack?.enabled,
+      localAudioTrackMuted: audioTrack?.muted,
+      localAudioTrackReadyState: audioTrack?.readyState,
+      localAudioTrackLabel: audioTrack?.label,
+      hasLocalAudio: !!audioTrack && audioTrack.readyState === "live",
+    });
+  }
+
+  recordRemoteMediaElement(state: {
+    muted?: boolean;
+    volume?: number;
+    playbackState?: DiagnosticsSnapshot["remoteMediaPlaybackState"];
+  }): void {
+    this.update({
+      remoteMediaElementMuted: state.muted,
+      remoteMediaElementVolume: state.volume,
+      remoteMediaPlaybackState: state.playbackState,
+    });
+  }
+
+  recordChatSubscription(status: NonNullable<DiagnosticsSnapshot["chatSubscriptionStatus"]>, error?: string): void {
+    this.update({ chatSubscriptionStatus: status, chatSubscriptionError: error });
+  }
+
   recordSignal(type: string): void {
     this.update({ lastSignalType: type, lastSignalAt: new Date().toISOString() });
   }
@@ -60,10 +89,21 @@ export class ConnectionDiagnostics {
       const hasRemoteAudio = receivers.some((r) => r.track?.kind === "audio" && r.track?.readyState === "live");
       const hasRemoteVideo = receivers.some((r) => r.track?.kind === "video" && r.track?.readyState === "live");
       const senders = pc.getSenders();
-      const hasLocalAudio = senders.some((s) => s.track?.kind === "audio" && s.track?.readyState === "live");
+      const audioSender = senders.find((s) => s.track?.kind === "audio") ?? null;
+      const localAudioTrack = audioSender?.track ?? null;
+      const hasLocalAudio = !!localAudioTrack && localAudioTrack.readyState === "live";
       const hasLocalVideo = senders.some((s) => s.track?.kind === "video" && s.track?.readyState === "live");
       this.update({
         hasRemoteAudio, hasRemoteVideo, hasLocalAudio, hasLocalVideo,
+        localAudioTrackExists: Boolean(localAudioTrack),
+        localAudioTrackEnabled: localAudioTrack?.enabled,
+        localAudioTrackMuted: localAudioTrack?.muted,
+        localAudioTrackReadyState: localAudioTrack?.readyState,
+        localAudioTrackLabel: localAudioTrack?.label,
+        selectedMicrophone: localAudioTrack?.label,
+        audioSenderAttached: Boolean(audioSender?.track),
+        audioSenderTrackId: audioSender?.track?.id,
+        remoteAudioTrackReceived: hasRemoteAudio,
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
         signalingState: pc.signalingState,
@@ -75,12 +115,29 @@ export class ConnectionDiagnostics {
       readTracks();
       try {
         const stats = await pc.getStats();
+        let audioBytesSent: number | undefined;
+        let audioBytesReceived: number | undefined;
         stats.forEach((report: unknown) => {
-          const r = report as { type?: string; state?: string; currentRoundTripTime?: number };
+          const r = report as {
+            type?: string;
+            state?: string;
+            currentRoundTripTime?: number;
+            kind?: string;
+            mediaType?: string;
+            bytesSent?: number;
+            bytesReceived?: number;
+          };
           if (r.type === "candidate-pair" && r.state === "succeeded" && typeof r.currentRoundTripTime === "number") {
             this.update({ roundTripTimeMs: Math.round(r.currentRoundTripTime * 1000) });
           }
+          if (r.type === "outbound-rtp" && (r.kind === "audio" || r.mediaType === "audio") && typeof r.bytesSent === "number") {
+            audioBytesSent = r.bytesSent;
+          }
+          if (r.type === "inbound-rtp" && (r.kind === "audio" || r.mediaType === "audio") && typeof r.bytesReceived === "number") {
+            audioBytesReceived = r.bytesReceived;
+          }
         });
+        this.update({ audioBytesSent, audioBytesReceived });
       } catch { /* ignore transient getStats errors */ }
     }, 2000);
 
