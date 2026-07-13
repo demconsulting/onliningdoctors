@@ -15,6 +15,7 @@ import type { ChatMessage } from "@/services/webrtc/useConsultationChat";
 interface ConsultationChatProps {
   messages: ChatMessage[];
   localUserId: string;
+  localName?: string;
   remoteName: string;
   maxLength: number;
   onSend: (draft: string) => Promise<{ ok: boolean; error?: string }>;
@@ -27,7 +28,7 @@ const formatTime = (iso: string) => {
 };
 
 const ConsultationChat = ({
-  messages, localUserId, remoteName, maxLength, onSend, onClose,
+  messages, localUserId, localName, remoteName, maxLength, onSend, onClose,
 }: ConsultationChatProps) => {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -70,6 +71,7 @@ const ConsultationChat = ({
           ) : (
             messages.map((m) => {
               const own = m.sender_id === localUserId;
+              const senderName = own ? (localName || "You") : (remoteName || (m.sender_role === "doctor" ? "Doctor" : "Patient"));
               return (
                 <div key={m.id} className={`flex ${own ? "justify-end" : "justify-start"}`}>
                   <div
@@ -79,7 +81,7 @@ const ConsultationChat = ({
                   >
                     <p className="whitespace-pre-wrap break-words">{m.message}</p>
                     <p className={`mt-1 text-[10px] ${own ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                      {m.sender_role === "doctor" ? "Doctor" : "Patient"} · {formatTime(m.created_at)}
+                      {senderName} · {m.sender_role === "doctor" ? "Doctor" : "Patient"} · {formatTime(m.created_at)}
                     </p>
                   </div>
                 </div>
