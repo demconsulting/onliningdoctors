@@ -146,8 +146,9 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="appointments">
-            <AppointmentList user={user} />
+            <AppointmentList key={appointmentsRefreshKey} user={user} />
           </TabsContent>
+
           <TabsContent value="book">
             <Suspense fallback={<TabFallback />}>
               <BookAppointment user={user} preselectDoctorId={preselectDoctorId} onBooked={() => setActiveTab("appointments")} />
