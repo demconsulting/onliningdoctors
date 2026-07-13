@@ -214,7 +214,7 @@ const Doctors = () => {
             </div>
           ) : (
             <>
-              {!availableOnly && <AvailableNowSection doctors={availableNow} />}
+              {!availableOnly && <AvailableNowSection doctors={availableNow} onBookNextAvailable={handleOpenBooking} />}
 
               <p className="mb-5 text-sm text-muted-foreground">
                 {filtered.length} doctor{filtered.length !== 1 ? "s" : ""} found
@@ -222,13 +222,20 @@ const Doctors = () => {
 
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {allOthers.map((doc) => (
-                  <DoctorCardNew key={doc.id} doctor={doc} />
+                  <DoctorCardNew key={doc.id} doctor={doc} onBookNextAvailable={handleOpenBooking} />
                 ))}
               </div>
             </>
           )}
         </div>
       </section>
+
+      <QuickBookDrawer
+        doctor={bookDoctor}
+        defaultAt={bookAt}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
 
       <Footer />
       <WhatsAppButton />
