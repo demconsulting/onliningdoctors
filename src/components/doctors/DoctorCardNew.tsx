@@ -37,7 +37,12 @@ const formatNextAvailable = (iso?: string | null) => {
   return d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }) + ` ${time}`;
 };
 
-const DoctorCardNew = ({ doctor }: { doctor: Doctor }) => {
+interface DoctorCardNewProps {
+  doctor: Doctor;
+  onBookNextAvailable?: (doctor: Doctor) => void;
+}
+
+const DoctorCardNew = ({ doctor, onBookNextAvailable }: DoctorCardNewProps) => {
   const name = doctor.profile?.full_name || "Doctor";
   const currencySymbol = getCurrencySymbol(doctor.profile?.country);
   const displayName = `${doctor.title ? `${doctor.title} ` : "Dr. "}${name}`;
