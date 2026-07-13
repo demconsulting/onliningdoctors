@@ -89,6 +89,15 @@ const CallPage = () => {
 
   const onDiagnostics = useCallback((snap: DiagnosticsSnapshot) => setDiagnostics(snap), []);
 
+  const localRole: "doctor" | "patient" = isDoctor ? "doctor" : "patient";
+
+  const chat = useConsultationChat({
+    appointmentId: appointmentId ?? "",
+    localUserId: userId,
+    localRole,
+    visible: chatOpen,
+  });
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -111,14 +120,6 @@ const CallPage = () => {
     );
   }
 
-  const localRole: "doctor" | "patient" = isDoctor ? "doctor" : "patient";
-
-  const chat = useConsultationChat({
-    appointmentId: appointmentId!,
-    localUserId: userId,
-    localRole,
-    visible: chatOpen,
-  });
 
   const chatToggleButton = (
     <Button
