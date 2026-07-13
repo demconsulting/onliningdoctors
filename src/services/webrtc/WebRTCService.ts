@@ -206,7 +206,6 @@ export class WebRTCService {
     }
     const audioTrack = stream.getAudioTracks()[0] ?? null;
     if (audioTrack) {
-      audioTrack.enabled = true;
       console.info("[WebRTCService] attaching local audio track", {
         exists: Boolean(audioTrack),
         enabled: audioTrack.enabled,
