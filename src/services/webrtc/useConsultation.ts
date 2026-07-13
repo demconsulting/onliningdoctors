@@ -107,7 +107,10 @@ export const useConsultation = (opts: UseConsultationOptions): ConsultationContr
       setLocalStream(stream);
       setIsAudioEnabled(mediaRef.current.isAudioEnabled());
       setIsVideoEnabled(mediaRef.current.isVideoEnabled());
-      if (webrtcRef.current) await webrtcRef.current.retry();
+      if (webrtcRef.current) {
+        await webrtcRef.current.refreshLocalTracks();
+        await webrtcRef.current.retry();
+      }
       else await start();
     } catch (err) {
       setMediaError(err as MediaError);
@@ -124,6 +127,7 @@ export const useConsultation = (opts: UseConsultationOptions): ConsultationContr
     if (!mediaRef.current) return;
     const next = !mediaRef.current.isAudioEnabled();
     mediaRef.current.setAudioEnabled(next);
+    webrtcRef.current?.toggleAudio(next);
     setIsAudioEnabled(next);
   }, []);
 
@@ -131,6 +135,7 @@ export const useConsultation = (opts: UseConsultationOptions): ConsultationContr
     if (!mediaRef.current) return;
     const next = !mediaRef.current.isVideoEnabled();
     mediaRef.current.setVideoEnabled(next);
+    webrtcRef.current?.toggleVideo(next);
     setIsVideoEnabled(next);
   }, []);
 
