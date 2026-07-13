@@ -2,7 +2,12 @@ import { Zap } from "lucide-react";
 import DoctorCardNew from "./DoctorCardNew";
 import type { Doctor } from "./DoctorCardNew";
 
-const AvailableNowSection = ({ doctors }: { doctors: Doctor[] }) => {
+interface AvailableNowSectionProps {
+  doctors: Doctor[];
+  onBookNextAvailable?: (doctor: Doctor) => void;
+}
+
+const AvailableNowSection = ({ doctors, onBookNextAvailable }: AvailableNowSectionProps) => {
   if (doctors.length === 0) return null;
 
   return (
@@ -16,7 +21,7 @@ const AvailableNowSection = ({ doctors }: { doctors: Doctor[] }) => {
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {doctors.slice(0, 3).map((doc) => (
-          <DoctorCardNew key={doc.id} doctor={doc} />
+          <DoctorCardNew key={doc.id} doctor={doc} onBookNextAvailable={onBookNextAvailable} />
         ))}
       </div>
     </section>
