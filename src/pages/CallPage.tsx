@@ -29,6 +29,7 @@ const CallPage = () => {
   const [doctorId, setDoctorId] = useState("");
   const [patientId, setPatientId] = useState("");
   const [patientName, setPatientName] = useState("");
+  const [localName, setLocalName] = useState("");
   const [remoteName, setRemoteName] = useState("");
   const [error, setError] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
@@ -82,6 +83,7 @@ const CallPage = () => {
       ]);
       setPatientName(patProfile?.full_name || "Patient");
       const docLabel = docProfile?.full_name ? `Dr. ${docProfile.full_name}` : "Doctor";
+      setLocalName(uid === apt.doctor_id ? docLabel : (patProfile?.full_name || "Patient"));
       setRemoteName(uid === apt.doctor_id ? (patProfile?.full_name || "Patient") : docLabel);
 
       setLoading(false);
@@ -160,6 +162,7 @@ const CallPage = () => {
     <ConsultationChat
       messages={chat.messages}
       localUserId={userId}
+      localName={localName}
       remoteName={remoteName}
       maxLength={chat.maxLength}
       onSend={chat.send}
