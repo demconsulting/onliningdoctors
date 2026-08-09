@@ -6,6 +6,10 @@ export interface FoundingSlots {
   remaining: number;
   max_slots: number;
   applications_open: boolean;
+  pioneer_limit?: number;
+  founding_limit?: number;
+  pioneer_filled?: number;
+  founding_filled?: number;
 }
 
 export function useFoundingSlots() {

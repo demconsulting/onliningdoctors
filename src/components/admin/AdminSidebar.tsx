@@ -30,7 +30,7 @@ const items = [
   { title: "Profile Reviews", key: "profile-reviews", icon: ClipboardCheck },
   { title: "Doctor Onboarding", key: "doctor-onboarding", icon: Mail },
   { title: "Reminder Center", key: "reminder-center", icon: Mail },
-  { title: "Founding Doctors", key: "founding-doctors", icon: Crown },
+  { title: "Founding Doctor Programme", key: "founding-doctors", icon: Crown },
   { title: "Recruitment CRM", key: "recruitment-crm", icon: Network },
   { title: "Referral & Rewards", key: "referrals", icon: Gift },
   { title: "Users", key: "users", icon: Users },

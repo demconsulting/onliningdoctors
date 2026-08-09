@@ -892,6 +892,42 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_digital_services: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          doctor_profile_id: string
+          id: string
+          notes: string | null
+          requested_at: string
+          service_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          doctor_profile_id: string
+          id?: string
+          notes?: string | null
+          requested_at?: string
+          service_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          doctor_profile_id?: string
+          id?: string
+          notes?: string | null
+          requested_at?: string
+          service_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       doctor_medical_aids: {
         Row: {
           consultation_rate: number
@@ -1121,6 +1157,7 @@ export type Database = {
       doctors: {
         Row: {
           accepted_payment_method: Database["public"]["Enums"]["accepted_payment_method_enum"]
+          assigned_business_developer: string | null
           auto_weekly_payout: boolean
           bio: string | null
           consultation_category_id: string | null
@@ -1133,7 +1170,9 @@ export type Database = {
           founding_expiry: string | null
           founding_locked: boolean
           founding_pricing_plan_id: string | null
+          founding_sequence: number | null
           founding_status: string
+          founding_tier: string
           hospital_affiliation: string | null
           id: string
           id_document_path: string | null
@@ -1154,6 +1193,7 @@ export type Database = {
           practice_website: string | null
           profile_id: string
           rating: number | null
+          recruitment_source: string | null
           specialty_id: string | null
           suspension_reason: string | null
           title: string | null
@@ -1163,6 +1203,7 @@ export type Database = {
         }
         Insert: {
           accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
+          assigned_business_developer?: string | null
           auto_weekly_payout?: boolean
           bio?: string | null
           consultation_category_id?: string | null
@@ -1175,7 +1216,9 @@ export type Database = {
           founding_expiry?: string | null
           founding_locked?: boolean
           founding_pricing_plan_id?: string | null
+          founding_sequence?: number | null
           founding_status?: string
+          founding_tier?: string
           hospital_affiliation?: string | null
           id?: string
           id_document_path?: string | null
@@ -1196,6 +1239,7 @@ export type Database = {
           practice_website?: string | null
           profile_id: string
           rating?: number | null
+          recruitment_source?: string | null
           specialty_id?: string | null
           suspension_reason?: string | null
           title?: string | null
@@ -1205,6 +1249,7 @@ export type Database = {
         }
         Update: {
           accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
+          assigned_business_developer?: string | null
           auto_weekly_payout?: boolean
           bio?: string | null
           consultation_category_id?: string | null
@@ -1217,7 +1262,9 @@ export type Database = {
           founding_expiry?: string | null
           founding_locked?: boolean
           founding_pricing_plan_id?: string | null
+          founding_sequence?: number | null
           founding_status?: string
+          founding_tier?: string
           hospital_affiliation?: string | null
           id?: string
           id_document_path?: string | null
@@ -1238,6 +1285,7 @@ export type Database = {
           practice_website?: string | null
           profile_id?: string
           rating?: number | null
+          recruitment_source?: string | null
           specialty_id?: string | null
           suspension_reason?: string | null
           title?: string | null
@@ -1686,30 +1734,60 @@ export type Database = {
       founding_doctor_program: {
         Row: {
           applications_open: boolean
+          auto_close_founding: boolean
+          auto_close_pioneer: boolean
           created_at: string
           default_fee_settings_id: string | null
+          founding_copy: string | null
+          founding_limit: number
           id: string
+          marketing_description: string | null
+          marketing_headline: string | null
           max_slots: number
+          pioneer_copy: string | null
+          pioneer_limit: number
           program_label: string
+          programme_enabled: boolean
           updated_at: string
+          waiting_list_enabled: boolean
         }
         Insert: {
           applications_open?: boolean
+          auto_close_founding?: boolean
+          auto_close_pioneer?: boolean
           created_at?: string
           default_fee_settings_id?: string | null
+          founding_copy?: string | null
+          founding_limit?: number
           id?: string
+          marketing_description?: string | null
+          marketing_headline?: string | null
           max_slots?: number
+          pioneer_copy?: string | null
+          pioneer_limit?: number
           program_label?: string
+          programme_enabled?: boolean
           updated_at?: string
+          waiting_list_enabled?: boolean
         }
         Update: {
           applications_open?: boolean
+          auto_close_founding?: boolean
+          auto_close_pioneer?: boolean
           created_at?: string
           default_fee_settings_id?: string | null
+          founding_copy?: string | null
+          founding_limit?: number
           id?: string
+          marketing_description?: string | null
+          marketing_headline?: string | null
           max_slots?: number
+          pioneer_copy?: string | null
+          pioneer_limit?: number
           program_label?: string
+          programme_enabled?: boolean
           updated_at?: string
+          waiting_list_enabled?: boolean
         }
         Relationships: [
           {
@@ -1720,6 +1798,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      founding_exit_policy: {
+        Row: {
+          commitment_months: number
+          created_at: string
+          founding_contribution: number
+          id: string
+          policy_notes: string | null
+          standard_practice_value: number
+          updated_at: string
+        }
+        Insert: {
+          commitment_months?: number
+          created_at?: string
+          founding_contribution?: number
+          id?: string
+          policy_notes?: string | null
+          standard_practice_value?: number
+          updated_at?: string
+        }
+        Update: {
+          commitment_months?: number
+          created_at?: string
+          founding_contribution?: number
+          id?: string
+          policy_notes?: string | null
+          standard_practice_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      founding_programme_pricing: {
+        Row: {
+          created_at: string
+          currency: string
+          founding_setup_fee: number
+          id: string
+          monthly_care_plan: number
+          pioneer_setup_fee: number
+          standard_setup_fee: number
+          updated_at: string
+          vat_enabled: boolean
+          vat_rate: number
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          founding_setup_fee?: number
+          id?: string
+          monthly_care_plan?: number
+          pioneer_setup_fee?: number
+          standard_setup_fee?: number
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_rate?: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          founding_setup_fee?: number
+          id?: string
+          monthly_care_plan?: number
+          pioneer_setup_fee?: number
+          standard_setup_fee?: number
+          updated_at?: string
+          vat_enabled?: boolean
+          vat_rate?: number
+        }
+        Relationships: []
       }
       hero_stats: {
         Row: {
@@ -2735,6 +2882,97 @@ export type Database = {
           },
         ]
       }
+      recruitment_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          doctor_profile_id: string | null
+          id: string
+          metadata: Json
+          prospect_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          doctor_profile_id?: string | null
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          doctor_profile_id?: string | null
+          id?: string
+          metadata?: Json
+          prospect_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_activities_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recruitment_commissions: {
+        Row: {
+          amount: number
+          business_developer: string | null
+          created_at: string
+          doctor_profile_id: string | null
+          id: string
+          notes: string | null
+          payment_date: string | null
+          payment_reference: string | null
+          prospect_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_developer?: string | null
+          created_at?: string
+          doctor_profile_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_reference?: string | null
+          prospect_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_developer?: string | null
+          created_at?: string
+          doctor_profile_id?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_reference?: string | null
+          prospect_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recruitment_commissions_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "recruitment_prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recruitment_communications: {
         Row: {
           body: string | null
@@ -2833,6 +3071,7 @@ export type Database = {
         Row: {
           activated_at: string | null
           assigned_recruiter: string | null
+          business_developer: string | null
           city: string | null
           created_at: string
           created_by: string | null
@@ -2843,11 +3082,13 @@ export type Database = {
           id: string
           last_activity_at: string | null
           last_name: string
+          lead_score: number
           linked_doctor_profile_id: string | null
           mobile_number: string | null
           next_follow_up_date: string | null
           notes: string | null
           practice_name: string | null
+          priority: string
           province: string | null
           referral_source: string | null
           referrer_doctor_id: string | null
@@ -2860,6 +3101,7 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           assigned_recruiter?: string | null
+          business_developer?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
@@ -2870,11 +3112,13 @@ export type Database = {
           id?: string
           last_activity_at?: string | null
           last_name: string
+          lead_score?: number
           linked_doctor_profile_id?: string | null
           mobile_number?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           practice_name?: string | null
+          priority?: string
           province?: string | null
           referral_source?: string | null
           referrer_doctor_id?: string | null
@@ -2887,6 +3131,7 @@ export type Database = {
         Update: {
           activated_at?: string | null
           assigned_recruiter?: string | null
+          business_developer?: string | null
           city?: string | null
           created_at?: string
           created_by?: string | null
@@ -2897,11 +3142,13 @@ export type Database = {
           id?: string
           last_activity_at?: string | null
           last_name?: string
+          lead_score?: number
           linked_doctor_profile_id?: string | null
           mobile_number?: string | null
           next_follow_up_date?: string | null
           notes?: string | null
           practice_name?: string | null
+          priority?: string
           province?: string | null
           referral_source?: string | null
           referrer_doctor_id?: string | null
