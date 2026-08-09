@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { Loader2 } from "lucide-react";
+import { RESOURCES } from "@/components/admin/nalavation/resourceConfig";
+
 
 // Map of section key -> dynamic import factory. Used to both lazy-mount and
 // to prefetch the chunk on sidebar hover so clicks feel instant.
