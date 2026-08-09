@@ -346,6 +346,7 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
+          business_unit: Database["public"]["Enums"]["business_unit"]
           created_at: string
           details: Json | null
           id: string
@@ -356,6 +357,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           details?: Json | null
           id?: string
@@ -366,6 +368,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           details?: Json | null
           id?: string
@@ -413,6 +416,88 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_profiles: {
+        Row: {
+          address: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          city: string | null
+          country: string | null
+          created_at: string
+          doctor_id: string
+          email: string | null
+          id: string
+          legal_name: string
+          phone: string | null
+          project_id: string | null
+          province: string | null
+          registration_number: string | null
+          trading_name: string | null
+          updated_at: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          doctor_id: string
+          email?: string | null
+          id?: string
+          legal_name: string
+          phone?: string | null
+          project_id?: string | null
+          province?: string | null
+          registration_number?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          doctor_id?: string
+          email?: string | null
+          id?: string
+          legal_name?: string
+          phone?: string | null
+          project_id?: string | null
+          province?: string | null
+          registration_number?: string | null
+          trading_name?: string | null
+          updated_at?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_profiles_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_profiles_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_profiles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -606,6 +691,69 @@ export type Database = {
         }
         Relationships: []
       }
+      content_articles: {
+        Row: {
+          author_id: string | null
+          body: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          cover_image_url: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          project_id: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          project_id?: string | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          cover_image_url?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          project_id?: string | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_articles_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_articles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       countries: {
         Row: {
           code: string
@@ -746,6 +894,149 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      digital_assets: {
+        Row: {
+          asset_type: string
+          bucket: string
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          doctor_id: string | null
+          id: string
+          name: string
+          project_id: string | null
+          storage_path: string | null
+          tags: string[]
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          asset_type?: string
+          bucket?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          name: string
+          project_id?: string | null
+          storage_path?: string | null
+          tags?: string[]
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          asset_type?: string
+          bucket?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          doctor_id?: string | null
+          id?: string
+          name?: string
+          project_id?: string | null
+          storage_path?: string | null
+          tags?: string[]
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_assets_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digital_assets_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digital_assets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digital_practice_projects: {
+        Row: {
+          account_manager: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          currency: string
+          doctor_id: string
+          id: string
+          launch_date: string | null
+          monthly_fee: number
+          name: string
+          notes: string | null
+          package: string | null
+          setup_fee: number
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_manager?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          doctor_id: string
+          id?: string
+          launch_date?: string | null
+          monthly_fee?: number
+          name: string
+          notes?: string | null
+          package?: string | null
+          setup_fee?: number
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_manager?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          doctor_id?: string
+          id?: string
+          launch_date?: string | null
+          monthly_fee?: number
+          name?: string
+          notes?: string | null
+          package?: string | null
+          setup_fee?: number
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_practice_projects_account_manager_fkey"
+            columns: ["account_manager"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digital_practice_projects_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digital_practice_projects_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       doctor_availability: {
         Row: {
@@ -1387,6 +1678,116 @@ export type Database = {
           },
         ]
       }
+      domain_registrations: {
+        Row: {
+          annual_fee: number
+          auto_renew: boolean
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          currency: string
+          domain_name: string
+          expires_on: string | null
+          id: string
+          project_id: string
+          registered_on: string | null
+          registrar: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          annual_fee?: number
+          auto_renew?: boolean
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          domain_name: string
+          expires_on?: string | null
+          id?: string
+          project_id: string
+          registered_on?: string | null
+          registrar?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_fee?: number
+          auto_renew?: boolean
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          domain_name?: string
+          expires_on?: string | null
+          id?: string
+          project_id?: string
+          registered_on?: string | null
+          registrar?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_registrations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_accounts: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          email_address: string
+          hosting_account_id: string | null
+          id: string
+          mailbox_size_mb: number
+          monthly_fee: number
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          email_address: string
+          hosting_account_id?: string | null
+          id?: string
+          mailbox_size_mb?: number
+          monthly_fee?: number
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          email_address?: string
+          hosting_account_id?: string | null
+          id?: string
+          mailbox_size_mb?: number
+          monthly_fee?: number
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_accounts_hosting_account_id_fkey"
+            columns: ["hosting_account_id"]
+            isOneToOne: false
+            referencedRelation: "hosting_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_accounts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_events: {
         Row: {
           created_at: string
@@ -1868,6 +2269,56 @@ export type Database = {
         }
         Relationships: []
       }
+      google_business_profiles: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          category: string | null
+          created_at: string
+          id: string
+          listing_name: string
+          listing_url: string | null
+          project_id: string
+          rating: number | null
+          review_count: number
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string | null
+          created_at?: string
+          id?: string
+          listing_name: string
+          listing_url?: string | null
+          project_id: string
+          rating?: number | null
+          review_count?: number
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string | null
+          created_at?: string
+          id?: string
+          listing_name?: string
+          listing_url?: string | null
+          project_id?: string
+          rating?: number | null
+          review_count?: number
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_business_profiles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hero_stats: {
         Row: {
           created_at: string
@@ -1894,6 +2345,115 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      hosting_accounts: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          currency: string
+          id: string
+          monthly_fee: number
+          plan: string | null
+          project_id: string
+          provider: string
+          renews_on: string | null
+          server: string | null
+          status: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          id?: string
+          monthly_fee?: number
+          plan?: string | null
+          project_id: string
+          provider: string
+          renews_on?: string | null
+          server?: string | null
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          id?: string
+          monthly_fee?: number
+          plan?: string | null
+          project_id?: string
+          provider?: string
+          renews_on?: string | null
+          server?: string | null
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hosting_accounts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      landing_pages: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          conversion_goal: string | null
+          conversions: number
+          created_at: string
+          id: string
+          project_id: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          url: string | null
+          views: number
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          conversion_goal?: string | null
+          conversions?: number
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          url?: string | null
+          views?: number
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          conversion_goal?: string | null
+          conversions?: number
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          url?: string | null
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "landing_pages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       legal_documents: {
         Row: {
@@ -1936,6 +2496,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "countries"
             referencedColumns: ["code"]
+          },
+        ]
+      }
+      maintenance_plans: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          id: string
+          included_hours: number
+          monthly_fee: number
+          plan_name: string
+          project_id: string
+          renews_on: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          included_hours?: number
+          monthly_fee?: number
+          plan_name: string
+          project_id: string
+          renews_on?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          included_hours?: number
+          monthly_fee?: number
+          plan_name?: string
+          project_id?: string
+          renews_on?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1998,6 +2605,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
           created_at: string
           id: string
           is_read: boolean
@@ -2008,6 +2616,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           id?: string
           is_read?: boolean
@@ -2018,6 +2627,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           id?: string
           is_read?: boolean
@@ -2175,6 +2785,7 @@ export type Database = {
         Row: {
           amount: number
           appointment_id: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
           created_at: string
           currency: string
           doctor_id: string
@@ -2200,6 +2811,7 @@ export type Database = {
         Insert: {
           amount: number
           appointment_id?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           currency?: string
           doctor_id: string
@@ -2225,6 +2837,7 @@ export type Database = {
         Update: {
           amount?: number
           appointment_id?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           currency?: string
           doctor_id?: string
@@ -2768,6 +3381,7 @@ export type Database = {
           account_status: string
           address: string | null
           avatar_url: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
           city: string | null
           country: string | null
           created_at: string
@@ -2793,6 +3407,7 @@ export type Database = {
           account_status?: string
           address?: string | null
           avatar_url?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           city?: string | null
           country?: string | null
           created_at?: string
@@ -2818,6 +3433,7 @@ export type Database = {
           account_status?: string
           address?: string | null
           avatar_url?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           city?: string | null
           country?: string | null
           created_at?: string
@@ -2840,6 +3456,111 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      project_files: {
+        Row: {
+          bucket: string
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          file_name: string
+          file_type: string | null
+          id: string
+          project_id: string
+          size_bytes: number | null
+          storage_path: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          bucket?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          file_name: string
+          file_type?: string | null
+          id?: string
+          project_id: string
+          size_bytes?: number | null
+          storage_path: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          bucket?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          file_name?: string
+          file_type?: string | null
+          id?: string
+          project_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_notes: {
+        Row: {
+          author_id: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          id: string
+          is_internal: boolean
+          note: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          note: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          note?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_notes_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recruitment_activation_events: {
         Row: {
@@ -3933,6 +4654,101 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_projects: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          id: string
+          last_audit_at: string | null
+          monthly_fee: number
+          package: string | null
+          project_id: string
+          ranking_score: number | null
+          status: string
+          target_keywords: string[]
+          updated_at: string
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          last_audit_at?: string | null
+          monthly_fee?: number
+          package?: string | null
+          project_id: string
+          ranking_score?: number | null
+          status?: string
+          target_keywords?: string[]
+          updated_at?: string
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          last_audit_at?: string | null
+          monthly_fee?: number
+          package?: string | null
+          project_id?: string
+          ranking_score?: number | null
+          status?: string
+          target_keywords?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_catalogue: {
+        Row: {
+          billing_cycle: string
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          category: string
+          code: string
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string
+          code: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string
+          code?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           id: string
@@ -3998,6 +4814,53 @@ export type Database = {
           },
         ]
       }
+      social_profiles: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          followers: number
+          handle: string | null
+          id: string
+          platform: string
+          project_id: string
+          status: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          followers?: number
+          handle?: string | null
+          id?: string
+          platform: string
+          project_id: string
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          followers?: number
+          handle?: string | null
+          id?: string
+          platform?: string
+          project_id?: string
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_profiles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       specialties: {
         Row: {
           created_at: string
@@ -4022,8 +4885,62 @@ export type Database = {
         }
         Relationships: []
       }
+      ssl_certificates: {
+        Row: {
+          annual_fee: number
+          auto_renew: boolean
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          domain: string
+          expires_on: string | null
+          id: string
+          issued_on: string | null
+          issuer: string | null
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          annual_fee?: number
+          auto_renew?: boolean
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          domain: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          issuer?: string | null
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_fee?: number
+          auto_renew?: boolean
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          domain?: string
+          expires_on?: string | null
+          id?: string
+          issued_on?: string | null
+          issuer?: string | null
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ssl_certificates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
           created_at: string
           email: string
           id: string
@@ -4036,6 +4953,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           email: string
           id?: string
@@ -4048,6 +4966,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           email?: string
           id?: string
@@ -4111,6 +5030,392 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      website_activity: {
+        Row: {
+          action: string
+          actor_id: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          details: Json
+          id: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          details?: Json
+          id?: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          details?: Json
+          id?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_activity_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_activity_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_invoices: {
+        Row: {
+          amount: number
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          category: string
+          created_at: string
+          currency: string
+          description: string | null
+          doctor_id: string
+          due_on: string | null
+          id: string
+          invoice_number: string
+          is_recurring: boolean
+          issued_on: string
+          paid_at: string | null
+          payment_reference: string | null
+          project_id: string | null
+          status: string
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          doctor_id: string
+          due_on?: string | null
+          id?: string
+          invoice_number: string
+          is_recurring?: boolean
+          issued_on?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          project_id?: string | null
+          status?: string
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string
+          created_at?: string
+          currency?: string
+          description?: string | null
+          doctor_id?: string
+          due_on?: string | null
+          id?: string
+          invoice_number?: string
+          is_recurring?: boolean
+          issued_on?: string
+          paid_at?: string | null
+          payment_reference?: string | null
+          project_id?: string | null
+          status?: string
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_invoices_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_invoices_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_orders: {
+        Row: {
+          amount: number
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          currency: string
+          doctor_id: string
+          id: string
+          notes: string | null
+          ordered_at: string
+          project_id: string | null
+          quantity: number
+          service_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          doctor_id: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string
+          project_id?: string | null
+          quantity?: number
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          currency?: string
+          doctor_id?: string
+          id?: string
+          notes?: string | null
+          ordered_at?: string
+          project_id?: string | null
+          quantity?: number
+          service_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_orders_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_orders_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_orders_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "service_catalogue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_pages: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          content: string | null
+          created_at: string
+          id: string
+          project_id: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          website_id: string
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          content?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          website_id: string
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          content?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_pages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_pages_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_tasks: {
+        Row: {
+          assigned_to: string | null
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      websites: {
+        Row: {
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          id: string
+          launched_on: string | null
+          live_url: string | null
+          name: string
+          platform: string
+          primary_domain: string | null
+          project_id: string
+          staging_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          launched_on?: string | null
+          live_url?: string | null
+          name: string
+          platform?: string
+          primary_domain?: string | null
+          project_id: string
+          staging_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          id?: string
+          launched_on?: string | null
+          live_url?: string | null
+          name?: string
+          platform?: string
+          primary_domain?: string | null
+          project_id?: string
+          staging_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "websites_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -4428,6 +5733,7 @@ export type Database = {
       }
       is_doctor_available_now: { Args: { _doctor: string }; Returns: boolean }
       is_identity_verified: { Args: { _user: string }; Returns: boolean }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_practice_manager: {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
@@ -4452,6 +5758,14 @@ export type Database = {
       log_audit_event_self: {
         Args: { _action: string; _details: Json; _table_name: string }
         Returns: undefined
+      }
+      owns_doctor_record: {
+        Args: { _doctor_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_np_project: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
       }
       process_consultation_referral_reward: {
         Args: { _appointment_id: string }
@@ -4531,6 +5845,12 @@ export type Database = {
         | "receptionist"
         | "hospital_admin"
         | "department_admin"
+      business_unit:
+        | "doctorsonlining"
+        | "nalavation"
+        | "onlining_health"
+        | "emko"
+        | "tenderintel"
       practice_member_status: "invited" | "active" | "suspended"
       practice_role:
         | "owner"
@@ -4720,6 +6040,13 @@ export const Constants = {
         "receptionist",
         "hospital_admin",
         "department_admin",
+      ],
+      business_unit: [
+        "doctorsonlining",
+        "nalavation",
+        "onlining_health",
+        "emko",
+        "tenderintel",
       ],
       practice_member_status: ["invited", "active", "suspended"],
       practice_role: [
