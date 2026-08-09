@@ -50,9 +50,10 @@ const ResourceManager = ({ def }: { def: ResourceDef }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    let query = supabase.from(def.table).select("*").order(def.orderBy ?? "created_at", { ascending: false }).limit(500);
+    let query = db.from(def.table).select("*").order(def.orderBy ?? "created_at", { ascending: false }).limit(500);
     Object.entries(def.scope ?? {}).forEach(([k, v]) => { query = query.eq(k, v); });
     const { data, error } = await query;
+
     if (error) toast({ variant: "destructive", title: "Could not load records", description: error.message });
     setRows((data ?? []) as unknown as DbRow[]);
     setLoading(false);
