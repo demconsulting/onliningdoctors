@@ -453,8 +453,9 @@ const AdminRecruitmentCRM = () => {
             />
             <ExportMenu
               filename="Recruitment sources"
-              columns={[{ key: "label", label: "Source" }, { key: "value", label: "Prospects" }]}
-              rows={reports.topReferral}
+              columns={[{ key: "source", label: "Source" }, { key: "count", label: "Prospects" }]}
+              rows={reports.topReferral.map(([source, count]) => ({ source, count }))}
+
               label="Export sources"
             />
           </div>
