@@ -16,6 +16,12 @@ import type { FieldDef, ResourceDef, DbRow } from "./resourceConfig";
 
 interface Option { id: string; label: string }
 
+/** Loosely-typed client: this component is generic over many tables, so the
+ *  per-table generated types can't be resolved statically. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
+
 const emptyFor = (def: ResourceDef): Record<string, unknown> => {
   const out: Record<string, unknown> = {};
   def.fields.forEach((f) => { out[f.key] = f.type === "boolean" ? false : ""; });
