@@ -1,57 +1,48 @@
-# Patient Documents & ID Verification
+# Founding Doctor Programme — Full Build
 
-## 1. Document type catalog (frontend)
-Reorder `DOCUMENT_TYPES` in `src/components/patient/DocumentUpload.tsx`. Default selection becomes `id_document`.
+Extends the existing Founding Doctors module and Recruitment CRM in place. No rebuild, no branding/layout changes. Delivered in 4 phases so each part is testable before the next.
 
-Order:
-1. `id_document` — ID Document (default)
-2. `passport` — Passport
-3. `medical_aid_card` — Medical Aid Card
-4. `prescription` — Prescription
-5. `medical_report` — Medical Report
-6. `blood_results` — Blood Results
-7. `xray_scan` — X-Ray / Scan
-8. `referral_letter` — Referral Letter
-9. `vaccination_record` — Vaccination Record
-10. `other` — Other
+## Phase 1 — Programme core (schema + module rename + tiers)
 
-Existing rows with `document_type='other'` remain untouched (no migration of data).
+Database:
+- Extend `founding_doctor_program` with: pioneer limit (20), founding limit (80), programme enabled, auto-close pioneer, auto-close founding, waiting list enabled, marketing copy fields (headline, description, pioneer copy, founding copy).
+- New `founding_programme_pricing`: pioneer setup fee (750), founding setup fee (750), standard setup fee (7997), monthly care plan (250), VAT enabled + VAT rate.
+- New `founding_exit_policy`: commitment months (36), standard practice value (7997), founding contribution (750).
+- Add `founding_tier` (`pioneer` / `founding` / `standard`) and `founding_sequence` to `doctors`, set by a trigger on approval — sequence 1–20 = Pioneer, 21–100 = Founding, 101+ = Standard. No manual assignment.
+- Backfill existing founding doctors by approval date.
+- All tables: GRANTs + RLS (admin manage, doctors read their own tier).
 
-## 2. Database changes (migration)
-Add to `patient_documents`:
-- `verification_status` text default `'not_uploaded'` — actual rows always `'pending'` on insert; enum-like values: `pending`, `verified`, `rejected`
-- `verified_by uuid`, `verified_at timestamptz`, `rejection_reason text`
-- `expiry_date date` (used for passports)
+UI (`AdminFoundingDoctors.tsx`):
+- Title → "Founding Doctor Programme", subtitle "Recruit, Onboard and Manage the First 100 Founding Doctors".
+- Slot counter → three progress cards (Pioneer 20, Founding 80, Overall 100) with filled/remaining/progress, auto-updating.
+- Tabs → Applications, Pioneer Founding Doctors, Founding Doctors, Standard Doctors, Settings.
+- KPI card row: applications received, pending approval, pioneer, founding, standard, total active, MRR (active doctors x monthly care plan), conversion rate (approved / applications).
 
-New helper RPC `public.get_patient_id_verification_status(_user uuid)` returning `not_uploaded | pending | verified | rejected` based on the most recent `id_document` or `passport` row.
+## Phase 2 — Settings, pricing, exit policy
 
-New RPC `public.is_identity_verified(_user uuid)` returning boolean (true only if a verified ID/passport exists AND `profiles.phone_verified` AND `auth.users.email_confirmed_at`). Used by client and by withdrawal RPC.
+- Settings tab sections: programme limits, enable/disable, auto-close toggles, waiting list, editable marketing copy.
+- Pricing configuration form (5 fees + VAT toggle) written to `founding_programme_pricing`; a shared `useFoundingPricing` hook so onboarding and agreements read the same values.
+- Early Exit Policy panel: commitment period, standard value, contribution, plus a live calculator showing the remaining subsidised setup investment and an example table at 6 / 12 / 24 / 36 months.
 
-RLS: admins can `UPDATE` `patient_documents` to change verification fields (new policy using `has_role(auth.uid(),'admin')`).
+## Phase 3 — Digital Practice Services + recruitment source
 
-## 3. Patient UI
-- `DocumentUpload.tsx`:
-  - Reordered types, default `id_document`
-  - Show a warning `Alert` banner above the upload card when no `id_document` or `passport` is verified/pending
-  - For each document show a status badge (Pending / Verified / Rejected) with rejection reason tooltip
-  - When type = `passport`, show an "Expiry date" date input; saved into `expiry_date`
-- New small component `IdentityVerificationCard` shown on the Patient Dashboard top area (status: Verified / Pending / Required) with CTA to switch to Documents tab.
-- Existing referral withdrawal action (in `ReferralCenter`) gated: if `is_identity_verified=false`, button disabled with toast "Please verify your identity before requesting a payout."
+- New `doctor_digital_services`: doctor, service type (website, google_business_profile, social_media, website_migration, website_upgrade, integration_only), status (not_required, pending, in_progress, awaiting_approval, live, completed), notes, timestamps. RLS: admin manage, doctor reads own.
+- Onboarding/admin panel to select required services per doctor and track each status individually. Only selected services are displayed and tracked; services stay optional.
+- `recruitment_source` field on the doctor record with the 11 fixed options, editable in both the Founding Programme doctor view and the CRM prospect dialog, shared via `linked_doctor_profile_id` so there is no duplicate entry.
 
-## 4. Profile badge
-On `DoctorDetail` / patient-facing profile views where the patient name appears in the doctor's PatientDocuments side-panel: render a small "ID Verified" badge next to the patient name when verified.
+## Phase 4 — Recruitment CRM enhancements + reporting
 
-## 5. Admin review
-Extend existing admin documents area (new tab in `AdminDashboard` → `AdminPatientDocuments.tsx`): list pending ID/passport documents with Approve / Reject (reason) buttons. Approval sets `verification_status='verified'`, `verified_by=auth.uid()`, `verified_at=now()`. Rejection requires a reason and notifies the patient via `notifications`.
-
-## 6. Backward compatibility
-- All existing documents keep `verification_status` default of `pending` (backfill: set existing rows to `pending` except non-ID/passport types → `not_applicable`? Simpler: leave all existing as `pending`, but verification gating only checks for id_document/passport rows.)
-- Default-selection change only affects new uploads; existing data unchanged.
+- Pipeline stages expanded to the 10 requested stages (Lead → Contacted → Meeting Scheduled → Presentation Completed → Proposal Sent → Application Submitted → Documents Verified → Approved → Onboarding → Completed), reusing the existing Kanban board and drag-and-drop.
+- Prospect record gains: assigned business developer, priority, lead score, date added, next follow-up (existing), plus attachments via the existing document upload system.
+- Communication history: extend `recruitment_communications` channels to phone, WhatsApp, email, meeting, internal note.
+- New `recruitment_commissions`: amount, status (pending/approved/paid), payment date, reference. Admin managed.
+- Activity timeline auto-recorded by triggers on stage change, approval, digital service completion, activation and commission payment.
+- Business Developer dashboard: per-BD totals (leads, contacted, meetings, applications, approved, pioneer/founding/standard recruited, conversion rate, commission earned/pending/paid, monthly performance) plus a cross-BD comparison table.
+- Reports tab with the 9 requested reports, exported to Excel / PDF / CSV via the existing `exportData.ts` helper.
 
 ## Technical notes
-- Identity gating helper used both server-side (RPC) and client-side (display).
-- Phone verification: `profiles.phone_verified boolean` already used elsewhere; if missing, add column default false.
-- Email verification: read from `auth.users.email_confirmed_at` via SECURITY DEFINER RPC.
-- No file-storage changes; `patient-documents` bucket and paths stay as-is.
 
-Confirm to proceed and I'll ship the migration + UI changes.
+- Existing tables reused: `founding_doctor_program`, `founding_doctor_applications`, `doctors`, `recruitment_prospects`, `recruitment_communications`, `recruitment_tasks`, `platform_fee_settings`.
+- Classification and slot counting move into `get_founding_slots()` (rewritten to return per-tier counts) so UI and public pages stay consistent.
+- Existing verification, onboarding, document upload and founding pricing-plan logic are left intact.
+- Every new public table gets GRANTs, RLS and an `updated_at` trigger.
