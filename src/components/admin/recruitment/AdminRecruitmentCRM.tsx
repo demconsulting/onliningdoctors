@@ -28,6 +28,11 @@ import GeographicDashboard from "./GeographicDashboard";
 import SourceTrackingDashboard from "./SourceTrackingDashboard";
 import EarlyAccessInterestList from "./EarlyAccessInterestList";
 import { buildDoctorProspectRows, mergeFunnelWithDoctors } from "./doctorProspectMerge";
+import BusinessDeveloperDashboard from "./BusinessDeveloperDashboard";
+import CommissionsPanel from "./CommissionsPanel";
+import ExportMenu from "./ExportMenu";
+
+
 
 const AdminRecruitmentCRM = () => {
   const { toast } = useToast();
@@ -236,8 +241,14 @@ const AdminRecruitmentCRM = () => {
           <TabsTrigger value="prospects">Prospects ({totalProspects})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks {overdueTasks.length > 0 && <Badge variant="destructive" className="ml-1.5">{overdueTasks.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="referrals">Referrals</TabsTrigger>
+          <TabsTrigger value="developers">Business Developers</TabsTrigger>
+          <TabsTrigger value="commissions">Commissions</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="developers"><BusinessDeveloperDashboard /></TabsContent>
+        <TabsContent value="commissions"><CommissionsPanel prospects={prospects} /></TabsContent>
+
 
         <TabsContent value="funnel"><FunnelAnalytics /></TabsContent>
         <TabsContent value="activation"><ActivationPipeline /></TabsContent>
@@ -420,6 +431,34 @@ const AdminRecruitmentCRM = () => {
 
         {/* REPORTS */}
         <TabsContent value="reports" className="space-y-4">
+          <div className="flex flex-wrap justify-end gap-2">
+            <ExportMenu
+              filename="Recruitment prospects"
+              columns={[
+                { key: "first_name", label: "First name" }, { key: "last_name", label: "Last name" },
+                { key: "specialty", label: "Specialty" }, { key: "province", label: "Province" },
+                { key: "city", label: "City" }, { key: "email", label: "Email" },
+                { key: "mobile_number", label: "Mobile" }, { key: "stage", label: "Stage" },
+                { key: "priority", label: "Priority" }, { key: "lead_score", label: "Lead score" },
+                { key: "referral_source", label: "Recruitment source" }, { key: "created_at", label: "Date added" },
+              ]}
+              rows={allProspects}
+              label="Export prospects"
+            />
+            <ExportMenu
+              filename="Recruitment funnel"
+              columns={[{ key: "stage", label: "Stage" }, { key: "count", label: "Count" }]}
+              rows={PIPELINE_STAGES.map(s => ({ stage: s.label, count: counts[s.key] || 0 }))}
+              label="Export funnel"
+            />
+            <ExportMenu
+              filename="Recruitment sources"
+              columns={[{ key: "label", label: "Source" }, { key: "value", label: "Prospects" }]}
+              rows={reports.topReferral}
+              label="Export sources"
+            />
+          </div>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Stat label="Added (30 days)" value={reports.addedThisMonth} />
             <Stat label="Lead → Registration" value={`${reports.leadToReg}%`} />

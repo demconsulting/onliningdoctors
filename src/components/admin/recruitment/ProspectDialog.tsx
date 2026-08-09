@@ -12,6 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, MessageCircle, Phone, Calendar, StickyNote, Send, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { PIPELINE_STAGES, TEMPLATES, stageLabel, stripHtml } from "./templates";
+import { RECRUITMENT_SOURCES } from "../founding/constants";
+
 
 interface Props {
   open: boolean;
@@ -25,6 +27,8 @@ const EMPTY = {
   practice_name: "", province: "", city: "", mobile_number: "", whatsapp_number: "",
   email: "", referral_source: "", notes: "", stage: "lead",
   next_follow_up_date: "", assigned_recruiter: "",
+  priority: "medium", lead_score: 0, business_developer: "",
+
 };
 
 const ProspectDialog = ({ open, onOpenChange, prospect, onSaved }: Props) => {
@@ -33,6 +37,22 @@ const ProspectDialog = ({ open, onOpenChange, prospect, onSaved }: Props) => {
   const [form, setForm] = useState<any>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState("details");
+  const [admins, setAdmins] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "platform_admin", "super_admin"] as any);
+      const ids = Array.from(new Set(((roles as any[]) || []).map((r) => r.user_id)));
+      if (!ids.length) { setAdmins([]); return; }
+      const { data } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+      setAdmins((data as any[]) || []);
+    })();
+  }, [open]);
+
 
   const [comms, setComms] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
@@ -89,6 +109,9 @@ const ProspectDialog = ({ open, onOpenChange, prospect, onSaved }: Props) => {
     const payload: any = { ...form };
     if (!payload.next_follow_up_date) payload.next_follow_up_date = null;
     if (!payload.assigned_recruiter) payload.assigned_recruiter = null;
+    if (!payload.business_developer) payload.business_developer = null;
+    payload.lead_score = Number(payload.lead_score) || 0;
+
     delete payload.id; delete payload.created_at; delete payload.updated_at;
     delete payload.linked_doctor_profile_id; delete payload.referrer_doctor_id; delete payload.created_by;
 
@@ -211,7 +234,14 @@ const ProspectDialog = ({ open, onOpenChange, prospect, onSaved }: Props) => {
               <Field label="Email"><Input type="email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
               <Field label="Mobile number"><Input value={form.mobile_number || ""} onChange={(e) => setForm({ ...form, mobile_number: e.target.value })} /></Field>
               <Field label="WhatsApp number"><Input value={form.whatsapp_number || ""} onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })} placeholder="e.g. 27821234567" /></Field>
-              <Field label="Referral source"><Input value={form.referral_source || ""} onChange={(e) => setForm({ ...form, referral_source: e.target.value })} /></Field>
+              <Field label="Recruitment source">
+                <Select value={form.referral_source || ""} onValueChange={(v) => setForm({ ...form, referral_source: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
+                  <SelectContent>
+                    {RECRUITMENT_SOURCES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
               <Field label="Stage">
                 <Select value={form.stage} onValueChange={(v) => setForm({ ...form, stage: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -220,7 +250,27 @@ const ProspectDialog = ({ open, onOpenChange, prospect, onSaved }: Props) => {
                   </SelectContent>
                 </Select>
               </Field>
+              <Field label="Priority">
+                <Select value={form.priority || "medium"} onValueChange={(v) => setForm({ ...form, priority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["low", "medium", "high"].map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Lead score (0-100)">
+                <Input type="number" min={0} max={100} value={form.lead_score ?? 0} onChange={(e) => setForm({ ...form, lead_score: e.target.value })} />
+              </Field>
+              <Field label="Business developer">
+                <Select value={form.business_developer || ""} onValueChange={(v) => setForm({ ...form, business_developer: v })}>
+                  <SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                  <SelectContent>
+                    {admins.map(a => <SelectItem key={a.id} value={a.id}>{a.full_name || a.id}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </Field>
               <Field label="Next follow-up"><Input type="date" value={form.next_follow_up_date || ""} onChange={(e) => setForm({ ...form, next_follow_up_date: e.target.value })} /></Field>
+
             </div>
             <Field label="Notes"><Textarea rows={4} value={form.notes || ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
           </TabsContent>

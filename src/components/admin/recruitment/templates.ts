@@ -88,14 +88,18 @@ export const PIPELINE_STAGES: { key: string; label: string; color: string }[] = 
   { key: "contacted", label: "Contacted", color: "bg-blue-500" },
   { key: "interested", label: "Interested", color: "bg-cyan-500" },
   { key: "meeting_scheduled", label: "Meeting Scheduled", color: "bg-indigo-500" },
-  { key: "demo_completed", label: "Demo Completed", color: "bg-violet-500" },
+  { key: "demo_completed", label: "Presentation Completed", color: "bg-violet-500" },
+  { key: "proposal_sent", label: "Proposal Sent", color: "bg-fuchsia-500" },
   { key: "invited", label: "Invited", color: "bg-purple-500" },
-  { key: "registered", label: "Registered", color: "bg-amber-500" },
-  { key: "pending_verification", label: "Pending Verification", color: "bg-orange-500" },
-  { key: "verified", label: "Verified", color: "bg-emerald-500" },
-  { key: "founding_doctor", label: "Founding Doctor", color: "bg-yellow-500" },
+  { key: "registered", label: "Application Submitted", color: "bg-amber-500" },
+  { key: "pending_verification", label: "Documents Pending", color: "bg-orange-500" },
+  { key: "verified", label: "Documents Verified", color: "bg-emerald-500" },
+  { key: "founding_doctor", label: "Approved", color: "bg-yellow-500" },
+  { key: "activated", label: "Onboarding", color: "bg-teal-500" },
+  { key: "first_consultation_completed", label: "Completed", color: "bg-green-600" },
   { key: "declined", label: "Declined", color: "bg-rose-500" },
 ];
+
 
 export function stageLabel(key: string) {
   return PIPELINE_STAGES.find((s) => s.key === key)?.label || key;
