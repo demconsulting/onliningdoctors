@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { Loader2 } from "lucide-react";
+import { RESOURCES } from "@/components/admin/nalavation/resourceConfig";
+
 
 // Map of section key -> dynamic import factory. Used to both lazy-mount and
 // to prefetch the chunk on sidebar hover so clicks feel instant.
@@ -46,12 +48,17 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "recruitment-crm": () => import("@/components/admin/recruitment/AdminRecruitmentCRM"),
   "referrals": () => import("@/components/admin/referrals/AdminReferralsCenter"),
   "patient-id-verification": () => import("@/components/admin/AdminPatientDocuments"),
+  "nalavation-overview": () => import("@/components/admin/nalavation/NalavationOverview"),
 };
 
 
-export const prefetchAdminSection = (key: string) => { loaders[key]?.(); };
+export const prefetchAdminSection = (key: string) => {
+  if (loaders[key]) { loaders[key](); return; }
+  if (RESOURCES[key]) import("@/components/admin/nalavation/ResourceManager");
+};
 
 const AdminUsers = lazy(loaders["users"]);
+
 const AdminAppointments = lazy(loaders["appointments"]);
 const AdminReviews = lazy(loaders["reviews"]);
 const AdminConsultationOutcomes = lazy(loaders["consultation-outcomes"]);
@@ -89,6 +96,9 @@ const AdminPracticePatients = lazy(loaders["practice-patients"]);
 const AdminRecruitmentCRM = lazy(loaders["recruitment-crm"]);
 const AdminReferralsCenter = lazy(loaders["referrals"]);
 const AdminPatientDocuments = lazy(loaders["patient-id-verification"]);
+const NalavationOverview = lazy(loaders["nalavation-overview"]);
+const ResourceManager = lazy(() => import("@/components/admin/nalavation/ResourceManager"));
+
 
 
 const SectionFallback = () => (
@@ -137,7 +147,10 @@ const AdminDashboard = () => {
   }
 
   const renderSection = () => {
+    const resource = RESOURCES[activeSection];
+    if (resource) return <ResourceManager def={resource} />;
     switch (activeSection) {
+
       case "section-order": return <AdminSectionOrder />;
       case "branding": return <AdminBranding />;
       case "hero": return <AdminHero />;
@@ -176,6 +189,8 @@ const AdminDashboard = () => {
       case "recruitment-crm": return <AdminRecruitmentCRM />;
       case "referrals": return <AdminReferralsCenter />;
       case "patient-id-verification": return <AdminPatientDocuments />;
+      case "nalavation-overview": return <NalavationOverview />;
+
       default: return <AdminHero />;
 
     }
