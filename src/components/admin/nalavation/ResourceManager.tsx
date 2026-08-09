@@ -123,7 +123,7 @@ const ResourceManager = ({ def }: { def: ResourceDef }) => {
 
   const remove = async (row: DbRow) => {
     if (!window.confirm("Delete this record? This cannot be undone.")) return;
-    const { error } = await supabase.from(def.table).delete().eq("id", row.id);
+    const { error } = await db.from(def.table).delete().eq("id", row.id);
     if (error) { toast({ variant: "destructive", title: "Delete failed", description: error.message }); return; }
     toast({ title: "Record deleted" });
     load();
