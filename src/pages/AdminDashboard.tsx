@@ -189,6 +189,8 @@ const AdminDashboard = () => {
       case "recruitment-crm": return <AdminRecruitmentCRM />;
       case "referrals": return <AdminReferralsCenter />;
       case "patient-id-verification": return <AdminPatientDocuments />;
+      case "nalavation-overview": return <NalavationOverview />;
+
       default: return <AdminHero />;
 
     }
