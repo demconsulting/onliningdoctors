@@ -96,6 +96,9 @@ const AdminPracticePatients = lazy(loaders["practice-patients"]);
 const AdminRecruitmentCRM = lazy(loaders["recruitment-crm"]);
 const AdminReferralsCenter = lazy(loaders["referrals"]);
 const AdminPatientDocuments = lazy(loaders["patient-id-verification"]);
+const NalavationOverview = lazy(loaders["nalavation-overview"]);
+const ResourceManager = lazy(() => import("@/components/admin/nalavation/ResourceManager"));
+
 
 
 const SectionFallback = () => (
