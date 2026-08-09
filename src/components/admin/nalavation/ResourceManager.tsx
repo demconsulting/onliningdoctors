@@ -110,8 +110,9 @@ const ResourceManager = ({ def }: { def: ResourceDef }) => {
     }
 
     const { error } = editing
-      ? await supabase.from(def.table).update(payload).eq("id", editing.id)
-      : await supabase.from(def.table).insert(payload);
+      ? await db.from(def.table).update(payload).eq("id", editing.id)
+      : await db.from(def.table).insert(payload);
+
 
     setSaving(false);
     if (error) { toast({ variant: "destructive", title: "Save failed", description: error.message }); return; }
