@@ -147,7 +147,10 @@ const AdminDashboard = () => {
   }
 
   const renderSection = () => {
+    const resource = RESOURCES[activeSection];
+    if (resource) return <ResourceManager def={resource} />;
     switch (activeSection) {
+
       case "section-order": return <AdminSectionOrder />;
       case "branding": return <AdminBranding />;
       case "hero": return <AdminHero />;
