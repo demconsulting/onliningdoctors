@@ -46,12 +46,17 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "recruitment-crm": () => import("@/components/admin/recruitment/AdminRecruitmentCRM"),
   "referrals": () => import("@/components/admin/referrals/AdminReferralsCenter"),
   "patient-id-verification": () => import("@/components/admin/AdminPatientDocuments"),
+  "nalavation-overview": () => import("@/components/admin/nalavation/NalavationOverview"),
 };
 
 
-export const prefetchAdminSection = (key: string) => { loaders[key]?.(); };
+export const prefetchAdminSection = (key: string) => {
+  if (loaders[key]) { loaders[key](); return; }
+  if (RESOURCES[key]) import("@/components/admin/nalavation/ResourceManager");
+};
 
 const AdminUsers = lazy(loaders["users"]);
+
 const AdminAppointments = lazy(loaders["appointments"]);
 const AdminReviews = lazy(loaders["reviews"]);
 const AdminConsultationOutcomes = lazy(loaders["consultation-outcomes"]);
