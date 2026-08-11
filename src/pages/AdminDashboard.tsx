@@ -79,7 +79,7 @@ const AdminDoctorCTA = lazy(loaders["doctor-cta"]);
 const AdminFooter = lazy(loaders["footer"]);
 const AdminBranding = lazy(loaders["branding"]);
 const AdminSectionOrder = lazy(loaders["section-order"]);
-const AdminPaymentConfig = lazy(loaders["payment-config"]);
+const AdminPaymentConfig = lazy(() => import("@/components/admin/AdminPaymentConfig"));
 const AdminPayments = lazy(loaders["payments"]);
 const AdminPayouts = lazy(loaders["payouts"]);
 const AdminAIAssistant = lazy(loaders["ai-assistant"]);
