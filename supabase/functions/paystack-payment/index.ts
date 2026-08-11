@@ -20,12 +20,14 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+    // Payment gateway settings are scoped per business unit (context).
     const { data: configRow } = await supabaseAdmin
-      .from("site_content")
-      .select("value")
-      .eq("key", "paystack_config")
+      .from("payment_gateway_configs")
+      .select("*")
+      .eq("context", "doctorsonlining")
+      .eq("provider", "paystack")
       .maybeSingle();
-    const paymentConfig = (configRow?.value as Record<string, unknown>) || {};
+    const paymentConfig = (configRow as Record<string, unknown>) || {};
     const envMode = (paymentConfig.mode as string) || "test";
 
     // Use mode-specific secret keys, with fallback to generic PAYSTACK_SECRET_KEY
@@ -311,16 +313,10 @@ serve(async (req) => {
 
       const amount = serverAmount;
 
-      // Load payment config for fee_bearer
-      const { data: configData } = await supabase
-        .from("site_content")
-        .select("value")
-        .eq("key", "paystack_config")
-        .maybeSingle();
-
-      const payConfig = configData?.value as Record<string, unknown> | null;
+      // Reuse the DoctorsOnlining gateway config loaded above
+      const payConfig = paymentConfig as Record<string, unknown> | null;
       const feeBearer = (payConfig?.fee_bearer as string) || "patient";
-      const mode = (payConfig?.mode as string) || "test";
+      const mode = envMode;
 
       // In test mode, Paystack typically only supports NGN.
       // In live mode, use the admin-configured supported currencies.
@@ -382,6 +378,8 @@ serve(async (req) => {
       );
 
       await serviceClient.from("payments").insert({
+        business_unit: "doctorsonlining",
+        payer_id: user.id,
         appointment_id,
         patient_id: user.id,
         doctor_id,

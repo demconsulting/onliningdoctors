@@ -37,6 +37,7 @@ const AdminPayments = () => {
       const { data } = await supabase
         .from("payments")
         .select("*")
+        .eq("business_unit", "doctorsonlining")
         .order("created_at", { ascending: false });
 
       if (data) {

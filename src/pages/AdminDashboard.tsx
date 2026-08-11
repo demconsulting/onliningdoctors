@@ -49,6 +49,9 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "referrals": () => import("@/components/admin/referrals/AdminReferralsCenter"),
   "patient-id-verification": () => import("@/components/admin/AdminPatientDocuments"),
   "nalavation-overview": () => import("@/components/admin/nalavation/NalavationOverview"),
+  "nala-payment-config": () => import("@/components/admin/AdminPaymentConfig"),
+  "nala-payments": () => import("@/components/admin/nalavation/NalavationPayments"),
+  "nala-revenue": () => import("@/components/admin/nalavation/NalavationRevenue"),
 };
 
 
@@ -76,7 +79,7 @@ const AdminDoctorCTA = lazy(loaders["doctor-cta"]);
 const AdminFooter = lazy(loaders["footer"]);
 const AdminBranding = lazy(loaders["branding"]);
 const AdminSectionOrder = lazy(loaders["section-order"]);
-const AdminPaymentConfig = lazy(loaders["payment-config"]);
+const AdminPaymentConfig = lazy(() => import("@/components/admin/AdminPaymentConfig"));
 const AdminPayments = lazy(loaders["payments"]);
 const AdminPayouts = lazy(loaders["payouts"]);
 const AdminAIAssistant = lazy(loaders["ai-assistant"]);
@@ -97,6 +100,8 @@ const AdminRecruitmentCRM = lazy(loaders["recruitment-crm"]);
 const AdminReferralsCenter = lazy(loaders["referrals"]);
 const AdminPatientDocuments = lazy(loaders["patient-id-verification"]);
 const NalavationOverview = lazy(loaders["nalavation-overview"]);
+const NalavationPayments = lazy(loaders["nala-payments"]);
+const NalavationRevenue = lazy(loaders["nala-revenue"]);
 const ResourceManager = lazy(() => import("@/components/admin/nalavation/ResourceManager"));
 
 
@@ -147,6 +152,7 @@ const AdminDashboard = () => {
   }
 
   const renderSection = () => {
+    if (activeSection === "nala-payment-config") return <AdminPaymentConfig context="nalavation" />;
     const resource = RESOURCES[activeSection];
     if (resource) return <ResourceManager def={resource} />;
     switch (activeSection) {
@@ -190,6 +196,9 @@ const AdminDashboard = () => {
       case "referrals": return <AdminReferralsCenter />;
       case "patient-id-verification": return <AdminPatientDocuments />;
       case "nalavation-overview": return <NalavationOverview />;
+      case "nala-payment-config": return <AdminPaymentConfig context="nalavation" />;
+      case "nala-payments": return <NalavationPayments />;
+      case "nala-revenue": return <NalavationRevenue />;
 
       default: return <AdminHero />;
 

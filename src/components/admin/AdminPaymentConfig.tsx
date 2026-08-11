@@ -29,6 +29,7 @@ const PAYMENT_METHODS = [
 
 const FEE_BEARERS = [
   { value: "patient", label: "Patient pays fees" },
+  { value: "customer", label: "Customer pays fees" },
   { value: "doctor", label: "Doctor pays fees" },
   { value: "platform", label: "Platform absorbs fees" },
 ];
@@ -38,6 +39,14 @@ const PAYMENT_TIMINGS = [
   { value: "before_call", label: "Pay Before Call", desc: "Payment required before joining consultation" },
   { value: "after_completion", label: "Pay After Completion", desc: "Payment processed after consultation ends" },
 ];
+
+const NALA_PAYMENT_TIMINGS = [
+  { value: "at_booking", label: "Pay on Order", desc: "Payment collected when the service is ordered" },
+  { value: "before_call", label: "Pay on Invoice", desc: "Payment required once the invoice is issued" },
+  { value: "after_completion", label: "Pay on Delivery", desc: "Payment collected after the service is delivered" },
+];
+
+export type PaymentContext = "doctorsonlining" | "nalavation";
 
 interface PaystackConfig {
   mode: "test" | "live";
@@ -55,7 +64,7 @@ const DEFAULT_CONFIG: PaystackConfig = {
   mode: "test",
   public_key_test: "",
   public_key_live: "",
-  supported_currencies: ["NGN"],
+  supported_currencies: ["ZAR"],
   payment_methods: ["card"],
   fee_bearer: "patient",
   payment_timing: "at_booking",
@@ -63,7 +72,7 @@ const DEFAULT_CONFIG: PaystackConfig = {
   platform_commission_percent: 15,
 };
 
-const AdminPaymentConfig = () => {
+const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: PaymentContext }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [config, setConfig] = useState<PaystackConfig>(DEFAULT_CONFIG);
@@ -71,30 +80,61 @@ const AdminPaymentConfig = () => {
   const [pendingMode, setPendingMode] = useState<"test" | "live">("test");
   const { toast } = useToast();
 
+  const isNala = context === "nalavation";
+  const platformLabel = isNala ? "Nalavation" : "DoctorsOnlining";
+  const timings = isNala ? NALA_PAYMENT_TIMINGS : PAYMENT_TIMINGS;
+
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       const { data } = await supabase
-        .from("site_content")
-        .select("value")
-        .eq("key", "paystack_config")
+        .from("payment_gateway_configs")
+        .select("*")
+        .eq("context", context)
+        .eq("provider", "paystack")
         .maybeSingle();
-      if (data?.value) {
-        setConfig({ ...DEFAULT_CONFIG, ...(data.value as any) });
+      if (data) {
+        setConfig({
+          mode: (data.mode as "test" | "live") ?? "test",
+          public_key_test: data.public_key_test ?? "",
+          public_key_live: data.public_key_live ?? "",
+          supported_currencies: data.supported_currencies ?? ["ZAR"],
+          payment_methods: data.payment_methods ?? ["card"],
+          fee_bearer: data.fee_bearer ?? (isNala ? "customer" : "patient"),
+          payment_timing: data.payment_timing ?? "at_booking",
+          payouts_enabled: data.payouts_enabled ?? false,
+          platform_commission_percent: Number(data.platform_commission_percent ?? 0),
+        });
       }
       setLoading(false);
     };
     load();
-  }, []);
+  }, [context, isNala]);
 
   const save = async () => {
     setSaving(true);
     const { error } = await supabase
-      .from("site_content")
-      .upsert({ key: "paystack_config", value: config as any }, { onConflict: "key" });
+      .from("payment_gateway_configs")
+      .upsert(
+        {
+          context,
+          provider: "paystack",
+          mode: config.mode,
+          public_key_test: config.public_key_test,
+          public_key_live: config.public_key_live,
+          supported_currencies: config.supported_currencies,
+          payment_methods: config.payment_methods,
+          fee_bearer: config.fee_bearer,
+          payment_timing: config.payment_timing,
+          payouts_enabled: config.payouts_enabled,
+          platform_commission_percent: config.platform_commission_percent,
+        },
+        { onConflict: "context,provider" }
+      );
     if (error) {
       toast({ variant: "destructive", title: "Failed to save", description: error.message });
     } else {
-      toast({ title: "Payment configuration saved" });
+      toast({ title: `${platformLabel} payment configuration saved` });
     }
     setSaving(false);
   };
@@ -132,9 +172,9 @@ const AdminPaymentConfig = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Paystack API Configuration
+            {platformLabel} Paystack Configuration
           </CardTitle>
-          <CardDescription>Configure your Paystack integration keys and environment mode.</CardDescription>
+          <CardDescription>Configure the Paystack keys and environment mode used by {platformLabel}. Each platform keeps its own gateway configuration.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className={`flex items-center justify-between rounded-lg border-2 p-5 transition-colors ${config.mode === "live" ? "border-destructive bg-destructive/5" : "border-green-500/50 bg-green-500/5"}`}>
@@ -179,7 +219,7 @@ const AdminPaymentConfig = () => {
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
                 <p className="font-semibold">Live mode is active</p>
-                <p>Real payments will be processed. Ensure your <strong>PAYSTACK_LIVE_SECRET_KEY</strong> is set in Supabase Edge Function secrets.</p>
+                <p>Real payments will be processed. Ensure your <strong>{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</strong> is set in Supabase Edge Function secrets.</p>
               </div>
             </div>
           )}
@@ -237,7 +277,7 @@ const AdminPaymentConfig = () => {
               <div>
                 <Label className="text-sm font-semibold">Secret Keys</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_TEST_SECRET_KEY</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_LIVE_SECRET_KEY</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
+                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_TEST_SECRET_KEY" : "PAYSTACK_TEST_SECRET_KEY"}</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
                 </p>
               </div>
               <a
@@ -344,7 +384,7 @@ const AdminPaymentConfig = () => {
           <div>
             <Label className="text-sm font-medium">When Is Payment Required?</Label>
             <div className="mt-2 space-y-2">
-              {PAYMENT_TIMINGS.map((t) => (
+              {timings.map((t) => (
                 <label
                   key={t.value}
                   className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${

@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.admin-storage-stats]
 verify_jwt = true
+
+[functions.nalavation-payment]
+verify_jwt = false

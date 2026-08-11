@@ -20,6 +20,8 @@ export type NalavationTable =
   | "landing_pages"
   | "digital_assets"
   | "service_catalogue"
+  | "service_subscriptions"
+  | "nalavation_service_requests"
   | "support_tickets";
 
 export type FieldType = "text" | "textarea" | "number" | "date" | "select" | "project" | "doctor" | "boolean" | "tags";
@@ -222,7 +224,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   "nala-billing": {
     table: "website_invoices",
-    title: "Nalavation Billing",
+    title: "Invoices",
     description: "Digital practice invoices — separate from patient consultation payments.",
     fields: [
       { key: "invoice_number", label: "Invoice number", list: true, required: true },
@@ -279,6 +281,45 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { key: "message", label: "Message", type: "textarea" },
       { key: "source", label: "Source", list: true },
       STATUS(["open", "in_progress", "resolved", "closed"]),
+    ],
+  },
+  "nala-subscriptions": {
+    table: "service_subscriptions",
+    title: "Active Subscriptions",
+    description: "Recurring digital services — hosting, SEO retainers, maintenance and website plans.",
+    scope: { business_unit: "nalavation" },
+    fields: [
+      { key: "name", label: "Subscription", list: true, required: true },
+      { key: "doctor_id", label: "Doctor", type: "doctor", list: true, required: true },
+      { key: "project_id", label: "Project", type: "project", list: true },
+      { key: "service_code", label: "Service code" },
+      { key: "amount", label: "Amount", type: "number", list: true },
+      { key: "currency", label: "Currency", type: "select", options: ["ZAR", "USD"], list: true },
+      { key: "billing_cycle", label: "Billing cycle", type: "select", options: ["monthly", "annual", "quarterly"], list: true },
+      STATUS(["active", "paused", "cancelled"]),
+      { key: "started_on", label: "Started on", type: "date" },
+      { key: "next_billing_on", label: "Next billing", type: "date", list: true },
+      { key: "notes", label: "Notes", type: "textarea" },
+    ],
+  },
+  "nala-service-requests": {
+    table: "nalavation_service_requests",
+    title: "Service Requests",
+    description: "Digital service requests raised by doctors from DoctorsOnlining. Convert these into projects, invoices and subscriptions.",
+    fields: [
+      { key: "service_name", label: "Service", list: true, required: true },
+      { key: "service_code", label: "Service code", list: true },
+      { key: "practice_name", label: "Practice", list: true },
+      { key: "contact_name", label: "Contact" },
+      { key: "contact_email", label: "Email", list: true },
+      { key: "contact_phone", label: "Phone" },
+      { key: "amount", label: "Amount", type: "number", list: true },
+      { key: "currency", label: "Currency", type: "select", options: ["ZAR", "USD"] },
+      { key: "billing_cycle", label: "Billing cycle", type: "select", options: ["once_off", "monthly", "annual"], list: true },
+      { key: "source_platform", label: "Source", list: true },
+      { key: "project_id", label: "Project", type: "project", list: true },
+      STATUS(["new", "contacted", "quoted", "in_progress", "converted", "declined"]),
+      { key: "notes", label: "Notes", type: "textarea" },
     ],
   },
 };

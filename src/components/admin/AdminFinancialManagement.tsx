@@ -158,7 +158,7 @@ const AdminFinancialManagement = () => {
   const loadAll = async () => {
     setLoading(true);
     const [p, po, ex, rc, ct, cv, rr] = await Promise.all([
-      supabase.from("payments").select("*").order("created_at", { ascending: false }),
+      supabase.from("payments").select("*").eq("business_unit", "doctorsonlining").order("created_at", { ascending: false }),
       supabase.from("payout_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("recurring_expenses").select("*").order("next_due_date"),

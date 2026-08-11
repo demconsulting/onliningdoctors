@@ -3040,14 +3040,19 @@ export type Database = {
       nalavation_service_requests: {
         Row: {
           amount: number
+          billing_cycle: string
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          category: string | null
           contact_email: string
           contact_name: string
           contact_phone: string | null
           created_at: string
+          currency: string
           external_ref: string | null
           id: string
           notes: string | null
           practice_name: string | null
+          project_id: string | null
           requester_user_id: string | null
           service_code: string | null
           service_name: string
@@ -3057,14 +3062,19 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          billing_cycle?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string | null
           contact_email?: string
           contact_name?: string
           contact_phone?: string | null
           created_at?: string
+          currency?: string
           external_ref?: string | null
           id?: string
           notes?: string | null
           practice_name?: string | null
+          project_id?: string | null
           requester_user_id?: string | null
           service_code?: string | null
           service_name: string
@@ -3074,14 +3084,19 @@ export type Database = {
         }
         Update: {
           amount?: number
+          billing_cycle?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          category?: string | null
           contact_email?: string
           contact_name?: string
           contact_phone?: string | null
           created_at?: string
+          currency?: string
           external_ref?: string | null
           id?: string
           notes?: string | null
           practice_name?: string | null
+          project_id?: string | null
           requester_user_id?: string | null
           service_code?: string | null
           service_name?: string
@@ -3090,6 +3105,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nalavation_service_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "nalavation_service_requests_service_code_fkey"
             columns: ["service_code"]
@@ -3671,6 +3693,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_configs: {
+        Row: {
+          context: Database["public"]["Enums"]["business_unit"]
+          created_at: string
+          extra: Json
+          fee_bearer: string
+          id: string
+          is_active: boolean
+          mode: string
+          payment_methods: string[]
+          payment_timing: string
+          payouts_enabled: boolean
+          platform_commission_percent: number
+          provider: string
+          public_key_live: string | null
+          public_key_test: string | null
+          supported_currencies: string[]
+          updated_at: string
+        }
+        Insert: {
+          context: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          extra?: Json
+          fee_bearer?: string
+          id?: string
+          is_active?: boolean
+          mode?: string
+          payment_methods?: string[]
+          payment_timing?: string
+          payouts_enabled?: boolean
+          platform_commission_percent?: number
+          provider?: string
+          public_key_live?: string | null
+          public_key_test?: string | null
+          supported_currencies?: string[]
+          updated_at?: string
+        }
+        Update: {
+          context?: Database["public"]["Enums"]["business_unit"]
+          created_at?: string
+          extra?: Json
+          fee_bearer?: string
+          id?: string
+          is_active?: boolean
+          mode?: string
+          payment_methods?: string[]
+          payment_timing?: string
+          payouts_enabled?: boolean
+          platform_commission_percent?: number
+          provider?: string
+          public_key_live?: string | null
+          public_key_test?: string | null
+          supported_currencies?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_gateway_credentials: {
         Row: {
           context: string
@@ -3720,7 +3799,7 @@ export type Database = {
           business_unit: Database["public"]["Enums"]["business_unit"]
           created_at: string
           currency: string
-          doctor_id: string
+          doctor_id: string | null
           doctor_net_amount: number | null
           fee_amount: number | null
           fee_bearer: string | null
@@ -3729,16 +3808,20 @@ export type Database = {
           last_recalculated_by: string | null
           metadata: Json | null
           paid_at: string | null
-          patient_id: string
+          patient_id: string | null
+          payer_id: string | null
           payment_method: string | null
           paystack_access_code: string | null
           paystack_reference: string | null
           platform_fee_amount: number | null
           processing_fee_amount: number | null
           processing_fee_percentage: number | null
+          project_id: string | null
+          service_code: string | null
           status: string
           transaction_type: string | null
           updated_at: string
+          website_invoice_id: string | null
         }
         Insert: {
           amount: number
@@ -3746,7 +3829,7 @@ export type Database = {
           business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           currency?: string
-          doctor_id: string
+          doctor_id?: string | null
           doctor_net_amount?: number | null
           fee_amount?: number | null
           fee_bearer?: string | null
@@ -3755,16 +3838,20 @@ export type Database = {
           last_recalculated_by?: string | null
           metadata?: Json | null
           paid_at?: string | null
-          patient_id: string
+          patient_id?: string | null
+          payer_id?: string | null
           payment_method?: string | null
           paystack_access_code?: string | null
           paystack_reference?: string | null
           platform_fee_amount?: number | null
           processing_fee_amount?: number | null
           processing_fee_percentage?: number | null
+          project_id?: string | null
+          service_code?: string | null
           status?: string
           transaction_type?: string | null
           updated_at?: string
+          website_invoice_id?: string | null
         }
         Update: {
           amount?: number
@@ -3772,7 +3859,7 @@ export type Database = {
           business_unit?: Database["public"]["Enums"]["business_unit"]
           created_at?: string
           currency?: string
-          doctor_id?: string
+          doctor_id?: string | null
           doctor_net_amount?: number | null
           fee_amount?: number | null
           fee_bearer?: string | null
@@ -3781,16 +3868,20 @@ export type Database = {
           last_recalculated_by?: string | null
           metadata?: Json | null
           paid_at?: string | null
-          patient_id?: string
+          patient_id?: string | null
+          payer_id?: string | null
           payment_method?: string | null
           paystack_access_code?: string | null
           paystack_reference?: string | null
           platform_fee_amount?: number | null
           processing_fee_amount?: number | null
           processing_fee_percentage?: number | null
+          project_id?: string | null
+          service_code?: string | null
           status?: string
           transaction_type?: string | null
           updated_at?: string
+          website_invoice_id?: string | null
         }
         Relationships: [
           {
@@ -3798,6 +3889,20 @@ export type Database = {
             columns: ["appointment_id"]
             isOneToOne: false
             referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_website_invoice_id_fkey"
+            columns: ["website_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "website_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -5711,6 +5816,71 @@ export type Database = {
         }
         Relationships: []
       }
+      service_subscriptions: {
+        Row: {
+          amount: number
+          billing_cycle: string
+          business_unit: Database["public"]["Enums"]["business_unit"]
+          cancelled_at: string | null
+          created_at: string
+          currency: string
+          doctor_id: string
+          id: string
+          name: string
+          next_billing_on: string | null
+          notes: string | null
+          project_id: string | null
+          service_code: string | null
+          started_on: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          billing_cycle?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          doctor_id: string
+          id?: string
+          name: string
+          next_billing_on?: string | null
+          notes?: string | null
+          project_id?: string | null
+          service_code?: string | null
+          started_on?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_cycle?: string
+          business_unit?: Database["public"]["Enums"]["business_unit"]
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          doctor_id?: string
+          id?: string
+          name?: string
+          next_billing_on?: string | null
+          notes?: string | null
+          project_id?: string | null
+          service_code?: string | null
+          started_on?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_subscriptions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "digital_practice_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_content: {
         Row: {
           id: string
@@ -6694,6 +6864,10 @@ export type Database = {
       get_patient_id_verification_status: {
         Args: { _user: string }
         Returns: string
+      }
+      get_payment_gateway_public_config: {
+        Args: { _context?: Database["public"]["Enums"]["business_unit"] }
+        Returns: Json
       }
       get_public_reviews: {
         Args: { _doctor_id: string }
