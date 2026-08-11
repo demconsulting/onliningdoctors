@@ -63,9 +63,21 @@ const nalavationItems: Item[] = [
   { title: "Media Library", key: "nala-media", icon: FolderOpen },
   { title: "Project Tasks", key: "nala-tasks", icon: ListChecks },
   { title: "Service Catalogue", key: "nala-services", icon: Package },
-  { title: "Billing", key: "nala-billing", icon: Receipt },
+  { title: "Service Requests", key: "nala-service-requests", icon: ClipboardCheck },
   { title: "Support", key: "nala-support", icon: LifeBuoy },
 ];
+
+const nalavationFinanceItems: Item[] = [
+  { title: "Payment Gateways", key: "nala-payment-config", icon: CreditCard },
+  { title: "Invoices", key: "nala-billing", icon: Receipt },
+  { title: "Service Payments", key: "nala-payments", icon: Wallet },
+  { title: "Website Projects", key: "nala-projects", icon: Briefcase },
+  { title: "Hosting Services", key: "nala-hosting", icon: Server },
+  { title: "Domain Services", key: "nala-domains", icon: Globe },
+  { title: "Active Subscriptions", key: "nala-subscriptions", icon: Package },
+  { title: "Revenue Reports", key: "nala-revenue", icon: TrendingUp },
+];
+
 
 const platformItems: Item[] = [
   { title: "Users", key: "users", icon: Users },
