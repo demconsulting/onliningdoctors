@@ -224,7 +224,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
   },
   "nala-billing": {
     table: "website_invoices",
-    title: "Nalavation Billing",
+    title: "Invoices",
     description: "Digital practice invoices — separate from patient consultation payments.",
     fields: [
       { key: "invoice_number", label: "Invoice number", list: true, required: true },
