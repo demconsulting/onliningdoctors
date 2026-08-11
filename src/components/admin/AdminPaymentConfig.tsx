@@ -172,9 +172,9 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            Paystack API Configuration
+            {platformLabel} Paystack Configuration
           </CardTitle>
-          <CardDescription>Configure your Paystack integration keys and environment mode.</CardDescription>
+          <CardDescription>Configure the Paystack keys and environment mode used by {platformLabel}. Each platform keeps its own gateway configuration.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className={`flex items-center justify-between rounded-lg border-2 p-5 transition-colors ${config.mode === "live" ? "border-destructive bg-destructive/5" : "border-green-500/50 bg-green-500/5"}`}>
@@ -219,7 +219,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
                 <p className="font-semibold">Live mode is active</p>
-                <p>Real payments will be processed. Ensure your <strong>PAYSTACK_LIVE_SECRET_KEY</strong> is set in Supabase Edge Function secrets.</p>
+                <p>Real payments will be processed. Ensure your <strong>{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</strong> is set in Supabase Edge Function secrets.</p>
               </div>
             </div>
           )}
@@ -277,7 +277,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
               <div>
                 <Label className="text-sm font-semibold">Secret Keys</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_TEST_SECRET_KEY</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_LIVE_SECRET_KEY</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
+                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_TEST_SECRET_KEY" : "PAYSTACK_TEST_SECRET_KEY"}</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
                 </p>
               </div>
               <a
@@ -384,7 +384,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
           <div>
             <Label className="text-sm font-medium">When Is Payment Required?</Label>
             <div className="mt-2 space-y-2">
-              {PAYMENT_TIMINGS.map((t) => (
+              {timings.map((t) => (
                 <label
                   key={t.value}
                   className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
