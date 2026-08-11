@@ -20,6 +20,8 @@ export type NalavationTable =
   | "landing_pages"
   | "digital_assets"
   | "service_catalogue"
+  | "service_subscriptions"
+  | "nalavation_service_requests"
   | "support_tickets";
 
 export type FieldType = "text" | "textarea" | "number" | "date" | "select" | "project" | "doctor" | "boolean" | "tags";
