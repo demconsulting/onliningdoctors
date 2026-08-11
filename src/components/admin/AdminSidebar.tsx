@@ -142,6 +142,7 @@ const AdminSidebar = ({ activeSection, onSectionChange }: AdminSidebarProps) => 
         </SidebarGroup>
         {renderGroup("DoctorsOnlining", doctorsOnliningItems)}
         {renderGroup("Nalavation", nalavationItems)}
+        {renderGroup("Nalavation Financial", nalavationFinanceItems)}
         {renderGroup("Platform", platformItems)}
       </SidebarContent>
     </Sidebar>
