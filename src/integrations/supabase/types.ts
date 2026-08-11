@@ -661,6 +661,69 @@ export type Database = {
           },
         ]
       }
+      contact_enquiries: {
+        Row: {
+          assigned_to: string | null
+          budget_range: string | null
+          care_plan_interest: string | null
+          company: string | null
+          country: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          internal_notes: string | null
+          message: string
+          metadata: Json
+          phone: string | null
+          practice_name: string | null
+          service_required: string | null
+          source_page: string | null
+          status: Database["public"]["Enums"]["enquiry_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          budget_range?: string | null
+          care_plan_interest?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          internal_notes?: string | null
+          message: string
+          metadata?: Json
+          phone?: string | null
+          practice_name?: string | null
+          service_required?: string | null
+          source_page?: string | null
+          status?: Database["public"]["Enums"]["enquiry_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          budget_range?: string | null
+          care_plan_interest?: string | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          internal_notes?: string | null
+          message?: string
+          metadata?: Json
+          phone?: string | null
+          practice_name?: string | null
+          service_required?: string | null
+          source_page?: string | null
+          status?: Database["public"]["Enums"]["enquiry_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -2546,6 +2609,54 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          alt_text: string | null
+          bucket: string
+          created_at: string
+          file_name: string
+          file_size: number | null
+          height: number | null
+          id: string
+          is_public: boolean
+          mime_type: string | null
+          path: string
+          updated_at: string
+          uploaded_by: string | null
+          width: number | null
+        }
+        Insert: {
+          alt_text?: string | null
+          bucket?: string
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          is_public?: boolean
+          mime_type?: string | null
+          path: string
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Update: {
+          alt_text?: string | null
+          bucket?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          is_public?: boolean
+          mime_type?: string | null
+          path?: string
+          updated_at?: string
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
       medical_aid_requests: {
         Row: {
           appointment_id: string | null
@@ -2603,6 +2714,477 @@ export type Database = {
         }
         Relationships: []
       }
+      nalavation_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          previous_values: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          previous_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          previous_values?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      nalavation_domain_services: {
+        Row: {
+          annual_amount: number
+          auto_renew: boolean
+          created_at: string
+          domain: string
+          expires_on: string | null
+          id: string
+          notes: string | null
+          owner_user_id: string | null
+          project_id: string | null
+          registrar: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          annual_amount?: number
+          auto_renew?: boolean
+          created_at?: string
+          domain: string
+          expires_on?: string | null
+          id?: string
+          notes?: string | null
+          owner_user_id?: string | null
+          project_id?: string | null
+          registrar?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_amount?: number
+          auto_renew?: boolean
+          created_at?: string
+          domain?: string
+          expires_on?: string | null
+          id?: string
+          notes?: string | null
+          owner_user_id?: string | null
+          project_id?: string | null
+          registrar?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_domain_services_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_website_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nalavation_hosting_services: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_amount: number
+          notes: string | null
+          owner_user_id: string | null
+          plan: string
+          practice_name: string
+          project_id: string | null
+          provider: string
+          renews_on: string | null
+          ssl_status: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          owner_user_id?: string | null
+          plan?: string
+          practice_name?: string
+          project_id?: string | null
+          provider?: string
+          renews_on?: string | null
+          ssl_status?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          owner_user_id?: string | null
+          plan?: string
+          practice_name?: string
+          project_id?: string | null
+          provider?: string
+          renews_on?: string | null
+          ssl_status?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_hosting_services_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_website_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nalavation_invoices: {
+        Row: {
+          context: string
+          created_at: string
+          currency: string
+          customer_email: string
+          customer_name: string
+          customer_user_id: string | null
+          description: string
+          due_date: string | null
+          id: string
+          invoice_number: string
+          notes: string | null
+          paid_at: string | null
+          practice_name: string | null
+          project_id: string | null
+          request_id: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          vat: number
+        }
+        Insert: {
+          context?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          customer_name?: string
+          customer_user_id?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          paid_at?: string | null
+          practice_name?: string | null
+          project_id?: string | null
+          request_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          vat?: number
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          customer_name?: string
+          customer_user_id?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_at?: string | null
+          practice_name?: string | null
+          project_id?: string | null
+          request_id?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          vat?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_website_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nalavation_invoices_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nalavation_service_payments: {
+        Row: {
+          amount: number
+          context: string
+          created_at: string
+          currency: string
+          customer_email: string
+          customer_name: string
+          description: string
+          gateway: string
+          id: string
+          invoice_id: string | null
+          m_payment_id: string | null
+          mode: string
+          paid_at: string | null
+          pf_payment_id: string | null
+          request_id: string | null
+          service_code: string | null
+          status: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          context?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          customer_name?: string
+          description?: string
+          gateway?: string
+          id?: string
+          invoice_id?: string | null
+          m_payment_id?: string | null
+          mode?: string
+          paid_at?: string | null
+          pf_payment_id?: string | null
+          request_id?: string | null
+          service_code?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          context?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          customer_name?: string
+          description?: string
+          gateway?: string
+          id?: string
+          invoice_id?: string | null
+          m_payment_id?: string | null
+          mode?: string
+          paid_at?: string | null
+          pf_payment_id?: string | null
+          request_id?: string | null
+          service_code?: string | null
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_service_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nalavation_service_payments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_service_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nalavation_service_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "payfast_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nalavation_service_requests: {
+        Row: {
+          amount: number
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          external_ref: string | null
+          id: string
+          notes: string | null
+          practice_name: string | null
+          requester_user_id: string | null
+          service_code: string | null
+          service_name: string
+          source_platform: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          notes?: string | null
+          practice_name?: string | null
+          requester_user_id?: string | null
+          service_code?: string | null
+          service_name: string
+          source_platform?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          external_ref?: string | null
+          id?: string
+          notes?: string | null
+          practice_name?: string | null
+          requester_user_id?: string | null
+          service_code?: string | null
+          service_name?: string
+          source_platform?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_service_requests_service_code_fkey"
+            columns: ["service_code"]
+            isOneToOne: false
+            referencedRelation: "nalavation_services"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      nalavation_services: {
+        Row: {
+          amount: number
+          billing_type: string
+          category: string
+          code: string
+          created_at: string
+          description: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          amount?: number
+          billing_type?: string
+          category: string
+          code: string
+          created_at?: string
+          description?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          amount?: number
+          billing_type?: string
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      nalavation_website_projects: {
+        Row: {
+          contract_value: number
+          created_at: string
+          domain: string | null
+          id: string
+          launch_date: string | null
+          notes: string | null
+          owner_user_id: string | null
+          plan_code: string | null
+          practice_name: string
+          request_id: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          contract_value?: number
+          created_at?: string
+          domain?: string | null
+          id?: string
+          launch_date?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          plan_code?: string | null
+          practice_name: string
+          request_id?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          contract_value?: number
+          created_at?: string
+          domain?: string | null
+          id?: string
+          launch_date?: string | null
+          notes?: string | null
+          owner_user_id?: string | null
+          plan_code?: string | null
+          practice_name?: string
+          request_id?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_website_projects_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           business_unit: Database["public"]["Enums"]["business_unit"]
@@ -2636,6 +3218,146 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      page_sections: {
+        Row: {
+          button_text: string | null
+          button_url: string | null
+          content: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          is_visible: boolean
+          page_id: string
+          section_type: Database["public"]["Enums"]["section_type"]
+          settings: Json
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          button_text?: string | null
+          button_url?: string | null
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean
+          page_id: string
+          section_type: Database["public"]["Enums"]["section_type"]
+          settings?: Json
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          button_text?: string | null
+          button_url?: string | null
+          content?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean
+          page_id?: string
+          section_type?: Database["public"]["Enums"]["section_type"]
+          settings?: Json
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_sections_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          canonical_url: string | null
+          created_at: string
+          created_by: string | null
+          featured_image: string | null
+          id: string
+          is_followable: boolean
+          is_indexable: boolean
+          meta_description: string | null
+          meta_title: string | null
+          og_description: string | null
+          og_image: string | null
+          og_title: string | null
+          page_type: string
+          published_at: string | null
+          redirect_url: string | null
+          slug: string
+          status: Database["public"]["Enums"]["content_status"]
+          structured_data: Json | null
+          title: string
+          twitter_description: string | null
+          twitter_image: string | null
+          twitter_title: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          canonical_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          featured_image?: string | null
+          id?: string
+          is_followable?: boolean
+          is_indexable?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          og_description?: string | null
+          og_image?: string | null
+          og_title?: string | null
+          page_type?: string
+          published_at?: string | null
+          redirect_url?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["content_status"]
+          structured_data?: Json | null
+          title: string
+          twitter_description?: string | null
+          twitter_image?: string | null
+          twitter_title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          canonical_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          featured_image?: string | null
+          id?: string
+          is_followable?: boolean
+          is_indexable?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          og_description?: string | null
+          og_image?: string | null
+          og_title?: string | null
+          page_type?: string
+          published_at?: string | null
+          redirect_url?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          structured_data?: Json | null
+          title?: string
+          twitter_description?: string | null
+          twitter_image?: string | null
+          twitter_title?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -2780,6 +3502,216 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payfast_itn_logs: {
+        Row: {
+          context: string
+          created_at: string
+          id: string
+          m_payment_id: string | null
+          mode: string | null
+          note: string | null
+          payload: Json
+          payment_status: string | null
+          pf_payment_id: string | null
+          signature_valid: boolean
+          source_valid: boolean
+        }
+        Insert: {
+          context?: string
+          created_at?: string
+          id?: string
+          m_payment_id?: string | null
+          mode?: string | null
+          note?: string | null
+          payload?: Json
+          payment_status?: string | null
+          pf_payment_id?: string | null
+          signature_valid?: boolean
+          source_valid?: boolean
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          id?: string
+          m_payment_id?: string | null
+          mode?: string | null
+          note?: string | null
+          payload?: Json
+          payment_status?: string | null
+          pf_payment_id?: string | null
+          signature_valid?: boolean
+          source_valid?: boolean
+        }
+        Relationships: []
+      }
+      payfast_reconciliation_runs: {
+        Row: {
+          checked: number
+          created_at: string
+          details: Json
+          duration_ms: number
+          errors: number
+          id: string
+          mode: string | null
+          skipped: number
+          trigger: string
+          triggered_by: string | null
+          updated: number
+        }
+        Insert: {
+          checked?: number
+          created_at?: string
+          details?: Json
+          duration_ms?: number
+          errors?: number
+          id?: string
+          mode?: string | null
+          skipped?: number
+          trigger?: string
+          triggered_by?: string | null
+          updated?: number
+        }
+        Update: {
+          checked?: number
+          created_at?: string
+          details?: Json
+          duration_ms?: number
+          errors?: number
+          id?: string
+          mode?: string | null
+          skipped?: number
+          trigger?: string
+          triggered_by?: string | null
+          updated?: number
+        }
+        Relationships: []
+      }
+      payfast_subscriptions: {
+        Row: {
+          amount: number
+          cancelled_at: string | null
+          context: string
+          country: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          frequency: string
+          id: string
+          last_payment_at: string | null
+          last_reconciled_at: string | null
+          m_payment_id: string
+          mode: string
+          next_run: string | null
+          notes: string | null
+          pf_payment_id: string | null
+          pf_status: string | null
+          pf_token: string | null
+          phone: string | null
+          plan_code: string
+          plan_name: string
+          practice_name: string | null
+          reconcile_note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cancelled_at?: string | null
+          context?: string
+          country?: string | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          frequency?: string
+          id?: string
+          last_payment_at?: string | null
+          last_reconciled_at?: string | null
+          m_payment_id: string
+          mode?: string
+          next_run?: string | null
+          notes?: string | null
+          pf_payment_id?: string | null
+          pf_status?: string | null
+          pf_token?: string | null
+          phone?: string | null
+          plan_code: string
+          plan_name: string
+          practice_name?: string | null
+          reconcile_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cancelled_at?: string | null
+          context?: string
+          country?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          frequency?: string
+          id?: string
+          last_payment_at?: string | null
+          last_reconciled_at?: string | null
+          m_payment_id?: string
+          mode?: string
+          next_run?: string | null
+          notes?: string | null
+          pf_payment_id?: string | null
+          pf_status?: string | null
+          pf_token?: string | null
+          phone?: string | null
+          plan_code?: string
+          plan_name?: string
+          practice_name?: string | null
+          reconcile_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_gateway_credentials: {
+        Row: {
+          context: string
+          created_at: string
+          gateway: string
+          id: string
+          is_active: boolean
+          merchant_id: string
+          merchant_key: string
+          mode: string
+          passphrase: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          context?: string
+          created_at?: string
+          gateway?: string
+          id?: string
+          is_active?: boolean
+          merchant_id?: string
+          merchant_key?: string
+          mode: string
+          passphrase?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          gateway?: string
+          id?: string
+          is_active?: boolean
+          merchant_id?: string
+          merchant_key?: string
+          mode?: string
+          passphrase?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       payments: {
         Row: {
@@ -3385,8 +4317,10 @@ export type Database = {
           city: string | null
           country: string | null
           created_at: string
+          created_by: string | null
           date_of_birth: string | null
           demo_user: boolean
+          email: string | null
           environment: string
           full_name: string | null
           gender: string | null
@@ -3396,9 +4330,11 @@ export type Database = {
           id_number_hash: string | null
           id_type: string | null
           is_suspended: boolean
+          last_login_at: string | null
           phone: string | null
           phone_verified: boolean
           state: string | null
+          status: Database["public"]["Enums"]["user_status"]
           suspension_reason: string | null
           test_user: boolean
           updated_at: string
@@ -3411,8 +4347,10 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          created_by?: string | null
           date_of_birth?: string | null
           demo_user?: boolean
+          email?: string | null
           environment?: string
           full_name?: string | null
           gender?: string | null
@@ -3422,9 +4360,11 @@ export type Database = {
           id_number_hash?: string | null
           id_type?: string | null
           is_suspended?: boolean
+          last_login_at?: string | null
           phone?: string | null
           phone_verified?: boolean
           state?: string | null
+          status?: Database["public"]["Enums"]["user_status"]
           suspension_reason?: string | null
           test_user?: boolean
           updated_at?: string
@@ -3437,8 +4377,10 @@ export type Database = {
           city?: string | null
           country?: string | null
           created_at?: string
+          created_by?: string | null
           date_of_birth?: string | null
           demo_user?: boolean
+          email?: string | null
           environment?: string
           full_name?: string | null
           gender?: string | null
@@ -3448,9 +4390,11 @@ export type Database = {
           id_number_hash?: string | null
           id_type?: string | null
           is_suspended?: boolean
+          last_login_at?: string | null
           phone?: string | null
           phone_verified?: boolean
           state?: string | null
+          status?: Database["public"]["Enums"]["user_status"]
           suspension_reason?: string | null
           test_user?: boolean
           updated_at?: string
@@ -4654,6 +5598,24 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          id: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          id?: string
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          id?: string
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       seo_projects: {
         Row: {
           business_unit: Database["public"]["Enums"]["business_unit"]
@@ -4766,6 +5728,30 @@ export type Database = {
           id?: string
           key?: string
           updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          is_public: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          is_public?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          is_public?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
           value?: Json
         }
         Relationships: []
@@ -4983,18 +5969,21 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
+          granted_by: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
+          granted_by?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
+          granted_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -5720,6 +6709,13 @@ export type Database = {
         }[]
       }
       get_user_referral_stats: { Args: { _user_id?: string }; Returns: Json }
+      has_permission: {
+        Args: {
+          _permission: Database["public"]["Enums"]["app_permission"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -5742,6 +6738,7 @@ export type Database = {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_test_or_demo_user: { Args: { _user_id: string }; Returns: boolean }
       link_practice_patient: {
         Args: { _practice_patient_id: string }
@@ -5758,6 +6755,33 @@ export type Database = {
       log_audit_event_self: {
         Args: { _action: string; _details: Json; _table_name: string }
         Returns: undefined
+      }
+      my_permissions: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_permission"][]
+      }
+      nalavation_log_audit: {
+        Args: {
+          _action: string
+          _new?: Json
+          _previous?: Json
+          _resource_id?: string
+          _resource_type?: string
+        }
+        Returns: string
+      }
+      nalavation_request_service: {
+        Args: {
+          _contact_email?: string
+          _contact_name?: string
+          _contact_phone?: string
+          _external_ref?: string
+          _notes?: string
+          _practice_name?: string
+          _service_code: string
+          _source_platform?: string
+        }
+        Returns: string
       }
       owns_doctor_record: {
         Args: { _doctor_id: string; _user_id: string }
@@ -5836,6 +6860,19 @@ export type Database = {
     }
     Enums: {
       accepted_payment_method_enum: "medical_aid_only" | "card_only" | "both"
+      app_permission:
+        | "manage_users"
+        | "manage_admins"
+        | "manage_content"
+        | "manage_payments"
+        | "manage_payment_gateways"
+        | "manage_orders"
+        | "manage_media"
+        | "manage_settings"
+        | "view_reports"
+        | "issue_refunds"
+        | "view_audit_logs"
+        | "manage_enquiries"
       app_role:
         | "admin"
         | "patient"
@@ -5845,12 +6882,25 @@ export type Database = {
         | "receptionist"
         | "hospital_admin"
         | "department_admin"
+        | "content_editor"
+        | "finance_admin"
+        | "support_admin"
+        | "user"
       business_unit:
         | "doctorsonlining"
         | "nalavation"
         | "onlining_health"
         | "emko"
         | "tenderintel"
+      content_status: "draft" | "published" | "unpublished" | "archived"
+      enquiry_status:
+        | "new"
+        | "contacted"
+        | "qualified"
+        | "proposal_sent"
+        | "won"
+        | "lost"
+        | "archived"
       practice_member_status: "invited" | "active" | "suspended"
       practice_role:
         | "owner"
@@ -5903,6 +6953,24 @@ export type Database = {
         | "first_consultation_completed"
         | "per_consultation"
       referral_user_type: "doctor" | "patient"
+      section_type:
+        | "hero"
+        | "text"
+        | "image_text"
+        | "services_grid"
+        | "pricing_cards"
+        | "features"
+        | "statistics"
+        | "testimonials"
+        | "portfolio_grid"
+        | "cta"
+        | "faq"
+        | "contact_form"
+        | "team"
+        | "logo_cloud"
+        | "video"
+        | "rich_text"
+      user_status: "active" | "suspended" | "pending" | "deactivated"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6031,6 +7099,20 @@ export const Constants = {
   public: {
     Enums: {
       accepted_payment_method_enum: ["medical_aid_only", "card_only", "both"],
+      app_permission: [
+        "manage_users",
+        "manage_admins",
+        "manage_content",
+        "manage_payments",
+        "manage_payment_gateways",
+        "manage_orders",
+        "manage_media",
+        "manage_settings",
+        "view_reports",
+        "issue_refunds",
+        "view_audit_logs",
+        "manage_enquiries",
+      ],
       app_role: [
         "admin",
         "patient",
@@ -6040,6 +7122,10 @@ export const Constants = {
         "receptionist",
         "hospital_admin",
         "department_admin",
+        "content_editor",
+        "finance_admin",
+        "support_admin",
+        "user",
       ],
       business_unit: [
         "doctorsonlining",
@@ -6047,6 +7133,16 @@ export const Constants = {
         "onlining_health",
         "emko",
         "tenderintel",
+      ],
+      content_status: ["draft", "published", "unpublished", "archived"],
+      enquiry_status: [
+        "new",
+        "contacted",
+        "qualified",
+        "proposal_sent",
+        "won",
+        "lost",
+        "archived",
       ],
       practice_member_status: ["invited", "active", "suspended"],
       practice_role: [
@@ -6107,6 +7203,25 @@ export const Constants = {
         "per_consultation",
       ],
       referral_user_type: ["doctor", "patient"],
+      section_type: [
+        "hero",
+        "text",
+        "image_text",
+        "services_grid",
+        "pricing_cards",
+        "features",
+        "statistics",
+        "testimonials",
+        "portfolio_grid",
+        "cta",
+        "faq",
+        "contact_form",
+        "team",
+        "logo_cloud",
+        "video",
+        "rich_text",
+      ],
+      user_status: ["active", "suspended", "pending", "deactivated"],
     },
   },
 } as const
