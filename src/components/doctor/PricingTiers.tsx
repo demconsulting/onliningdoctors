@@ -66,6 +66,8 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const { toast } = useToast();
   const symbol = getCurrencySymbol(doctorCountry);
 
@@ -141,6 +143,7 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
     }
 
     setSaving(true);
+    setSaveError(null);
     try {
       // Upsert each tier
       for (const t of TIER_ORDER) {
@@ -155,27 +158,34 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
           is_active: tier.is_active,
         };
         if (tier.id) {
-          await supabase.from("doctor_pricing_tiers").update(payload).eq("id", tier.id);
+          const { error } = await supabase.from("doctor_pricing_tiers").update(payload).eq("id", tier.id);
+          if (error) throw new Error(`${TIER_META[t].label}: ${error.message}`);
         } else if (tier.is_active || tier.price > 0) {
-          await supabase.from("doctor_pricing_tiers").insert(payload);
+          const { data, error } = await supabase.from("doctor_pricing_tiers").insert(payload).select("id").single();
+          if (error) throw new Error(`${TIER_META[t].label}: ${error.message}`);
+          if (data?.id) updateTier(t, { id: data.id });
         }
       }
 
       // Sync doctors.consultation_fee = lowest active tier price (preserves directory listing)
       const activePrices = TIER_ORDER.filter(t => tiers[t].is_active && tiers[t].price > 0).map(t => tiers[t].price);
       const lowest = activePrices.length ? Math.min(...activePrices) : tiers.private.price;
-      await supabase.from("doctors").update({
+      const { error: docError } = await supabase.from("doctors").update({
         consultation_category_id: selectedCategoryId,
         consultation_fee: lowest,
       } as any).eq("profile_id", user.id);
+      if (docError) throw new Error(`Doctor profile: ${docError.message}`);
 
       toast({ title: "Pricing saved", description: "Your consultation fees are updated." });
     } catch (err: any) {
-      toast({ variant: "destructive", title: "Save failed", description: err.message });
+      const message = err?.message || "Something went wrong while saving your pricing.";
+      setSaveError(message);
+      toast({ variant: "destructive", title: "Save failed", description: message });
     } finally {
       setSaving(false);
     }
   };
+
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -299,12 +309,23 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
         Doctors/practices handle the actual claim submission externally during Phase 1.
       </div>
 
+      {saveError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <div className="text-xs">
+            <p className="font-medium text-destructive">Pricing could not be saved</p>
+            <p className="text-muted-foreground break-words">{saveError}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           Save Pricing
         </Button>
       </div>
+
     </div>
   );
 };
