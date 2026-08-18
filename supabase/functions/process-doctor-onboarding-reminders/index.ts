@@ -39,6 +39,26 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // SECURITY: restrict to cron/service-role callers or platform admins so this
+    // job cannot be triggered anonymously to mass-email doctors.
+    const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const cronSecret = Deno.env.get("CRON_SECRET") || "";
+    let authorized = !!token && (token === serviceKey || (!!cronSecret && token === cronSecret));
+    if (!authorized && token) {
+      const { data: authData } = await service.auth.getUser(token);
+      const uid = authData?.user?.id;
+      if (uid) {
+        const { data: adminFlag } = await service.rpc("has_role", { _user_id: uid, _role: "admin" });
+        authorized = adminFlag === true;
+      }
+    }
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: reminders } = await service
       .from("doctor_onboarding_reminders")
       .select("*")
