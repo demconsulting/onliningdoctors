@@ -66,6 +66,8 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const { toast } = useToast();
   const symbol = getCurrencySymbol(doctorCountry);
 
