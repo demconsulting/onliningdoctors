@@ -123,7 +123,6 @@ const PrescriptionView = ({ appointmentId, prescriptionId, viewAs, triggerLabel 
       body: {
         prescriptionId: prescription.id,
         to: emailTo.trim(),
-        verifyUrl,
       },
     });
     setSendingEmail(false);

@@ -20,6 +20,37 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY missing");
 
+    const service0 = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    // SECURITY: only trusted callers (cron / service role), the doctor themselves,
+    // or an admin may invoke this. Prevents enumeration of doctor IDs and email spam.
+    const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const cronSecret = Deno.env.get("CRON_SECRET") || "";
+    const isTrusted = !!token && (token === serviceKey || (!!cronSecret && token === cronSecret));
+
+    let callerId: string | null = null;
+    let callerIsAdmin = false;
+    if (!isTrusted) {
+      if (!token) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: authData } = await service0.auth.getUser(token);
+      callerId = authData?.user?.id ?? null;
+      if (!callerId) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: adminFlag } = await service0.rpc("has_role", { _user_id: callerId, _role: "admin" });
+      callerIsAdmin = adminFlag === true;
+    }
+
     const { doctorProfileId } = await req.json();
     if (!doctorProfileId || typeof doctorProfileId !== "string") {
       return new Response(JSON.stringify({ error: "doctorProfileId required" }), {
@@ -27,10 +58,13 @@ serve(async (req) => {
       });
     }
 
-    const service = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    if (!isTrusted && !callerIsAdmin && callerId !== doctorProfileId) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const service = service0;
 
     // Ensure this is a real doctor and welcome not yet sent
     const { data: doctor } = await service
