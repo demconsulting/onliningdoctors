@@ -174,6 +174,10 @@ const App = () => (
               <Route path="/email-confirmed" element={<EmailConfirmed />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+              {/* Legacy links from older emails */}
+              <Route path="/doctor" element={<Navigate to="/doctor-dashboard" replace />} />
+              <Route path="/doctor/*" element={<Navigate to="/doctor-dashboard" replace />} />
+              <Route path="/patient" element={<Navigate to="/dashboard" replace />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/call/:appointmentId" element={<CallPage />} />
               <Route path="/doctors" element={<Doctors />} />
