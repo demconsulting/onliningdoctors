@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 
 // Recover from stale chunk hashes after a redeploy: if a dynamic import
@@ -174,6 +174,10 @@ const App = () => (
               <Route path="/email-confirmed" element={<EmailConfirmed />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+              {/* Legacy links from older emails */}
+              <Route path="/doctor" element={<Navigate to="/doctor-dashboard" replace />} />
+              <Route path="/doctor/*" element={<Navigate to="/doctor-dashboard" replace />} />
+              <Route path="/patient" element={<Navigate to="/dashboard" replace />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/call/:appointmentId" element={<CallPage />} />
               <Route path="/doctors" element={<Doctors />} />
