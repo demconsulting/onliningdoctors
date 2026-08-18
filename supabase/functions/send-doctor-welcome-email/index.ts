@@ -70,7 +70,7 @@ serve(async (req) => {
         <li>Set your availability schedule</li>
       </ul>
       <p style="margin-top:20px;">
-        <a href="https://doctorsonlining.com/doctor" style="background:#0d9488;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;">Complete my profile</a>
+        <a href="https://doctorsonlining.com/doctor-dashboard" style="background:#0d9488;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;">Complete my profile</a>
       </p>
       <p style="color:#64748b;font-size:13px;margin-top:28px;">Need help? Reply to this email and our team will assist.<br/>— The Doctors Onlining Team</p>
     </div>`;
