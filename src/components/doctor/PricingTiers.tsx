@@ -309,12 +309,23 @@ const PricingTiers = ({ user, doctorCountry }: PricingTiersProps) => {
         Doctors/practices handle the actual claim submission externally during Phase 1.
       </div>
 
+      {saveError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+          <div className="text-xs">
+            <p className="font-medium text-destructive">Pricing could not be saved</p>
+            <p className="text-muted-foreground break-words">{saveError}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
           Save Pricing
         </Button>
       </div>
+
     </div>
   );
 };
