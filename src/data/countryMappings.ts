@@ -42,3 +42,41 @@ export const countryCurrency: Record<string, { code: string; symbol: string }> =
   GB: { code: "GBP", symbol: "£" },
   IN: { code: "INR", symbol: "₹" },
 };
+
+// Reverse lookup: country name -> ISO code
+export const countryNameToCode: Record<string, string> = Object.entries(countryCodeToName).reduce(
+  (acc, [code, name]) => {
+    acc[name.toLowerCase()] = code;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+// International dialling codes (used to normalise phone numbers to E.164)
+export const countryDialCode: Record<string, string> = {
+  ZA: "27",
+  NG: "234",
+  KE: "254",
+  GH: "233",
+  TZ: "255",
+  UG: "256",
+  EG: "20",
+  ET: "251",
+  RW: "250",
+  US: "1",
+  GB: "44",
+  IN: "91",
+  BW: "267",
+  ZW: "263",
+  MZ: "258",
+  NA: "264",
+  AO: "244",
+  CD: "243",
+  CM: "237",
+  CI: "225",
+  SN: "221",
+  ML: "223",
+  MG: "261",
+  MW: "265",
+  ZM: "260",
+};

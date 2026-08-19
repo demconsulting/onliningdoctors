@@ -6,6 +6,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Globe, ExternalLink, Search, Share2, Mail, Server, Palette, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { countryNameToCode, countryDialCode } from "@/data/countryMappings";
+
+/** Collapse whitespace and trim — profile values often carry stray spaces. */
+const cleanText = (value?: string | null) => (value || "").replace(/\s+/g, " ").trim();
+
+const cleanEmail = (value?: string | null) => cleanText(value).toLowerCase();
+
+/** Resolve an ISO country code from a stored country name or code. */
+const resolveCountryCode = (country?: string | null): string | null => {
+  const raw = cleanText(country);
+  if (!raw) return null;
+  if (/^[A-Za-z]{2}$/.test(raw) && countryDialCode[raw.toUpperCase()]) return raw.toUpperCase();
+  return countryNameToCode[raw.toLowerCase()] ?? null;
+};
+
+/** Normalise a local number to E.164 (e.g. 0817330210 + ZA -> +27817330210). */
+const formatPhone = (phone?: string | null, country?: string | null): string | null => {
+  const digits = cleanText(phone).replace(/[^\d+]/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("+")) return `+${digits.slice(1).replace(/\D/g, "")}`;
+  const dial = countryDialCode[resolveCountryCode(country) || ""];
+  if (!dial) return digits;
+  const national = digits.replace(/^0+/, "");
+  if (!national) return null;
+  return digits.startsWith(dial) ? `+${digits}` : `+${dial}${national}`;
+};
 
 const NALAVATION_CARE_PLANS = "https://nalavation.com/care-plans#plans";
 
@@ -168,15 +194,22 @@ const DoctorPracticeServices = ({ user }: Props) => {
           .select("practice_name")
           .eq("id", doctorRow.practice_id)
           .maybeSingle();
-        practiceName = practice?.practice_name ?? null;
+        practiceName = cleanText(practice?.practice_name) || null;
       }
+
+      // Normalise every prefill value once so the RPC record and the handoff URL match.
+      const contactName = cleanText(profile?.full_name) || cleanText(user.user_metadata?.full_name as string);
+      const contactEmail = cleanEmail(profile?.email) || cleanEmail(user.email);
+      const countryName = cleanText(profile?.country);
+      const countryCode = resolveCountryCode(countryName);
+      const contactPhone = formatPhone(profile?.phone, countryName);
 
       const { data: requestId, error } = await supabase.rpc("nalavation_request_service", {
         _service_code: DIGITAL_PRACTICE_CODE,
         _practice_name: practiceName,
-        _contact_name: profile?.full_name || user.user_metadata?.full_name || "",
-        _contact_email: profile?.email || user.email || "",
-        _contact_phone: profile?.phone || null,
+        _contact_name: contactName,
+        _contact_email: contactEmail,
+        _contact_phone: contactPhone,
         _notes: "Digital Practice interest from Doctors Onlining dashboard. Plan selected on Nalavation Care Plans.",
         _source_platform: "doctorsonlining",
         _external_ref: user.id,
@@ -191,13 +224,12 @@ const DoctorPracticeServices = ({ user }: Props) => {
       if (requestId) url.searchParams.set("ref", String(requestId));
 
       // Pre-fill the Nalavation subscribe form with the doctor's own (non-sensitive) details.
-      const contactName = profile?.full_name || (user.user_metadata?.full_name as string) || "";
-      const contactEmail = profile?.email || user.email || "";
       if (contactName) url.searchParams.set("name", contactName);
       if (practiceName) url.searchParams.set("practice", practiceName);
       if (contactEmail) url.searchParams.set("email", contactEmail);
-      if (profile?.phone) url.searchParams.set("phone", profile.phone);
-      if (profile?.country) url.searchParams.set("country", profile.country);
+      if (contactPhone) url.searchParams.set("phone", contactPhone);
+      if (countryName) url.searchParams.set("country", countryName);
+      if (countryCode) url.searchParams.set("country_code", countryCode);
 
       await load();
       window.open(`${url.origin}${url.pathname}?${url.searchParams.toString()}#plans`, "_blank", "noopener,noreferrer");
