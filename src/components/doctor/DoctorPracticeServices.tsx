@@ -157,7 +157,7 @@ const DoctorPracticeServices = ({ user }: Props) => {
     try {
       // Fetch the doctor's own contact/practice details for the handoff (no tokens in the URL).
       const [{ data: profile }, { data: doctorRow }] = await Promise.all([
-        supabase.from("profiles").select("full_name,email,phone").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("full_name,email,phone,country").eq("id", user.id).maybeSingle(),
         supabase.from("doctors").select("practice_id").eq("profile_id", user.id).maybeSingle(),
       ]);
 
