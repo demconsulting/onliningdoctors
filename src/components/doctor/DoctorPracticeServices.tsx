@@ -190,6 +190,15 @@ const DoctorPracticeServices = ({ user }: Props) => {
       url.searchParams.set("src", "doctorsonlining");
       if (requestId) url.searchParams.set("ref", String(requestId));
 
+      // Pre-fill the Nalavation subscribe form with the doctor's own (non-sensitive) details.
+      const contactName = profile?.full_name || (user.user_metadata?.full_name as string) || "";
+      const contactEmail = profile?.email || user.email || "";
+      if (contactName) url.searchParams.set("name", contactName);
+      if (practiceName) url.searchParams.set("practice", practiceName);
+      if (contactEmail) url.searchParams.set("email", contactEmail);
+      if (profile?.phone) url.searchParams.set("phone", profile.phone);
+      if (profile?.country) url.searchParams.set("country", profile.country);
+
       await load();
       window.open(`${url.origin}${url.pathname}?${url.searchParams.toString()}#plans`, "_blank", "noopener,noreferrer");
     } catch (err) {
