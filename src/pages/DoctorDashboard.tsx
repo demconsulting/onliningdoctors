@@ -24,6 +24,7 @@ const PracticeCalendar = lazy(() => import("@/components/calendar/PracticeCalend
 const DoctorProfileChanges = lazy(() => import("@/components/doctor/DoctorProfileChanges"));
 const PracticePatients = lazy(() => import("@/components/doctor/PracticePatients"));
 const ReferralCenter = lazy(() => import("@/components/referrals/ReferralCenter"));
+const DoctorPracticeServices = lazy(() => import("@/components/doctor/DoctorPracticeServices"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
 import { attachPendingReferral } from "@/lib/referral";
 
