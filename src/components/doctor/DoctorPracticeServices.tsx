@@ -157,7 +157,7 @@ const DoctorPracticeServices = ({ user }: Props) => {
     try {
       // Fetch the doctor's own contact/practice details for the handoff (no tokens in the URL).
       const [{ data: profile }, { data: doctorRow }] = await Promise.all([
-        supabase.from("profiles").select("full_name,email,phone").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("full_name,email,phone,country").eq("id", user.id).maybeSingle(),
         supabase.from("doctors").select("practice_id").eq("profile_id", user.id).maybeSingle(),
       ]);
 
@@ -189,6 +189,15 @@ const DoctorPracticeServices = ({ user }: Props) => {
       const url = new URL(NALAVATION_CARE_PLANS);
       url.searchParams.set("src", "doctorsonlining");
       if (requestId) url.searchParams.set("ref", String(requestId));
+
+      // Pre-fill the Nalavation subscribe form with the doctor's own (non-sensitive) details.
+      const contactName = profile?.full_name || (user.user_metadata?.full_name as string) || "";
+      const contactEmail = profile?.email || user.email || "";
+      if (contactName) url.searchParams.set("name", contactName);
+      if (practiceName) url.searchParams.set("practice", practiceName);
+      if (contactEmail) url.searchParams.set("email", contactEmail);
+      if (profile?.phone) url.searchParams.set("phone", profile.phone);
+      if (profile?.country) url.searchParams.set("country", profile.country);
 
       await load();
       window.open(`${url.origin}${url.pathname}?${url.searchParams.toString()}#plans`, "_blank", "noopener,noreferrer");
