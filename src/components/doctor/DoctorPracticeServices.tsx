@@ -6,6 +6,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Globe, ExternalLink, Search, Share2, Mail, Server, Palette, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { countryNameToCode, countryDialCode } from "@/data/countryMappings";
+
+/** Collapse whitespace and trim — profile values often carry stray spaces. */
+const cleanText = (value?: string | null) => (value || "").replace(/\s+/g, " ").trim();
+
+const cleanEmail = (value?: string | null) => cleanText(value).toLowerCase();
+
+/** Resolve an ISO country code from a stored country name or code. */
+const resolveCountryCode = (country?: string | null): string | null => {
+  const raw = cleanText(country);
+  if (!raw) return null;
+  if (/^[A-Za-z]{2}$/.test(raw) && countryDialCode[raw.toUpperCase()]) return raw.toUpperCase();
+  return countryNameToCode[raw.toLowerCase()] ?? null;
+};
+
+/** Normalise a local number to E.164 (e.g. 0817330210 + ZA -> +27817330210). */
+const formatPhone = (phone?: string | null, country?: string | null): string | null => {
+  const digits = cleanText(phone).replace(/[^\d+]/g, "");
+  if (!digits) return null;
+  if (digits.startsWith("+")) return `+${digits.slice(1).replace(/\D/g, "")}`;
+  const dial = countryDialCode[resolveCountryCode(country) || ""];
+  if (!dial) return digits;
+  const national = digits.replace(/^0+/, "");
+  if (!national) return null;
+  return digits.startsWith(dial) ? `+${digits}` : `+${dial}${national}`;
+};
 
 const NALAVATION_CARE_PLANS = "https://nalavation.com/care-plans#plans";
 
