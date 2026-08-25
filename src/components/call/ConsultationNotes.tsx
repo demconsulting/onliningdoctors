@@ -176,7 +176,9 @@ const ConsultationNotes = ({ appointmentId, doctorId, isDoctor }: ConsultationNo
         ) : (
           <ScrollArea className="flex-1 rounded-md border p-3 min-h-[300px]">
             <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {content || "No notes yet."}
+              {summary
+                ? "Your doctor's shared consultation summary is shown above."
+                : "No summary shared yet. Your doctor's private clinical notes are not visible to patients."}
             </p>
           </ScrollArea>
         )}
