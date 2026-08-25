@@ -6812,6 +6812,14 @@ export type Database = {
         }[]
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_consultation_summary: {
+        Args: { _appointment_id: string }
+        Returns: {
+          appointment_id: string
+          summary: string
+          updated_at: string
+        }[]
+      }
       get_default_platform_fee_percent: { Args: never; Returns: number }
       get_doctor_blocked_slots: {
         Args: { _doctor_id: string }
