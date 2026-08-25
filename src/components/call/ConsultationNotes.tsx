@@ -23,25 +23,37 @@ const ConsultationNotes = ({ appointmentId, doctorId, isDoctor }: ConsultationNo
   const [showSummary, setShowSummary] = useState(false);
   const { toast } = useToast();
 
-  // Load existing notes
+  // Load existing notes — doctors see full notes, patients only the shared summary
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("consultation_notes")
-        .select("content, updated_at, summary")
-        .eq("appointment_id", appointmentId)
-        .maybeSingle();
+      if (isDoctor) {
+        const { data } = await supabase
+          .from("consultation_notes")
+          .select("content, updated_at, summary")
+          .eq("appointment_id", appointmentId)
+          .maybeSingle();
 
-      if (data) {
-        setContent(data.content);
-        setSummary((data as any).summary || "");
-        setLastSaved(new Date(data.updated_at));
-        if ((data as any).summary) setShowSummary(true);
+        if (data) {
+          setContent(data.content);
+          setSummary((data as any).summary || "");
+          setLastSaved(new Date(data.updated_at));
+          if ((data as any).summary) setShowSummary(true);
+        }
+      } else {
+        const { data } = await supabase.rpc("get_consultation_summary", {
+          _appointment_id: appointmentId,
+        });
+        const row = Array.isArray(data) ? data[0] : null;
+        if (row) {
+          setSummary(row.summary || "");
+          if (row.summary) setShowSummary(true);
+          if (row.updated_at) setLastSaved(new Date(row.updated_at));
+        }
       }
       setLoading(false);
     };
     load();
-  }, [appointmentId]);
+  }, [appointmentId, isDoctor]);
 
   const saveNotes = useCallback(async () => {
     setSaving(true);
