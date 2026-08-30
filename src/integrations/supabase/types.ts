@@ -6869,6 +6869,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      get_my_identity: {
+        Args: never
+        Returns: {
+          id_country_code: string
+          id_number: string
+          id_type: string
+        }[]
+      }
       get_patient_id_verification_status: {
         Args: { _user: string }
         Returns: string
@@ -6975,6 +6983,10 @@ export type Database = {
       }
       process_consultation_referral_reward: {
         Args: { _appointment_id: string }
+        Returns: undefined
+      }
+      record_referral_click: {
+        Args: { _code: string; _referer?: string; _user_agent?: string }
         Returns: undefined
       }
       reject_profile_change: {
