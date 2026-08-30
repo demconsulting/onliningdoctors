@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import LocationSelect from "@/components/shared/LocationSelect";
 import AvatarUpload from "@/components/shared/AvatarUpload";
+import { PROFILE_COLUMNS } from "@/lib/profileColumns";
 
 interface ProfileEditProps {
   user: User;
