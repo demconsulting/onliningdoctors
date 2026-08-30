@@ -17,14 +17,11 @@ const ReferralLanding = () => {
     }
     storeReferralCode(clean);
     // Fire-and-forget click tracking
-    supabase
-      .from("referral_clicks")
-      .insert({
-        code: clean,
-        user_agent: navigator.userAgent.slice(0, 500),
-        referer: document.referrer || null,
-      })
-      .then(() => undefined, () => undefined);
+    (supabase.rpc as any)("record_referral_click", {
+      _code: clean,
+      _user_agent: navigator.userAgent.slice(0, 500),
+      _referer: document.referrer || null,
+    }).then(() => undefined, () => undefined);
 
     const isDoctor = search.get("as") === "doctor";
     const target = isDoctor
