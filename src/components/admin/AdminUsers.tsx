@@ -18,8 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
 import { PROFILE_COLUMNS } from "@/lib/profileColumns";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
