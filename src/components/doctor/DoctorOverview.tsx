@@ -18,6 +18,7 @@ import FoundingBenefitsCard from "@/components/doctor/FoundingBenefitsCard";
 import FoundingApplicationDialog from "@/components/doctor/FoundingApplicationDialog";
 import { useFoundingSlots } from "@/hooks/useFoundingSlots";
 import { Crown } from "lucide-react";
+import { PROFILE_COLUMNS } from "@/lib/profileColumns";
 
 interface Props {
   user: User;
@@ -46,7 +47,7 @@ const DoctorOverview = ({ user, doctorCountry, onNavigateTab }: Props) => {
     const load = async () => {
       const monthStart = startOfMonth(new Date()).toISOString();
       const [profRes, docRes, apptRes, payRes, availRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", user.id).single(),
         supabase.from("doctors").select("*").eq("profile_id", user.id).single(),
         supabase.from("appointments")
           .select("id, scheduled_at, status, duration_minutes")

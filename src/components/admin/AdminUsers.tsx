@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+import { PROFILE_COLUMNS } from "@/lib/profileColumns";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -57,7 +58,7 @@ const AdminUsers = () => {
   const fetchData = async () => {
     setLoading(true);
     const [profilesRes, rolesRes, doctorsRes] = await Promise.all([
-      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("profiles").select(PROFILE_COLUMNS).order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*"),
       supabase.from("doctors").select("id, profile_id, is_suspended, suspension_reason"),
     ]);

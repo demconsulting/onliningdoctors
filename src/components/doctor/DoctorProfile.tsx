@@ -17,6 +17,7 @@ import { usePractice } from "@/hooks/usePractice";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import PrescriptionSettings from "@/components/doctor/PrescriptionSettings";
+import { PROFILE_COLUMNS } from "@/lib/profileColumns";
 
 interface DoctorProfileProps {
   user: User;
@@ -94,7 +95,7 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     const load = async () => {
 
       const [profileRes, doctorRes, specRes, pendingRes] = await Promise.all([
-        supabase.from("profiles").select("*").eq("id", user.id).single(),
+        supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", user.id).single(),
         supabase.from("doctors").select("*").eq("profile_id", user.id).single(),
         supabase.from("specialties").select("*"),
         supabase.from("doctor_profile_changes" as any).select("field_name").eq("doctor_id", user.id).eq("status", "pending"),
