@@ -36,30 +36,32 @@ const ProfileEdit = ({ user }: ProfileEditProps) => {
   });
 
   useEffect(() => {
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setAvatarUrl(data.avatar_url || null);
-          setProfile({
-            full_name: data.full_name || "",
-            phone: data.phone || "",
-            date_of_birth: data.date_of_birth || "",
-            gender: data.gender || "",
-            address: data.address || "",
-            city: data.city || "",
-            state: data.state || "",
-            country: data.country || "",
-            id_type: (data as any).id_type || "",
-            id_number: (data as any).id_number || "",
-            id_country_code: (data as any).id_country_code || "",
-          });
-        }
-        setLoading(false);
-      });
+    const load = async () => {
+      const [{ data }, { data: identity }] = await Promise.all([
+        supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", user.id).single(),
+        (supabase.rpc as any)("get_my_identity"),
+      ]);
+      const ident = Array.isArray(identity) ? identity[0] : identity;
+      if (data) {
+        const d = data as any;
+        setAvatarUrl(d.avatar_url || null);
+        setProfile({
+          full_name: d.full_name || "",
+          phone: d.phone || "",
+          date_of_birth: d.date_of_birth || "",
+          gender: d.gender || "",
+          address: d.address || "",
+          city: d.city || "",
+          state: d.state || "",
+          country: d.country || "",
+          id_type: ident?.id_type || "",
+          id_number: ident?.id_number || "",
+          id_country_code: ident?.id_country_code || d.id_country_code || "",
+        });
+      }
+      setLoading(false);
+    };
+    load();
   }, [user.id]);
 
   const handleSave = async () => {
