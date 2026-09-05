@@ -3154,6 +3154,104 @@ export type Database = {
         }
         Relationships: []
       }
+      nalavation_subscriptions: {
+        Row: {
+          amount: number
+          cancelled_at: string | null
+          context: string
+          created_at: string
+          currency: string
+          customer_email: string
+          doctor_id: string | null
+          id: string
+          m_payment_id: string | null
+          next_billing_on: string | null
+          notes: string | null
+          payfast_subscription_id: string | null
+          plan_code: string | null
+          plan_name: string
+          practice_name: string | null
+          request_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          cancelled_at?: string | null
+          context?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          doctor_id?: string | null
+          id?: string
+          m_payment_id?: string | null
+          next_billing_on?: string | null
+          notes?: string | null
+          payfast_subscription_id?: string | null
+          plan_code?: string | null
+          plan_name?: string
+          practice_name?: string | null
+          request_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cancelled_at?: string | null
+          context?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string
+          doctor_id?: string | null
+          id?: string
+          m_payment_id?: string | null
+          next_billing_on?: string | null
+          notes?: string | null
+          payfast_subscription_id?: string | null
+          plan_code?: string | null
+          plan_name?: string
+          practice_name?: string | null
+          request_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nalavation_subscriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nalavation_subscriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nalavation_subscriptions_payfast_subscription_id_fkey"
+            columns: ["payfast_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "payfast_subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nalavation_subscriptions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "nalavation_service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nalavation_website_projects: {
         Row: {
           contract_value: number
@@ -3618,6 +3716,7 @@ export type Database = {
           created_at: string
           customer_email: string
           customer_name: string
+          doctor_id: string | null
           frequency: string
           id: string
           last_payment_at: string | null
@@ -3636,6 +3735,7 @@ export type Database = {
           reconcile_note: string | null
           status: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -3645,6 +3745,7 @@ export type Database = {
           created_at?: string
           customer_email: string
           customer_name: string
+          doctor_id?: string | null
           frequency?: string
           id?: string
           last_payment_at?: string | null
@@ -3663,6 +3764,7 @@ export type Database = {
           reconcile_note?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -3672,6 +3774,7 @@ export type Database = {
           created_at?: string
           customer_email?: string
           customer_name?: string
+          doctor_id?: string | null
           frequency?: string
           id?: string
           last_payment_at?: string | null
@@ -3690,8 +3793,24 @@ export type Database = {
           reconcile_note?: string | null
           status?: string
           updated_at?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payfast_subscriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payfast_subscriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_gateway_configs: {
         Row: {
@@ -6982,6 +7101,20 @@ export type Database = {
           _practice_name?: string
           _service_code: string
           _source_platform?: string
+        }
+        Returns: string
+      }
+      nalavation_set_subscription_state: {
+        Args: {
+          _amount?: number
+          _customer_email?: string
+          _m_payment_id?: string
+          _next_billing_on?: string
+          _plan_code?: string
+          _plan_name?: string
+          _practice_name?: string
+          _status: string
+          _user_id: string
         }
         Returns: string
       }
