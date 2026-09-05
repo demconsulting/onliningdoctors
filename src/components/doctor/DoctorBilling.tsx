@@ -134,6 +134,20 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
       error = res.error;
     }
 
+    if (!error && !isGroupMember) {
+      // Keep the authoritative payout details on the doctors row in sync,
+      // so the admin panel and subaccount creation see the same bank details.
+      const { error: docError } = await supabase
+        .from("doctors")
+        .update({
+          bank_name: billing.bank_name || null,
+          account_name: billing.account_holder_name || null,
+          account_number: billing.account_number || null,
+        })
+        .eq("profile_id", user.id);
+      if (docError) error = docError;
+    }
+
     setSaving(false);
     if (error) {
       toast({ variant: "destructive", title: "Error saving billing details", description: error.message });
