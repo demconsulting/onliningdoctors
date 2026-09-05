@@ -213,14 +213,16 @@ const Doctors = () => {
             <div className="py-20 text-center">
               <Stethoscope className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
               <p className="text-lg font-medium text-foreground">
-                {doctors.length === 0 ? "No doctors available yet" : "No doctors match your filters"}
+                {search || selectedSpecialty !== "all" || locationQuery || availableOnly
+                  ? "No doctors match your filters"
+                  : "No doctors available yet"}
               </p>
               <p className="mb-4 text-sm text-muted-foreground">
-                {doctors.length === 0
-                  ? "Please check back soon — new doctors are joining regularly."
-                  : `${doctors.length} doctor${doctors.length !== 1 ? "s are" : " is"} available. Clear your filters to see ${doctors.length !== 1 ? "them" : "them"}.`}
+                {search || selectedSpecialty !== "all" || locationQuery || availableOnly
+                  ? "Clear your filters to see all available doctors."
+                  : "Please check back soon — new doctors are joining regularly."}
               </p>
-              {doctors.length > 0 && (
+              {(search || selectedSpecialty !== "all" || locationQuery || availableOnly) && (
                 <button
                   type="button"
                   onClick={() => {
