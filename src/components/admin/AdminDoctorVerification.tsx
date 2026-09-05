@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
+import { Switch } from "@/components/ui/switch";
+import { Crown } from "lucide-react";
+import { useFoundingDoctorSlots } from "@/hooks/useFoundingDoctorSlots";
 
 
 interface DoctorRow {
@@ -24,6 +27,7 @@ interface DoctorRow {
   is_verified: boolean;
   is_available: boolean | null;
   is_suspended: boolean;
+  is_founding_doctor: boolean | null;
   suspension_reason: string | null;
   accepted_payment_method: "medical_aid_only" | "card_only" | "both" | null;
   created_at: string;
@@ -46,6 +50,7 @@ const AdminDoctorVerification = () => {
   const [suspendReason, setSuspendReason] = useState("");
   const [viewer, setViewer] = useState<{ path: string; title: string } | null>(null);
   const { toast } = useToast();
+  const { slots: foundingSlots, refresh: refreshFoundingSlots } = useFoundingDoctorSlots();
 
   const viewDoc = (path: string, title: string) => {
     setViewer({ path, title });
@@ -55,7 +60,7 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, is_founding_doctor, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (error) console.error(error);
@@ -176,7 +181,23 @@ const AdminDoctorVerification = () => {
 
   const updatePaymentMethod = async (doctorId: string, value: "medical_aid_only" | "card_only" | "both") => {
     setUpdating(doctorId);
+    const toggleFounding = async (d: DoctorRow, next: boolean) => {
+    setUpdating(d.id);
     const { error } = await supabase
+      .from("doctors")
+      .update({ is_founding_doctor: next } as any)
+      .eq("id", d.id);
+    setUpdating(null);
+    if (error) {
+      toast({ variant: "destructive", title: "Update failed", description: error.message });
+      return;
+    }
+    setDoctors((prev) => prev.map((x) => (x.id === d.id ? { ...x, is_founding_doctor: next } : x)));
+    refreshFoundingSlots();
+    toast({ title: next ? "Founding Doctor assigned" : "Founding Doctor status removed" });
+  };
+
+  const { error } = await supabase
       .from("doctors")
       .update({ accepted_payment_method: value } as any)
       .eq("id", doctorId);
@@ -197,7 +218,26 @@ const AdminDoctorVerification = () => {
 
   const renderDoctorRow = (d: DoctorRow, actions: React.ReactNode) => (
     <tr key={d.id} className="text-foreground">
-      <td className="py-3 pr-4 font-medium">{d.profile?.full_name || "—"}</td>
+      <td className="py-3 pr-4 font-medium">
+        <div className="flex flex-col gap-1">
+          <span className="flex items-center gap-2">
+            {d.profile?.full_name || "—"}
+            {d.is_founding_doctor && (
+              <Badge className="gap-1 bg-gradient-to-r from-primary to-accent text-primary-foreground border-0 text-[10px]">
+                <Crown className="h-3 w-3" /> Founding Doctor
+              </Badge>
+            )}
+          </span>
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Switch
+              checked={!!d.is_founding_doctor}
+              disabled={updating === d.id || (!d.is_founding_doctor && foundingSlots.remaining <= 0)}
+              onCheckedChange={(v) => toggleFounding(d, v)}
+            />
+            Founding ({foundingSlots.used}/{foundingSlots.cap})
+          </span>
+        </div>
+      </td>
       <td className="py-3 pr-4">{d.title || "—"}</td>
       <td className="py-3 pr-4">
         {d.profile?.country ? (
