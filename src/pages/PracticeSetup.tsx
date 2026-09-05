@@ -22,6 +22,9 @@ const schema = z.object({
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(3).max(50),
   address: z.string().trim().min(3).max(500),
+  bank_name: z.string().trim().min(2).max(100),
+  account_name: z.string().trim().min(2).max(200),
+  account_number: z.string().trim().min(5).max(30),
 });
 
 const MAX_PHOTOS = 4;
