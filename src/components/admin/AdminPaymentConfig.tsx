@@ -274,29 +274,71 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
           </AlertDialog>
 
           <div className="space-y-3">
-            <div>
-              <Label>Test Public Key</Label>
-              <Input
-                placeholder="pk_test_..."
-                value={config.public_key_test}
-                onChange={(e) => setConfig((prev) => ({ ...prev, public_key_test: e.target.value }))}
-                className="mt-1 font-mono text-sm"
-              />
-            </div>
-            <div>
-              <Label>Live Public Key</Label>
-              <Input
-                placeholder="pk_live_..."
-                value={config.public_key_live}
-                onChange={(e) => setConfig((prev) => ({ ...prev, public_key_live: e.target.value }))}
-                className="mt-1 font-mono text-sm"
-              />
-            </div>
+            {isNala ? (
+              <>
+                <div>
+                  <Label>Merchant ID</Label>
+                  <Input
+                    placeholder="e.g. 10000100"
+                    value={config.merchant_id}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, merchant_id: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label>Merchant Key</Label>
+                  <Input
+                    placeholder="e.g. 46f0cd694581a"
+                    value={config.merchant_key}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, merchant_key: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label>Passphrase (optional)</Label>
+                  <Input
+                    type="password"
+                    placeholder="Payfast MD5 passphrase"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className="mt-1 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The passphrase is never stored in the database — set it as the <code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_PASSPHRASE</code> Edge Function secret below.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Label>Test Public Key</Label>
+                  <Input
+                    placeholder="pk_test_..."
+                    value={config.public_key_test}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, public_key_test: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label>Live Public Key</Label>
+                  <Input
+                    placeholder="pk_live_..."
+                    value={config.public_key_live}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, public_key_live: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+              </>
+            )}
             <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
               <div>
-                <Label className="text-sm font-semibold">Secret Keys</Label>
+                <Label className="text-sm font-semibold">{isNala ? "Payfast Credentials" : "Secret Keys"}</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_TEST_SECRET_KEY" : "PAYSTACK_TEST_SECRET_KEY"}</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
+                  {isNala ? (
+                    <>Payfast credentials and passphrases (<code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_MERCHANT_ID</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_MERCHANT_KEY</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_PASSPHRASE</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.</>
+                  ) : (
+                    <>Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_TEST_SECRET_KEY</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_LIVE_SECRET_KEY</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.</>
+                  )}
                 </p>
               </div>
               <a
