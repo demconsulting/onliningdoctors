@@ -30,6 +30,12 @@ interface DoctorRow {
   is_founding_doctor: boolean | null;
   suspension_reason: string | null;
   accepted_payment_method: "medical_aid_only" | "card_only" | "both" | null;
+  practice_type: "independent" | "group_member" | null;
+  practice_id: string | null;
+  practice_approval_status: string | null;
+  bhf_number: string | null;
+  paystack_subaccount_code: string | null;
+  is_payout_verified: boolean | null;
   created_at: string;
   profile: {
     full_name: string | null;
@@ -60,7 +66,7 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, is_founding_doctor, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, is_founding_doctor, suspension_reason, accepted_payment_method, practice_type, practice_id, practice_approval_status, bhf_number, paystack_subaccount_code, is_payout_verified, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (error) console.error(error);
