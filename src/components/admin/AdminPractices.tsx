@@ -65,6 +65,11 @@ const AdminPractices = () => {
   useEffect(() => {
     setPhotoUrls([]);
     setBankCode("");
+    setBank({
+      bank_name: selected?.bank_name ?? "",
+      account_name: selected?.account_name ?? "",
+      account_number: selected?.account_number ?? "",
+    });
     if (!selected?.photo_urls?.length) return;
     (async () => {
       const { data, error } = await supabase.storage
