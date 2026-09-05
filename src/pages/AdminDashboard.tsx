@@ -49,6 +49,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "recruitment-crm": () => import("@/components/admin/recruitment/AdminRecruitmentCRM"),
   "referrals": () => import("@/components/admin/referrals/AdminReferralsCenter"),
   "patient-id-verification": () => import("@/components/admin/AdminPatientDocuments"),
+  "practices": () => import("@/components/admin/AdminPractices"),
   "nalavation-overview": () => import("@/components/admin/nalavation/NalavationOverview"),
   "nala-payment-config": () => import("@/components/admin/AdminPaymentConfig"),
   "nala-payments": () => import("@/components/admin/nalavation/NalavationPayments"),
@@ -101,6 +102,7 @@ const AdminPracticePatients = lazy(loaders["practice-patients"]);
 const AdminRecruitmentCRM = lazy(loaders["recruitment-crm"]);
 const AdminReferralsCenter = lazy(loaders["referrals"]);
 const AdminPatientDocuments = lazy(loaders["patient-id-verification"]);
+const AdminPractices = lazy(loaders["practices"]);
 const NalavationOverview = lazy(loaders["nalavation-overview"]);
 const NalavationPayments = lazy(loaders["nala-payments"]);
 const NalavationRevenue = lazy(loaders["nala-revenue"]);
@@ -198,6 +200,7 @@ const AdminDashboard = () => {
       case "recruitment-crm": return <AdminRecruitmentCRM />;
       case "referrals": return <AdminReferralsCenter />;
       case "patient-id-verification": return <AdminPatientDocuments />;
+      case "practices": return <AdminPractices />;
       case "nalavation-overview": return <NalavationOverview />;
       case "nala-payment-config": return <AdminPaymentConfig context="nalavation" />;
       case "nala-payments": return <NalavationPayments />;

@@ -1532,12 +1532,14 @@ export type Database = {
           id_document_path: string | null
           is_available: boolean | null
           is_founding_doctor: boolean
+          is_practice_owner: boolean
           is_suspended: boolean
           is_verified: boolean
           languages: string[] | null
           license_document_path: string | null
           license_number: string | null
           practice_address: string | null
+          practice_approval_status: string | null
           practice_email: string | null
           practice_id: string | null
           practice_logo_url: string | null
@@ -1578,12 +1580,14 @@ export type Database = {
           id_document_path?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
+          is_practice_owner?: boolean
           is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
           practice_address?: string | null
+          practice_approval_status?: string | null
           practice_email?: string | null
           practice_id?: string | null
           practice_logo_url?: string | null
@@ -1624,12 +1628,14 @@ export type Database = {
           id_document_path?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
+          is_practice_owner?: boolean
           is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
           practice_address?: string | null
+          practice_approval_status?: string | null
           practice_email?: string | null
           practice_id?: string | null
           practice_logo_url?: string | null
@@ -4342,48 +4348,75 @@ export type Database = {
       }
       practices: {
         Row: {
+          account_name: string | null
+          account_number: string | null
           address: string
+          approved_at: string | null
+          approved_by: string | null
+          bank_name: string | null
           created_at: string
           email: string
           id: string
           is_active: boolean
+          is_payout_verified: boolean
           nurses_can_support_consultations: boolean
           owner_doctor_name: string
           owner_hpcsa_number: string
           owner_id: string
+          paystack_subaccount_code: string | null
           phone: string
           practice_name: string
           practice_number: string
+          rejection_reason: string | null
+          status: string
           updated_at: string
         }
         Insert: {
+          account_name?: string | null
+          account_number?: string | null
           address: string
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_name?: string | null
           created_at?: string
           email: string
           id?: string
           is_active?: boolean
+          is_payout_verified?: boolean
           nurses_can_support_consultations?: boolean
           owner_doctor_name: string
           owner_hpcsa_number: string
           owner_id: string
+          paystack_subaccount_code?: string | null
           phone: string
           practice_name: string
           practice_number: string
+          rejection_reason?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
+          account_name?: string | null
+          account_number?: string | null
           address?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          bank_name?: string | null
           created_at?: string
           email?: string
           id?: string
           is_active?: boolean
+          is_payout_verified?: boolean
           nurses_can_support_consultations?: boolean
           owner_doctor_name?: string
           owner_hpcsa_number?: string
           owner_id?: string
+          paystack_subaccount_code?: string | null
           phone?: string
           practice_name?: string
           practice_number?: string
+          rejection_reason?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []
@@ -6862,6 +6895,10 @@ export type Database = {
         Args: { _reason: string; _referral_id: string }
         Returns: undefined
       }
+      admin_review_practice: {
+        Args: { _approve: boolean; _practice_id: string; _reason?: string }
+        Returns: undefined
+      }
       admin_top_referrers: {
         Args: { _limit?: number }
         Returns: {
@@ -7027,6 +7064,16 @@ export type Database = {
         Args: { _context?: Database["public"]["Enums"]["business_unit"] }
         Returns: Json
       }
+      get_practice_banking: {
+        Args: { _practice_id: string }
+        Returns: {
+          account_name: string
+          account_number: string
+          bank_name: string
+          is_payout_verified: boolean
+          paystack_subaccount_code: string
+        }[]
+      }
       get_public_reviews: {
         Args: { _doctor_id: string }
         Returns: {
@@ -7137,6 +7184,22 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      practice_doctor_earnings: {
+        Args: { _practice_id: string }
+        Returns: {
+          consultations: number
+          doctor_id: string
+          doctor_name: string
+          gross: number
+          net: number
+          platform_fee: number
+          processing_fee: number
+        }[]
+      }
+      practice_review_doctor: {
+        Args: { _approve: boolean; _doctor_id: string }
+        Returns: undefined
+      }
       process_consultation_referral_reward: {
         Args: { _appointment_id: string }
         Returns: undefined
@@ -7151,6 +7214,10 @@ export type Database = {
       }
       release_appointment_slot: {
         Args: { _reservation_id: string }
+        Returns: undefined
+      }
+      request_join_practice: {
+        Args: { _practice_id: string }
         Returns: undefined
       }
       request_profile_change_info: {
@@ -7194,6 +7261,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      search_approved_practices: {
+        Args: { _q?: string }
+        Returns: {
+          address: string
+          id: string
+          owner_doctor_name: string
+          practice_name: string
+          practice_number: string
+        }[]
       }
       user_delete_dependencies: { Args: { _user_id: string }; Returns: Json }
       verify_prescription: {

@@ -1,5 +1,5 @@
 import {
-  History, Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive, TrendingUp, Network, Gift, Briefcase, Server, Lock, AtSign, MapPin, Share2, Newspaper, MousePointerClick, FolderOpen, ListChecks, LayoutDashboard, LifeBuoy, Package } from "lucide-react";
+  History, Users, Calendar, Star, Stethoscope, Mail, HelpCircle, Home, Layout, BarChart3, ScrollText, ShieldCheck, Settings, Sparkles, Search, PanelBottom, Layers, CreditCard, Receipt, Wallet, ClipboardCheck, Bot, Globe, FileText, Tag, Image as ImageIcon, DollarSign, Crown, HardDrive, TrendingUp, Network, Gift, Briefcase, Server, Lock, AtSign, MapPin, Share2, Newspaper, MousePointerClick, FolderOpen, ListChecks, LayoutDashboard, LifeBuoy, Package, Building2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { prefetchAdminSection } from "@/pages/AdminDashboard";
 import {
@@ -37,6 +37,7 @@ const doctorsOnliningItems: Item[] = [
   { title: "Recruitment CRM", key: "recruitment-crm", icon: Network },
   { title: "Referral & Rewards", key: "referrals", icon: Gift },
   { title: "Appointments", key: "appointments", icon: Calendar },
+  { title: "Practices", key: "practices", icon: Building2 },
   { title: "Practice Patients", key: "practice-patients", icon: Users },
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Consultation Outcomes", key: "consultation-outcomes", icon: ClipboardCheck },
