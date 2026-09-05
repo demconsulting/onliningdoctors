@@ -22,7 +22,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
-import { resolveFeeSettings, calculateFees, type FeeSettings } from "@/lib/feeCalculator";
+import { resolveFeeSettings, calculateFees, type FeeSettings, computePlatformFee } from "@/lib/feeCalculator";
 
 interface Props {
   user: User;
@@ -281,14 +281,16 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SummaryCard icon={<Clock className="h-5 w-5" />} label="Pending Balance" value={fmt(summary.pending)} hint="Awaiting completion" />
         <SummaryCard icon={<TrendingUp className="h-5 w-5" />} label="Total Earnings" value={fmt(summary.total)} hint="Lifetime net" />
-        <SummaryCard icon={<Percent className="h-5 w-5" />} label="Total Platform Fees" value={fmt(summary.platform)} hint={`${feeSettings?.platform_fee_percent ?? 0}% per consultation`} />
+        <SummaryCard icon={<Percent className="h-5 w-5" />} label="Total Platform Fees" value={fmt(summary.platform)} hint={feeSettings?.platform_fee_mode === "tiered" ? "Fixed fee per consultation band" : `${feeSettings?.platform_fee_percent ?? 0}% per consultation`} />
         <SummaryCard icon={<Landmark className="h-5 w-5" />} label="Total Withdrawn" value={fmt(summary.withdrawn)} hint={`${payouts.filter(p => p.status === "paid").length} payouts`} />
       </div>
 
       {/* Fee transparency */}
       {feeSettings && (() => {
         const ex = calculateFees(297, feeSettings);
-        const pf = feeSettings.platform_fee_percent;
+        const pfLabel = feeSettings.platform_fee_mode === "tiered"
+          ? `− ${symbol}${computePlatformFee(297, feeSettings).toFixed(2)}`
+          : `− ${feeSettings.platform_fee_percent}%`;
         const procLabel = feeSettings.processing_fee_percent
           ? `− ${feeSettings.processing_fee_percent}% + ${symbol}${feeSettings.processing_fee_fixed.toFixed(2)}`
           : `− ${symbol}${feeSettings.processing_fee_fixed.toFixed(2)}`;
@@ -300,7 +302,7 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
             <CardContent>
               <div className="grid gap-3 sm:grid-cols-4 text-sm">
                 <FeeRow label="Consultation Fee" value="100%" tone="default" />
-                <FeeRow label="Platform Fee" value={`− ${pf}%`} tone="warn" />
+                <FeeRow label="Platform Fee" value={pfLabel} tone="warn" />
                 <FeeRow label="Processing Fee" value={procLabel} tone="warn" />
                 <FeeRow label="You Receive" value={fmt(ex.doctorNet) + " of " + fmt(297)} tone="good" />
               </div>
