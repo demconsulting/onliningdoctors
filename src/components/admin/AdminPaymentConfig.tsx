@@ -183,9 +183,13 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            {platformLabel} Paystack Configuration
+            {platformLabel} {gatewayLabel} Configuration
           </CardTitle>
-          <CardDescription>Configure the Paystack keys and environment mode used by {platformLabel}. Each platform keeps its own gateway configuration.</CardDescription>
+          <CardDescription>
+            {isNala
+              ? "Configure the Payfast merchant credentials and environment mode used for Nalavation care plan subscriptions."
+              : `Configure the Paystack keys and environment mode used by ${platformLabel}. Each platform keeps its own gateway configuration.`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className={`flex items-center justify-between rounded-lg border-2 p-5 transition-colors ${config.mode === "live" ? "border-destructive bg-destructive/5" : "border-green-500/50 bg-green-500/5"}`}>
@@ -230,7 +234,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
                 <p className="font-semibold">Live mode is active</p>
-                <p>Real payments will be processed. Ensure your <strong>{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</strong> is set in Supabase Edge Function secrets.</p>
+                <p>Real payments will be processed. Ensure your <strong>{isNala ? "NALAVATION_PAYFAST_MERCHANT_ID, NALAVATION_PAYFAST_MERCHANT_KEY and NALAVATION_PAYFAST_PASSPHRASE" : "PAYSTACK_LIVE_SECRET_KEY"}</strong> are set in Supabase Edge Function secrets.</p>
               </div>
             </div>
           )}
