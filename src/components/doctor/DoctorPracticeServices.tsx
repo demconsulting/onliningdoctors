@@ -125,6 +125,26 @@ const requestStatusToStatus = (status: string | null | undefined): DigitalPracti
   }
 };
 
+/** A plan selected/activated on Nalavation is recorded as a service_subscriptions row. */
+const subscriptionStatusToStatus = (status: string | null | undefined): DigitalPracticeStatus | null => {
+  switch ((status || "").toLowerCase()) {
+    case "active":
+    case "trialing":
+      return "Live";
+    case "pending":
+    case "past_due":
+    case "unpaid":
+      return "Awaiting Payment";
+    case "suspended":
+      return "Suspended";
+    case "cancelled":
+    case "canceled":
+      return "Cancelled";
+    default:
+      return null;
+  }
+};
+
 const DoctorPracticeServices = ({ user }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -136,7 +156,7 @@ const DoctorPracticeServices = ({ user }: Props) => {
   const load = useCallback(async () => {
     setLoading(true);
 
-    const [{ data: serviceRows }, { data: requestRows }, { data: projectRows }] = await Promise.all([
+    const [{ data: serviceRows }, { data: requestRows }, { data: projectRows }, { data: subscriptionRows }] = await Promise.all([
       supabase
         .from("nalavation_services")
         .select("code,name,category,billing_type,amount,description")
@@ -154,15 +174,27 @@ const DoctorPracticeServices = ({ user }: Props) => {
         .eq("owner_user_id", user.id)
         .order("updated_at", { ascending: false })
         .limit(1),
+      // A plan selected on Nalavation lands here — doctors can read their own subscriptions.
+      supabase
+        .from("service_subscriptions")
+        .select("status,updated_at")
+        .eq("doctor_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1),
     ]);
 
     setServices((serviceRows as ServiceRow[]) || []);
 
     const project = projectRows?.[0];
     const projectStatus = projectStageToStatus(project?.stage);
+    const subscriptionStatus = subscriptionStatusToStatus(subscriptionRows?.[0]?.status);
     if (projectStatus) {
       setStatus(projectStatus);
       setProjectDomain(project?.domain ?? null);
+    } else if (subscriptionStatus) {
+      // Plan chosen on Nalavation (or payment pending on it) — reflect that even before a website project exists.
+      setStatus(subscriptionStatus);
+      setProjectDomain(null);
     } else if (requestRows?.[0]) {
       setStatus(requestStatusToStatus(requestRows[0].status));
       setProjectDomain(null);
