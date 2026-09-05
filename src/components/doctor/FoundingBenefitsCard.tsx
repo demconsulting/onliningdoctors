@@ -9,11 +9,18 @@ interface Props {
     founding_doctor_since?: string | null;
     founding_expiry?: string | null;
   };
-  plan?: { platform_fee_percent?: number; name?: string } | null;
+  plan?: { platform_fee_percent?: number; name?: string; platform_fee_mode?: string; platform_fee_tiers?: any; processing_fee_percent?: number } | null;
 }
 
 const FoundingBenefitsCard = ({ doctor, plan }: Props) => {
   if (!doctor?.is_founding_doctor) return null;
+
+  const tiers = Array.isArray(plan?.platform_fee_tiers) ? plan!.platform_fee_tiers : [];
+  const feeDesc = plan?.platform_fee_mode === "tiered" && tiers.length > 0
+    ? `Fixed ${tiers.map((t: any) => `R${t.fee}`).join(" / ")} per consultation + ${plan?.processing_fee_percent ?? 3}% gateway fee`
+    : plan?.platform_fee_percent != null
+      ? `${plan.platform_fee_percent}% commission (vs standard 15%)`
+      : "Exclusive low commission rate";
 
   return (
     <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-background to-accent/10 shadow-xl">
@@ -39,10 +46,7 @@ const FoundingBenefitsCard = ({ doctor, plan }: Props) => {
         </div>
       </CardHeader>
       <CardContent className="relative grid gap-3 sm:grid-cols-2">
-        <Benefit icon={Zap} title="Reduced Platform Fee"
-          desc={plan?.platform_fee_percent != null
-            ? `${plan.platform_fee_percent}% commission (vs standard 15%)`
-            : "Exclusive low commission rate"} />
+        <Benefit icon={Zap} title="Reduced Platform Fee" desc={feeDesc} />
         <Benefit icon={Sparkles} title="Premium Features Included" desc="All advanced tools at no extra cost" />
         <Benefit icon={Lock} title="Locked-In Pricing" desc={doctor.founding_expiry ? `Until ${format(new Date(doctor.founding_expiry), "MMM yyyy")}` : "Protected for life"} />
         <Benefit icon={Handshake} title="Partnership Status" desc="Direct line to product & priority support" />

@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, CreditCard, Shield, Banknote, Settings2, AlertTriangle, ToggleLeft, ToggleRight } from "lucide-react";
+import { Loader2, CreditCard, Shield, Banknote, Settings2, AlertTriangle, ToggleLeft, ToggleRight, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useFoundingDoctorSlots, FOUNDING_FEE_BANDS, FOUNDING_GATEWAY_FEE_PERCENT } from "@/hooks/useFoundingDoctorSlots";
 
 const CURRENCIES = [
   { code: "NGN", name: "Nigerian Naira" },
@@ -87,6 +88,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
   const [showModeConfirm, setShowModeConfirm] = useState(false);
   const [pendingMode, setPendingMode] = useState<"test" | "live">("test");
   const { toast } = useToast();
+  const { slots: foundingSlots } = useFoundingDoctorSlots();
 
   const isNala = context === "nalavation";
   const platformLabel = isNala ? "Nalavation" : "DoctorsOnlining";
@@ -533,6 +535,63 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
           )}
         </CardContent>
       </Card>
+
+      {/* Founding Doctor fee structure */}
+      {!isNala && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              Founding Doctor Fees
+            </CardTitle>
+            <CardDescription>
+              Fixed platform fee bands applied to consultations booked with Founding Doctors.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">
+              <div>
+                <Label className="text-base font-medium">Founding Doctors Count</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Limited to {foundingSlots.cap} doctors across the platform.
+                </p>
+              </div>
+              <Badge variant={foundingSlots.remaining === 0 ? "secondary" : "default"} className="text-sm">
+                {foundingSlots.used} of {foundingSlots.cap} slots assigned
+              </Badge>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-2 pr-4">Consultation fee</th>
+                    <th className="pb-2 pr-4">Fixed platform fee</th>
+                    <th className="pb-2 pr-4">Gateway fee</th>
+                    <th className="pb-2">Total deduction</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {FOUNDING_FEE_BANDS.map((b) => (
+                    <tr key={b.label}>
+                      <td className="py-2 pr-4">{b.label}</td>
+                      <td className="py-2 pr-4 font-mono">R{b.fee}</td>
+                      <td className="py-2 pr-4 font-mono">{FOUNDING_GATEWAY_FEE_PERCENT}%</td>
+                      <td className="py-2 font-mono">
+                        R{b.fee} + {FOUNDING_GATEWAY_FEE_PERCENT}% of consultation fee
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Doctors outside the founding programme continue on the standard platform fee structure.
+              Assign or remove Founding Doctor status from the Doctor Verification page.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Save */}
       <div className="flex justify-end">
