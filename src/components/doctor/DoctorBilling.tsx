@@ -299,51 +299,80 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
           )}
 
           {/* Bank Details */}
-          <div className="space-y-4">
-            <h3 className="font-display font-semibold flex items-center gap-2">
-              <Landmark className="h-4 w-4 text-primary" /> Bank Account Details
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Bank Name</Label>
-                <Input value={billing.bank_name} onChange={(e) => update("bank_name", e.target.value)} placeholder="e.g. FNB, Standard Bank, Nedbank" />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Holder Name</Label>
-                <Input value={billing.account_holder_name} onChange={(e) => update("account_holder_name", e.target.value)} placeholder="Name as it appears on the account" />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Number</Label>
-                <Input value={billing.account_number} onChange={(e) => update("account_number", e.target.value)} placeholder="Your bank account number" />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Type</Label>
-                <Select value={billing.account_type} onValueChange={(v) => update("account_type", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select account type" /></SelectTrigger>
-                  <SelectContent>
-                    {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Branch Code</Label>
-                <Input value={billing.branch_code} onChange={(e) => update("branch_code", e.target.value)} placeholder="e.g. 250655" />
+          {isGroupMember ? (
+            <div className="space-y-4">
+              <h3 className="font-display font-semibold flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-primary" /> Payout Bank Account
+              </h3>
+              <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">Bank</span>
+                    {practiceBank?.bank_name || "—"}
+                  </div>
+                  <div>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">Account Holder</span>
+                    {practiceBank?.account_name || "—"}
+                  </div>
+                  <div>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">Account Number</span>
+                    {practiceBank?.account_number ? `•••• ${practiceBank.account_number.slice(-4)}` : "—"}
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Payments settle into your practice's account. Only the practice owner can change these details in Practice settings.
+                </p>
               </div>
             </div>
-            <details className="group rounded-lg border bg-muted/30 p-3">
-              <summary className="cursor-pointer text-sm font-medium text-muted-foreground">International payouts (SWIFT)</summary>
-              <div className="mt-3 space-y-2">
-                <Label>SWIFT Code</Label>
-                <Input value={billing.bank_swift_code} onChange={(e) => update("bank_swift_code", e.target.value)} placeholder="e.g. FIRNZAJJ" />
-                <p className="text-xs text-muted-foreground">Only required if you receive international payouts.</p>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="font-display font-semibold flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-primary" /> Bank Account Details
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Bank Name</Label>
+                  <Input value={billing.bank_name} onChange={(e) => update("bank_name", e.target.value)} placeholder="e.g. FNB, Standard Bank, Nedbank" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Holder Name</Label>
+                  <Input value={billing.account_holder_name} onChange={(e) => update("account_holder_name", e.target.value)} placeholder="Name as it appears on the account" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Number</Label>
+                  <Input value={billing.account_number} onChange={(e) => update("account_number", e.target.value)} placeholder="Your bank account number" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <Select value={billing.account_type} onValueChange={(v) => update("account_type", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select account type" /></SelectTrigger>
+                    <SelectContent>
+                      {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Branch Code</Label>
+                  <Input value={billing.branch_code} onChange={(e) => update("branch_code", e.target.value)} placeholder="e.g. 250655" />
+                </div>
               </div>
-            </details>
-          </div>
+              <details className="group rounded-lg border bg-muted/30 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground">International payouts (SWIFT)</summary>
+                <div className="mt-3 space-y-2">
+                  <Label>SWIFT Code</Label>
+                  <Input value={billing.bank_swift_code} onChange={(e) => update("bank_swift_code", e.target.value)} placeholder="e.g. FIRNZAJJ" />
+                  <p className="text-xs text-muted-foreground">Only required if you receive international payouts.</p>
+                </div>
+              </details>
+            </div>
+          )}
 
-          <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save Billing Details
-          </Button>
+          {!isGroupMember && (
+            <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save Billing Details
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
