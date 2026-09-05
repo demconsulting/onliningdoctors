@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Star, Clock, Video, User, ShieldCheck, MessageSquare, CreditCard, HeartPulse } from "lucide-react";
+import { Star, Clock, Video, User, ShieldCheck, MessageSquare, CreditCard, HeartPulse, MapPin } from "lucide-react";
 import { getCurrencySymbol } from "@/lib/currency";
 
 interface Doctor {
@@ -20,7 +20,7 @@ interface Doctor {
   hospital_affiliation: string | null;
   license_number?: string | null;
   accepted_payment_method?: "medical_aid_only" | "card_only" | "both" | null;
-  profile: { full_name: string | null; avatar_url: string | null; city: string | null; country: string | null } | null;
+  profile: { full_name: string | null; avatar_url: string | null; city: string | null; suburb: string | null; country: string | null } | null;
   specialty: { name: string; icon: string | null } | null;
 }
 
@@ -48,6 +48,9 @@ const DoctorCardNew = ({ doctor, onBookNextAvailable }: DoctorCardNewProps) => {
   const displayName = `${doctor.title ? `${doctor.title} ` : "Dr. "}${name}`;
   const isAvailable = !!doctor.is_available;
   const nextAvailableLabel = formatNextAvailable(doctor.next_available_at);
+
+  const locationParts = [doctor.profile?.suburb, doctor.profile?.city].filter(Boolean);
+  const locationLabel = locationParts.join(", ");
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/60">
@@ -103,6 +106,14 @@ const DoctorCardNew = ({ doctor, onBookNextAvailable }: DoctorCardNewProps) => {
             </div>
           )}
         </div>
+
+        {/* Location indicator */}
+        {locationLabel && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 shrink-0 text-primary/70" />
+            <span className="truncate">{locationLabel}</span>
+          </div>
+        )}
 
         {/* Details */}
         <div className="space-y-1.5 text-sm text-muted-foreground">

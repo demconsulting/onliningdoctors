@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, MapPin, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -13,23 +13,23 @@ interface DoctorsFiltersProps {
   onSearchChange: (v: string) => void;
   selectedSpecialty: string;
   onSpecialtyChange: (v: string) => void;
-  selectedCountry: string;
-  onCountryChange: (v: string) => void;
+  locationQuery: string;
+  onLocationChange: (v: string) => void;
+  onLocationClear: () => void;
   sortBy: string;
   onSortChange: (v: string) => void;
   availableOnly: boolean;
   onAvailableOnlyChange: (v: boolean) => void;
   specialties: Specialty[];
-  countries: string[];
 }
 
 const DoctorsFilters = ({
   search, onSearchChange,
   selectedSpecialty, onSpecialtyChange,
-  selectedCountry, onCountryChange,
+  locationQuery, onLocationChange, onLocationClear,
   sortBy, onSortChange,
   availableOnly, onAvailableOnlyChange,
-  specialties, countries,
+  specialties,
 }: DoctorsFiltersProps) => (
   <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -57,20 +57,26 @@ const DoctorsFilters = ({
         </SelectContent>
       </Select>
 
-      {/* Country */}
-      {countries.length > 0 && (
-        <Select value={selectedCountry} onValueChange={onCountryChange}>
-          <SelectTrigger className="w-full lg:w-40">
-            <SelectValue placeholder="Country" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
-            {countries.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+      {/* Location */}
+      <div className="relative flex-1 lg:max-w-sm">
+        <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="City or suburb (e.g. Sandton, Rosebank)"
+          value={locationQuery}
+          onChange={(e) => onLocationChange(e.target.value)}
+          className="pl-10 pr-9"
+        />
+        {locationQuery && (
+          <button
+            type="button"
+            onClick={onLocationClear}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground hover:text-foreground focus:outline-none"
+            aria-label="Clear location filter"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       {/* Sort */}
       <Select value={sortBy} onValueChange={onSortChange}>
