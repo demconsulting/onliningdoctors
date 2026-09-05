@@ -302,6 +302,37 @@ const AdminDoctorVerification = () => {
           </SelectContent>
         </Select>
       </td>
+      <td className="py-3 pr-4">
+        <div className="flex flex-col gap-1 text-xs">
+          <span className="flex items-center gap-1.5">
+            {d.practice_type === "group_member" ? (
+              <>
+                <Badge variant="secondary" className="text-[10px]">Group</Badge>
+                <span>{d.practice_id ? practiceNames[d.practice_id] || "Practice" : "No practice linked"}</span>
+                {d.practice_approval_status === "pending" && (
+                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-600/40">Owner approval pending</Badge>
+                )}
+              </>
+            ) : (
+              <Badge variant="outline" className="text-[10px]">Independent</Badge>
+            )}
+          </span>
+          <span className="text-muted-foreground">
+            BHF: {d.bhf_number || "Private / Cash Only"}
+          </span>
+          <span>
+            {d.paystack_subaccount_code ? (
+              <Badge variant="outline" className="gap-1 text-[10px] text-green-600 border-green-600/30">
+                <Check className="h-3 w-3" /> {d.practice_type === "group_member" ? "Practice payout" : "Subaccount active"}
+              </Badge>
+            ) : d.practice_type === "group_member" ? (
+              <Badge variant="outline" className="text-[10px]">Via practice payout</Badge>
+            ) : (
+              <Badge variant="outline" className="gap-1 text-[10px] text-amber-600 border-amber-600/40">No payout account</Badge>
+            )}
+          </span>
+        </div>
+      </td>
       <td className="py-3">{actions}</td>
     </tr>
   );
