@@ -247,8 +247,12 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {pendingMode === "live"
-                    ? "Switching to live mode will process real payments. Make sure your live Paystack secret key (PAYSTACK_LIVE_SECRET_KEY) is configured in Supabase secrets. This change takes effect after you save."
-                    : "Switching to test mode will stop processing real payments. Only test transactions will be processed using your test secret key (PAYSTACK_TEST_SECRET_KEY). This change takes effect after you save."}
+                    ? isNala
+                      ? "Switching to live mode will process real payments. Make sure your live Payfast merchant credentials (NALAVATION_PAYFAST_MERCHANT_ID, NALAVATION_PAYFAST_MERCHANT_KEY, NALAVATION_PAYFAST_PASSPHRASE) are configured in Supabase secrets. This change takes effect after you save."
+                      : "Switching to live mode will process real payments. Make sure your live Paystack secret key (PAYSTACK_LIVE_SECRET_KEY) is configured in Supabase secrets. This change takes effect after you save."
+                    : isNala
+                      ? "Switching to test mode will stop processing real payments. Only sandbox transactions will be processed using the Payfast sandbox environment. This change takes effect after you save."
+                      : "Switching to test mode will stop processing real payments. Only test transactions will be processed using your test secret key (PAYSTACK_TEST_SECRET_KEY). This change takes effect after you save."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
