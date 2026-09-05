@@ -98,14 +98,16 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
         .from("payment_gateway_configs")
         .select("*")
         .eq("context", context)
-        .eq("provider", "paystack")
+        .eq("provider", provider)
         .maybeSingle();
       if (data) {
         setConfig({
           mode: (data.mode as "test" | "live") ?? "test",
           public_key_test: data.public_key_test ?? "",
           public_key_live: data.public_key_live ?? "",
-          supported_currencies: data.supported_currencies ?? ["ZAR"],
+          merchant_id: (data as Record<string, unknown>).merchant_id as string ?? "",
+          merchant_key: (data as Record<string, unknown>).merchant_key as string ?? "",
+          supported_currencies: isNala ? ["ZAR"] : (data.supported_currencies ?? ["ZAR"]),
           payment_methods: data.payment_methods ?? ["card"],
           fee_bearer: data.fee_bearer ?? (isNala ? "customer" : "patient"),
           payment_timing: data.payment_timing ?? "at_booking",
@@ -125,11 +127,13 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
       .upsert(
         {
           context,
-          provider: "paystack",
+          provider,
           mode: config.mode,
           public_key_test: config.public_key_test,
           public_key_live: config.public_key_live,
-          supported_currencies: config.supported_currencies,
+          merchant_id: config.merchant_id,
+          merchant_key: config.merchant_key,
+          supported_currencies: isNala ? ["ZAR"] : config.supported_currencies,
           payment_methods: config.payment_methods,
           fee_bearer: config.fee_bearer,
           payment_timing: config.payment_timing,
