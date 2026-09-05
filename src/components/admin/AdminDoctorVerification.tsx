@@ -30,6 +30,12 @@ interface DoctorRow {
   is_founding_doctor: boolean | null;
   suspension_reason: string | null;
   accepted_payment_method: "medical_aid_only" | "card_only" | "both" | null;
+  practice_type: "independent" | "group_member" | null;
+  practice_id: string | null;
+  practice_approval_status: string | null;
+  bhf_number: string | null;
+  paystack_subaccount_code: string | null;
+  is_payout_verified: boolean | null;
   created_at: string;
   profile: {
     full_name: string | null;
@@ -49,6 +55,7 @@ const AdminDoctorVerification = () => {
   const [suspendDialog, setSuspendDialog] = useState<{ doctor: DoctorRow } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
   const [viewer, setViewer] = useState<{ path: string; title: string } | null>(null);
+  const [practiceNames, setPracticeNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { slots: foundingSlots, refresh: refreshFoundingSlots } = useFoundingDoctorSlots();
 
@@ -60,7 +67,7 @@ const AdminDoctorVerification = () => {
   const fetchDoctors = async () => {
     const { data, error } = await supabase
       .from("doctors")
-      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, is_founding_doctor, suspension_reason, accepted_payment_method, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
+      .select("id, profile_id, license_number, license_document_path, id_document_path, title, consultation_fee, welcome_email_sent_at, is_verified, is_available, is_suspended, is_founding_doctor, suspension_reason, accepted_payment_method, practice_type, practice_id, practice_approval_status, bhf_number, paystack_subaccount_code, is_payout_verified, created_at, profile:profiles!doctors_profile_id_fkey(full_name, country, phone, avatar_url)")
       .order("created_at", { ascending: false });
 
     if (error) console.error(error);
@@ -85,6 +92,12 @@ const AdminDoctorVerification = () => {
         const e = emailMap.get(r.profile_id);
         r.reminders_sent = e?.reminders ?? 0;
         r.last_email_at = e?.last ?? null;
+      }
+
+      const practiceIds = [...new Set(rows.map((r) => r.practice_id).filter(Boolean))] as string[];
+      if (practiceIds.length) {
+        const { data: pracs } = await supabase.from("practices").select("id, practice_name").in("id", practiceIds);
+        setPracticeNames(Object.fromEntries((pracs ?? []).map((p: any) => [p.id, p.practice_name])));
       }
     }
 
@@ -289,6 +302,37 @@ const AdminDoctorVerification = () => {
           </SelectContent>
         </Select>
       </td>
+      <td className="py-3 pr-4">
+        <div className="flex flex-col gap-1 text-xs">
+          <span className="flex items-center gap-1.5">
+            {d.practice_type === "group_member" ? (
+              <>
+                <Badge variant="secondary" className="text-[10px]">Group</Badge>
+                <span>{d.practice_id ? practiceNames[d.practice_id] || "Practice" : "No practice linked"}</span>
+                {d.practice_approval_status === "pending" && (
+                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-600/40">Owner approval pending</Badge>
+                )}
+              </>
+            ) : (
+              <Badge variant="outline" className="text-[10px]">Independent</Badge>
+            )}
+          </span>
+          <span className="text-muted-foreground">
+            BHF: {d.bhf_number || "Private / Cash Only"}
+          </span>
+          <span>
+            {d.paystack_subaccount_code ? (
+              <Badge variant="outline" className="gap-1 text-[10px] text-green-600 border-green-600/30">
+                <Check className="h-3 w-3" /> {d.practice_type === "group_member" ? "Practice payout" : "Subaccount active"}
+              </Badge>
+            ) : d.practice_type === "group_member" ? (
+              <Badge variant="outline" className="text-[10px]">Via practice payout</Badge>
+            ) : (
+              <Badge variant="outline" className="gap-1 text-[10px] text-amber-600 border-amber-600/40">No payout account</Badge>
+            )}
+          </span>
+        </div>
+      </td>
       <td className="py-3">{actions}</td>
     </tr>
   );
@@ -370,6 +414,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">License #</th>
                     <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2 pr-4">Payment</th>
+                    <th className="pb-2 pr-4">Practice / Payout</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
@@ -421,6 +466,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">License #</th>
                     <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2 pr-4">Payment</th>
+                    <th className="pb-2 pr-4">Practice / Payout</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>

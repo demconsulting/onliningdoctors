@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye, FlaskConical } from "lucide-react";
+import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye, FlaskConical, Crown, Building2 } from "lucide-react";
 import ImpersonateDialog from "@/components/admin/ImpersonateDialog";
 import UserActionDialog, { type UserAction } from "@/components/admin/UserActionDialog";
 import TestDeleteDialog from "@/components/admin/TestDeleteDialog";
@@ -51,6 +51,7 @@ const AdminUsers = () => {
   const [actionTarget, setActionTarget] = useState<{ userId: string; name: string; action: UserAction } | null>(null);
   const [viewTarget, setViewTarget] = useState<any | null>(null);
   const [testDeleteTarget, setTestDeleteTarget] = useState<{ userId: string; name: string; isTestUser: boolean } | null>(null);
+  const [practiceNames, setPracticeNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
   const canDestructive = canImpersonate; // platform_admin or super_admin
@@ -60,11 +61,17 @@ const AdminUsers = () => {
     const [profilesRes, rolesRes, doctorsRes] = await Promise.all([
       supabase.from("profiles").select(PROFILE_COLUMNS).order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*"),
-      supabase.from("doctors").select("id, profile_id, is_suspended, suspension_reason"),
+      supabase.from("doctors").select("id, profile_id, is_suspended, suspension_reason, practice_type, practice_id, practice_approval_status, license_number, bhf_number, is_founding_doctor, paystack_subaccount_code"),
     ]);
     if (profilesRes.data) setProfiles(profilesRes.data);
     if (rolesRes.data) setRoles(rolesRes.data);
     if (doctorsRes.data) setDoctors(doctorsRes.data);
+
+    const practiceIds = [...new Set((doctorsRes.data ?? []).map((d: any) => d.practice_id).filter(Boolean))];
+    if (practiceIds.length) {
+      const { data: pracs } = await supabase.from("practices").select("id, practice_name").in("id", practiceIds);
+      setPracticeNames(Object.fromEntries((pracs ?? []).map((p: any) => [p.id, p.practice_name])));
+    }
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -323,6 +330,27 @@ const AdminUsers = () => {
                           {p.environment && p.environment !== "production" && (
                             <Badge variant="outline" className="text-muted-foreground">{p.environment}</Badge>
                           )}
+                          {isDoctor && (() => {
+                            const doc = getDoctorRecord(p.id);
+                            if (!doc) return null;
+                            return (
+                              <>
+                                {doc.is_founding_doctor && (
+                                  <Badge className="gap-1 bg-gradient-to-r from-primary to-accent text-primary-foreground border-0 text-[10px]">
+                                    <Crown className="h-3 w-3" /> Founding
+                                  </Badge>
+                                )}
+                                {doc.practice_type === "group_member" ? (
+                                  <Badge variant="secondary" className="gap-1 text-[10px]">
+                                    <Building2 className="h-3 w-3" />
+                                    {doc.practice_id ? practiceNames[doc.practice_id] || "Group practice" : "Group (unlinked)"}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px]">Independent</Badge>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-muted-foreground">{emailMap[p.id] || "—"}</td>
@@ -567,6 +595,29 @@ const AdminUsers = () => {
               <Row label="Roles" value={(viewTarget.userRoles || []).join(", ") || "—"} />
               <Row label="Joined" value={new Date(viewTarget.created_at).toLocaleString()} />
               {viewTarget.suspension_reason && <Row label="Suspension reason" value={viewTarget.suspension_reason} />}
+              {(viewTarget.userRoles || []).includes("doctor") && (() => {
+                const doc = doctors.find((d: any) => d.profile_id === viewTarget.id);
+                if (!doc) return null;
+                return (
+                  <>
+                    <Row label="HPCSA Number" value={doc.license_number || "—"} />
+                    <Row
+                      label="Practice Type"
+                      value={doc.practice_type === "group_member"
+                        ? `Group — ${doc.practice_id ? practiceNames[doc.practice_id] || "Practice" : "Unlinked"}${doc.practice_approval_status === "pending" ? " (owner approval pending)" : ""}`
+                        : "Independent"}
+                    />
+                    <Row label="BHF Number" value={doc.bhf_number || "Private / Cash Only"} />
+                    <Row
+                      label="Payout Account"
+                      value={doc.paystack_subaccount_code
+                        ? `Active (${doc.practice_type === "group_member" ? "practice subaccount" : "own subaccount"})`
+                        : doc.practice_type === "group_member" ? "Via practice" : "Not created"}
+                    />
+                    {doc.is_founding_doctor && <Row label="Programme" value="Founding Doctor" />}
+                  </>
+                );
+              })()}
             </div>
           )}
         </DialogContent>
