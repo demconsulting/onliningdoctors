@@ -52,6 +52,8 @@ interface PaystackConfig {
   mode: "test" | "live";
   public_key_test: string;
   public_key_live: string;
+  merchant_id: string;
+  merchant_key: string;
   supported_currencies: string[];
   payment_methods: string[];
   fee_bearer: string;
@@ -64,6 +66,8 @@ const DEFAULT_CONFIG: PaystackConfig = {
   mode: "test",
   public_key_test: "",
   public_key_live: "",
+  merchant_id: "",
+  merchant_key: "",
   supported_currencies: ["ZAR"],
   payment_methods: ["card"],
   fee_bearer: "patient",
@@ -82,7 +86,10 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
 
   const isNala = context === "nalavation";
   const platformLabel = isNala ? "Nalavation" : "DoctorsOnlining";
+  const gatewayLabel = isNala ? "Payfast" : "Paystack";
+  const provider = isNala ? "payfast" : "paystack";
   const timings = isNala ? NALA_PAYMENT_TIMINGS : PAYMENT_TIMINGS;
+  const [passphrase, setPassphrase] = useState("");
 
   useEffect(() => {
     const load = async () => {
