@@ -52,6 +52,12 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const practiceId = typeof body.practice_id === "string" ? body.practice_id : null;
     const bankCodeOverride = typeof body.bank_code === "string" ? body.bank_code.trim() : null;
+    const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+    const bankInput = {
+      bank_name: str(body.bank_name),
+      account_name: str(body.account_name),
+      account_number: str(body.account_number),
+    };
 
     if (!practiceId) {
       return new Response(JSON.stringify({ error: "practice_id is required" }), {
