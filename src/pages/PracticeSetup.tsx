@@ -175,13 +175,41 @@ const PracticeSetup = () => {
                     type={k === "email" ? "email" : "text"}
                     value={form[k]}
                     onChange={(e) => setForm({ ...form, [k]: e.target.value })}
-                    required
+                    required={k !== "bhf_number"}
                   />
                 </div>
               ))}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="photos">Verification photos (up to {MAX_PHOTOS})</Label>
+                <Input
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS);
+                    setPhotos(files);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Photos of the practice or registration documents help admins verify your practice faster.
+                </p>
+                {photos.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {photos.map((f) => (
+                      <img
+                        key={f.name + f.size}
+                        src={URL.createObjectURL(f)}
+                        alt={f.name}
+                        className="h-16 w-16 rounded-md border object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <Button type="submit" disabled={submitting} className="w-full">
