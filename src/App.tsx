@@ -105,6 +105,7 @@ const DependentInvite = lazyWithRetry(() => import("./pages/DependentInvite"));
 const PracticeSetup = lazyWithRetry(() => import("./pages/PracticeSetup"));
 const PracticeTeam = lazyWithRetry(() => import("./pages/PracticeTeam"));
 const PracticeSettings = lazyWithRetry(() => import("./pages/PracticeSettings"));
+const PracticeDashboard = lazyWithRetry(() => import("./pages/PracticeDashboard"));
 const WellnessPlus = lazyWithRetry(() => import("./pages/WellnessPlus"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Sitemap = lazyWithRetry(() => import("./pages/Sitemap"));
@@ -192,6 +193,7 @@ const App = () => (
               <Route path="/practice/setup" element={<PracticeSetup />} />
               <Route path="/practice/team" element={<PracticeTeam />} />
               <Route path="/practice/settings" element={<PracticeSettings />} />
+              <Route path="/practice/dashboard" element={<PracticeDashboard />} />
               <Route path="/wellness-plus" element={<WellnessPlus />} />
               <Route path="/sitemap" element={<Sitemap />} />
               <Route path="/sitemap.html" element={<Sitemap />} />

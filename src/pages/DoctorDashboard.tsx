@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles, WalletCards, ShieldCheck, CalendarRange, FileText, ClipboardList, Users, Gift, Globe } from "lucide-react";
+import { Loader2, LayoutDashboard, Calendar, Clock, DollarSign, Stethoscope, Wallet, Sparkles, WalletCards, ShieldCheck, CalendarRange, FileText, ClipboardList, Users, Gift, Globe, Building2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import DoctorProfile from "@/components/doctor/DoctorProfile";
 import AvailabilityManager from "@/components/doctor/AvailabilityManager";
@@ -26,6 +26,7 @@ const PracticePatients = lazy(() => import("@/components/doctor/PracticePatients
 const ReferralCenter = lazy(() => import("@/components/referrals/ReferralCenter"));
 const DoctorPracticeServices = lazy(() => import("@/components/doctor/DoctorPracticeServices"));
 import PracticeDashboardCard from "@/components/doctor/PracticeDashboardCard";
+const PracticeStructureCard = lazy(() => import("@/components/doctor/PracticeStructureCard"));
 import { attachPendingReferral } from "@/lib/referral";
 
 const TabFallback = () => (
@@ -162,6 +163,9 @@ const DoctorDashboard = () => {
             <TabsTrigger value="referrals" className="gap-1.5">
               <Gift className="h-4 w-4" /> Referrals
             </TabsTrigger>
+            <TabsTrigger value="practice-structure" className="gap-1.5">
+              <Building2 className="h-4 w-4" /> Practice & Payouts
+            </TabsTrigger>
             <TabsTrigger value="practice-services" className="gap-1.5">
               <Globe className="h-4 w-4" /> Practice Services
             </TabsTrigger>
@@ -222,6 +226,11 @@ const DoctorDashboard = () => {
           <TabsContent value="referrals">
             <Suspense fallback={<TabFallback />}>
               <ReferralCenter user={user} />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="practice-structure">
+            <Suspense fallback={<TabFallback />}>
+              <PracticeStructureCard user={user} />
             </Suspense>
           </TabsContent>
           <TabsContent value="practice-services">

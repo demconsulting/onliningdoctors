@@ -37,7 +37,7 @@ const doctorsOnliningItems: Item[] = [
   { title: "Recruitment CRM", key: "recruitment-crm", icon: Network },
   { title: "Referral & Rewards", key: "referrals", icon: Gift },
   { title: "Appointments", key: "appointments", icon: Calendar },
-  { title: "Practices", key: "practices", icon: Building2 },
+  { title: "Practices & Clinicians", key: "practices", icon: Building2 },
   { title: "Practice Patients", key: "practice-patients", icon: Users },
   { title: "Reviews", key: "reviews", icon: Star },
   { title: "Consultation Outcomes", key: "consultation-outcomes", icon: ClipboardCheck },

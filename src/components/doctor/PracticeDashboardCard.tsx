@@ -62,7 +62,10 @@ const PracticeDashboardCard = ({ userId }: Props) => {
               <div className="text-xs text-muted-foreground">Practice #{practice.practice_number}</div>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={() => navigate("/practice/team")}>Manage team</Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/practice/dashboard")}>Practice dashboard</Button>
+            <Button size="sm" variant="outline" onClick={() => navigate("/practice/team")}>Manage team</Button>
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
