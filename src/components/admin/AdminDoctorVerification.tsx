@@ -414,6 +414,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">License #</th>
                     <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2 pr-4">Payment</th>
+                    <th className="pb-2 pr-4">Practice / Payout</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
@@ -465,6 +466,7 @@ const AdminDoctorVerification = () => {
                     <th className="pb-2 pr-4">License #</th>
                     <th className="pb-2 pr-4">ID Copy</th>
                     <th className="pb-2 pr-4">Payment</th>
+                    <th className="pb-2 pr-4">Practice / Payout</th>
                     <th className="pb-2">Actions</th>
                   </tr>
                 </thead>
