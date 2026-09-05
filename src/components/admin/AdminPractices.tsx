@@ -296,6 +296,10 @@ const AdminPractices = () => {
                 <div className="mt-1">{selected && statusBadge(selected.status)}</div>
               </div>
               <div>
+                <Label className="text-muted-foreground text-xs uppercase">BHF Number</Label>
+                <p>{selected?.bhf_number || "—"}</p>
+              </div>
+              <div>
                 <Label className="text-muted-foreground text-xs uppercase">Owner</Label>
                 <p>{selected?.owner_doctor_name}</p>
               </div>
@@ -334,6 +338,47 @@ const AdminPractices = () => {
                 <p className="font-mono text-xs">{selected?.paystack_subaccount_code || "—"}</p>
               </div>
             </div>
+            {selected && (selected.photo_urls?.length ?? 0) > 0 && (
+              <div>
+                <Label className="text-muted-foreground text-xs uppercase">Verification Photos</Label>
+                {photoUrls.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {photoUrls.map((url) => (
+                      <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt="Practice verification" className="h-20 w-20 rounded-md border object-cover hover:opacity-80 transition-opacity" />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-1 text-muted-foreground flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Loading photos…</p>
+                )}
+              </div>
+            )}
+            {selected?.status === "approved" && !selected?.paystack_subaccount_code && (
+              <div className="rounded-md border p-3 space-y-2">
+                <p className="font-medium">Payout account not created yet</p>
+                <p className="text-muted-foreground text-xs">
+                  The bank code is matched automatically from the bank name. If matching fails, paste the Paystack bank code below and retry.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Bank code (optional)"
+                    value={bankCode}
+                    onChange={(e) => setBankCode(e.target.value)}
+                    className="h-8 text-sm max-w-[180px]"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={creatingSubaccount}
+                    onClick={() => selected && createSubaccount(selected, bankCode || undefined)}
+                  >
+                    {creatingSubaccount ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Landmark className="h-3.5 w-3.5 mr-1" />}
+                    Create payout account
+                  </Button>
+                </div>
+              </div>
+            )}
             {selected?.rejection_reason && (
               <div className="text-destructive bg-destructive/10 rounded-md p-3">
                 <strong>Rejection reason:</strong> {selected.rejection_reason}
