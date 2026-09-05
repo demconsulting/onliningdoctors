@@ -330,6 +330,27 @@ const AdminUsers = () => {
                           {p.environment && p.environment !== "production" && (
                             <Badge variant="outline" className="text-muted-foreground">{p.environment}</Badge>
                           )}
+                          {isDoctor && (() => {
+                            const doc = getDoctorRecord(p.id);
+                            if (!doc) return null;
+                            return (
+                              <>
+                                {doc.is_founding_doctor && (
+                                  <Badge className="gap-1 bg-gradient-to-r from-primary to-accent text-primary-foreground border-0 text-[10px]">
+                                    <Crown className="h-3 w-3" /> Founding
+                                  </Badge>
+                                )}
+                                {doc.practice_type === "group_member" ? (
+                                  <Badge variant="secondary" className="gap-1 text-[10px]">
+                                    <Building2 className="h-3 w-3" />
+                                    {doc.practice_id ? practiceNames[doc.practice_id] || "Group practice" : "Group (unlinked)"}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-[10px]">Independent</Badge>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="py-2 pr-4 text-muted-foreground">{emailMap[p.id] || "—"}</td>
@@ -574,6 +595,29 @@ const AdminUsers = () => {
               <Row label="Roles" value={(viewTarget.userRoles || []).join(", ") || "—"} />
               <Row label="Joined" value={new Date(viewTarget.created_at).toLocaleString()} />
               {viewTarget.suspension_reason && <Row label="Suspension reason" value={viewTarget.suspension_reason} />}
+              {(viewTarget.userRoles || []).includes("doctor") && (() => {
+                const doc = doctors.find((d: any) => d.profile_id === viewTarget.id);
+                if (!doc) return null;
+                return (
+                  <>
+                    <Row label="HPCSA Number" value={doc.license_number || "—"} />
+                    <Row
+                      label="Practice Type"
+                      value={doc.practice_type === "group_member"
+                        ? `Group — ${doc.practice_id ? practiceNames[doc.practice_id] || "Practice" : "Unlinked"}${doc.practice_approval_status === "pending" ? " (owner approval pending)" : ""}`
+                        : "Independent"}
+                    />
+                    <Row label="BHF Number" value={doc.bhf_number || "Private / Cash Only"} />
+                    <Row
+                      label="Payout Account"
+                      value={doc.paystack_subaccount_code
+                        ? `Active (${doc.practice_type === "group_member" ? "practice subaccount" : "own subaccount"})`
+                        : doc.practice_type === "group_member" ? "Via practice" : "Not created"}
+                    />
+                    {doc.is_founding_doctor && <Row label="Programme" value="Founding Doctor" />}
+                  </>
+                );
+              })()}
             </div>
           )}
         </DialogContent>
