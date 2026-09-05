@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Loader2, CreditCard, Shield, Banknote, Settings2, AlertTriangle, ToggleLeft, ToggleRight } from "lucide-react";
+import { Loader2, CreditCard, Shield, Banknote, Settings2, AlertTriangle, ToggleLeft, ToggleRight, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useFoundingDoctorSlots, FOUNDING_FEE_BANDS, FOUNDING_GATEWAY_FEE_PERCENT } from "@/hooks/useFoundingDoctorSlots";
 
 const CURRENCIES = [
   { code: "NGN", name: "Nigerian Naira" },
@@ -87,6 +88,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
   const [showModeConfirm, setShowModeConfirm] = useState(false);
   const [pendingMode, setPendingMode] = useState<"test" | "live">("test");
   const { toast } = useToast();
+  const { slots: foundingSlots } = useFoundingDoctorSlots();
 
   const isNala = context === "nalavation";
   const platformLabel = isNala ? "Nalavation" : "DoctorsOnlining";
