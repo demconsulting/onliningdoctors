@@ -150,10 +150,30 @@ serve(async (req) => {
       }
       const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
       const target = normalize(practice.bank_name);
-      const match = (banksData.data as Array<{ name: string; code: string }>).find((b) => {
-        const n = normalize(b.name);
-        return n === target || n.includes(target) || target.includes(n);
-      });
+      const aliases: Record<string, string[]> = {
+        fnb: ["firstnationalbank"],
+        firstnationalbank: ["fnb"],
+        absa: ["absabank"],
+        std: ["standardbank"],
+        standard: ["standardbank"],
+        sbsa: ["standardbank"],
+        nedbank: ["nedbank"],
+        capitec: ["capitecbank"],
+        tyme: ["tymebank"],
+        investec: ["investecbank"],
+        discovery: ["discoverybank"],
+        africanbank: ["africanbank"],
+        bidvest: ["bidvestbank"],
+        sasfin: ["sasfinbank"],
+      };
+      const candidates = [target, ...(aliases[target] || [])];
+      const banks = banksData.data as Array<{ name: string; code: string }>;
+      const match = banks.find((b) => candidates.includes(normalize(b.name)))
+        || banks.find((b) => {
+          const n = normalize(b.name);
+          return candidates.some((c) => n.includes(c) || c.includes(n));
+        });
+
       if (!match) {
         return new Response(JSON.stringify({
           error: `Could not match "${practice.bank_name}" to a Paystack bank. Provide a bank_code override.`,
