@@ -363,26 +363,41 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
             <Banknote className="h-5 w-5 text-primary" />
             Supported Currencies
           </CardTitle>
-          <CardDescription>Select which currencies patients can pay in.</CardDescription>
+          <CardDescription>
+            {isNala
+              ? "Nalavation subscriptions exclusively bill in South African Rand via Payfast."
+              : "Select which currencies patients can pay in."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {CURRENCIES.map((c) => (
-              <label
-                key={c.code}
-                className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-              >
-                <Checkbox
-                  checked={config.supported_currencies.includes(c.code)}
-                  onCheckedChange={() => toggleCurrency(c.code)}
-                />
-                <div>
-                  <span className="font-medium text-sm">{c.code}</span>
-                  <span className="text-xs text-muted-foreground ml-1">{c.name}</span>
-                </div>
-              </label>
-            ))}
-          </div>
+          {isNala ? (
+            <div className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-3 w-fit">
+              <Checkbox checked disabled />
+              <div>
+                <span className="font-medium text-sm">ZAR</span>
+                <span className="text-xs text-muted-foreground ml-1">South African Rand</span>
+              </div>
+              <Badge variant="secondary" className="ml-2">Locked</Badge>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {CURRENCIES.map((c) => (
+                <label
+                  key={c.code}
+                  className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <Checkbox
+                    checked={config.supported_currencies.includes(c.code)}
+                    onCheckedChange={() => toggleCurrency(c.code)}
+                  />
+                  <div>
+                    <span className="font-medium text-sm">{c.code}</span>
+                    <span className="text-xs text-muted-foreground ml-1">{c.name}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
