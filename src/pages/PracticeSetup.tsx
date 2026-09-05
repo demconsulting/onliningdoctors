@@ -79,15 +79,34 @@ const PracticeSetup = () => {
     }
     setSubmitting(true);
     const d = parsed.data;
+
+    // Upload verification photos first
+    const photoUrls: string[] = [];
+    for (const file of photos.slice(0, MAX_PHOTOS)) {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("practice-photos")
+        .upload(path, file, { contentType: file.type });
+      if (uploadError) {
+        setSubmitting(false);
+        toast.error(`Photo upload failed: ${uploadError.message}`);
+        return;
+      }
+      photoUrls.push(path);
+    }
+
     const { error } = await supabase.from("practices").insert([{
       practice_name: d.practice_name,
       practice_number: d.practice_number,
+      bhf_number: d.bhf_number || null,
       owner_doctor_name: d.owner_doctor_name,
       owner_hpcsa_number: d.owner_hpcsa_number,
       email: d.email,
       phone: d.phone,
       address: d.address,
       owner_id: user.id,
+      photo_urls: photoUrls,
     }]);
     setSubmitting(false);
     if (error) {
@@ -143,6 +162,7 @@ const PracticeSetup = () => {
               {([
                 ["practice_name", "Practice name"],
                 ["practice_number", "Practice number"],
+                ["bhf_number", "BHF number (optional)"],
                 ["owner_doctor_name", "Owner doctor name"],
                 ["owner_hpcsa_number", "Owner HPCSA number"],
                 ["email", "Email"],
