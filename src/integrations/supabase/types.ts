@@ -1511,8 +1511,12 @@ export type Database = {
       doctors: {
         Row: {
           accepted_payment_method: Database["public"]["Enums"]["accepted_payment_method_enum"]
+          account_name: string | null
+          account_number: string | null
           assigned_business_developer: string | null
           auto_weekly_payout: boolean
+          bank_name: string | null
+          bhf_number: string | null
           bio: string | null
           consultation_category_id: string | null
           consultation_fee: number | null
@@ -1532,12 +1536,14 @@ export type Database = {
           id_document_path: string | null
           is_available: boolean | null
           is_founding_doctor: boolean
+          is_payout_verified: boolean
           is_practice_owner: boolean
           is_suspended: boolean
           is_verified: boolean
           languages: string[] | null
           license_document_path: string | null
           license_number: string | null
+          paystack_subaccount_code: string | null
           practice_address: string | null
           practice_approval_status: string | null
           practice_email: string | null
@@ -1546,6 +1552,7 @@ export type Database = {
           practice_name: string | null
           practice_phone: string | null
           practice_signature_url: string | null
+          practice_type: string
           practice_website: string | null
           profile_id: string
           rating: number | null
@@ -1559,8 +1566,12 @@ export type Database = {
         }
         Insert: {
           accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
+          account_name?: string | null
+          account_number?: string | null
           assigned_business_developer?: string | null
           auto_weekly_payout?: boolean
+          bank_name?: string | null
+          bhf_number?: string | null
           bio?: string | null
           consultation_category_id?: string | null
           consultation_fee?: number | null
@@ -1580,12 +1591,14 @@ export type Database = {
           id_document_path?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
+          is_payout_verified?: boolean
           is_practice_owner?: boolean
           is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
+          paystack_subaccount_code?: string | null
           practice_address?: string | null
           practice_approval_status?: string | null
           practice_email?: string | null
@@ -1594,6 +1607,7 @@ export type Database = {
           practice_name?: string | null
           practice_phone?: string | null
           practice_signature_url?: string | null
+          practice_type?: string
           practice_website?: string | null
           profile_id: string
           rating?: number | null
@@ -1607,8 +1621,12 @@ export type Database = {
         }
         Update: {
           accepted_payment_method?: Database["public"]["Enums"]["accepted_payment_method_enum"]
+          account_name?: string | null
+          account_number?: string | null
           assigned_business_developer?: string | null
           auto_weekly_payout?: boolean
+          bank_name?: string | null
+          bhf_number?: string | null
           bio?: string | null
           consultation_category_id?: string | null
           consultation_fee?: number | null
@@ -1628,12 +1646,14 @@ export type Database = {
           id_document_path?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
+          is_payout_verified?: boolean
           is_practice_owner?: boolean
           is_suspended?: boolean
           is_verified?: boolean
           languages?: string[] | null
           license_document_path?: string | null
           license_number?: string | null
+          paystack_subaccount_code?: string | null
           practice_address?: string | null
           practice_approval_status?: string | null
           practice_email?: string | null
@@ -1642,6 +1662,7 @@ export type Database = {
           practice_name?: string | null
           practice_phone?: string | null
           practice_signature_url?: string | null
+          practice_type?: string
           practice_website?: string | null
           profile_id?: string
           rating?: number | null
@@ -6954,6 +6975,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_doctor_identity_available: {
+        Args: { _email?: string; _exclude_user?: string; _hpcsa?: string }
+        Returns: Json
+      }
       complete_doctor_signup: {
         Args: { _country: string; _license_number: string; _title: string }
         Returns: undefined
@@ -7014,6 +7039,19 @@ export type Database = {
       get_doctor_next_available_slot: {
         Args: { _doctor: string }
         Returns: string
+      }
+      get_doctor_payout_target: {
+        Args: { _doctor_id: string }
+        Returns: {
+          bhf_number: string
+          doctor_name: string
+          hpcsa_number: string
+          is_ready: boolean
+          practice_name: string
+          practice_number: string
+          practice_type: string
+          subaccount_code: string
+        }[]
       }
       get_fee_plan_summary: {
         Args: { _plan_id: string }
