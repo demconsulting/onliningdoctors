@@ -57,14 +57,30 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
         .eq("doctor_id", user.id)
         .single();
 
+      // Authoritative payout bank details on the doctors row
+      const { data: docBank } = await supabase
+        .from("doctors")
+        .select("practice_type, practice_id, bank_name, account_name, account_number")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      const db = docBank as any;
+      const groupMember = db?.practice_type === "group_member" && !!db?.practice_id;
+      setIsGroupMember(groupMember);
+      if (groupMember) {
+        const { data: pb } = await (supabase as any).rpc("get_practice_banking", { _practice_id: db.practice_id });
+        const row = Array.isArray(pb) ? pb[0] : pb;
+        setPracticeBank(row ? { bank_name: row.bank_name ?? null, account_name: row.account_name ?? null, account_number: row.account_number ?? null } : null);
+      }
+
       if (data) {
         const d = data as any;
         setIsNew(false);
         setBilling({
           billing_type: d.billing_type || "individual",
-          bank_name: d.bank_name || "",
-          account_holder_name: d.account_holder_name || "",
-          account_number: d.account_number || "",
+          // Prefer the authoritative doctors-row payout details over stale billing copies
+          bank_name: db?.bank_name || d.bank_name || "",
+          account_holder_name: db?.account_name || d.account_holder_name || "",
+          account_number: db?.account_number || d.account_number || "",
           branch_code: d.branch_code || "",
           bank_swift_code: d.bank_swift_code || "",
           account_type: d.account_type || "",
