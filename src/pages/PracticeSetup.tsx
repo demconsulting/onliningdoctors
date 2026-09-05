@@ -46,6 +46,9 @@ const PracticeSetup = () => {
     email: "",
     phone: "",
     address: "",
+    bank_name: "",
+    account_name: "",
+    account_number: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
 
@@ -108,6 +111,9 @@ const PracticeSetup = () => {
       email: d.email,
       phone: d.phone,
       address: d.address,
+      bank_name: d.bank_name,
+      account_name: d.account_name,
+      account_number: d.account_number,
       owner_id: user.id,
       photo_urls: photoUrls,
     }]);
@@ -170,6 +176,9 @@ const PracticeSetup = () => {
                 ["owner_hpcsa_number", "Owner HPCSA number"],
                 ["email", "Email"],
                 ["phone", "Phone number"],
+                ["bank_name", "Bank name"],
+                ["account_name", "Account holder name"],
+                ["account_number", "Account number"],
               ] as const).map(([k, label]) => (
                 <div key={k} className="space-y-2">
                   <Label htmlFor={k}>{label}</Label>
