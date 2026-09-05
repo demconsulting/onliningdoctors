@@ -13,7 +13,7 @@ export interface FeeSettings {
   is_default: boolean;
   is_active: boolean;
   platform_fee_mode?: "percent" | "tiered";
-  platform_fee_tiers?: PlatformFeeTier[] | null;
+  platform_fee_tiers?: any;
   platform_fee_percent: number;
   processing_fee_percent: number;
   processing_fee_fixed: number;
