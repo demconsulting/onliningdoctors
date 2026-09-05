@@ -55,6 +55,7 @@ const AdminDoctorVerification = () => {
   const [suspendDialog, setSuspendDialog] = useState<{ doctor: DoctorRow } | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
   const [viewer, setViewer] = useState<{ path: string; title: string } | null>(null);
+  const [practiceNames, setPracticeNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { slots: foundingSlots, refresh: refreshFoundingSlots } = useFoundingDoctorSlots();
 
@@ -91,6 +92,12 @@ const AdminDoctorVerification = () => {
         const e = emailMap.get(r.profile_id);
         r.reminders_sent = e?.reminders ?? 0;
         r.last_email_at = e?.last ?? null;
+      }
+
+      const practiceIds = [...new Set(rows.map((r) => r.practice_id).filter(Boolean))] as string[];
+      if (practiceIds.length) {
+        const { data: pracs } = await supabase.from("practices").select("id, practice_name").in("id", practiceIds);
+        setPracticeNames(Object.fromEntries((pracs ?? []).map((p: any) => [p.id, p.practice_name])));
       }
     }
 
