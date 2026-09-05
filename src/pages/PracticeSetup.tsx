@@ -16,12 +16,15 @@ import type { User } from "@supabase/supabase-js";
 const schema = z.object({
   practice_name: z.string().trim().min(2).max(200),
   practice_number: z.string().trim().min(3).max(50),
+  bhf_number: z.string().trim().max(50).optional().or(z.literal("")),
   owner_doctor_name: z.string().trim().min(2).max(200),
   owner_hpcsa_number: z.string().trim().min(2).max(50),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(3).max(50),
   address: z.string().trim().min(3).max(500),
 });
+
+const MAX_PHOTOS = 4;
 
 const PracticeSetup = () => {
   const navigate = useNavigate();
@@ -34,12 +37,14 @@ const PracticeSetup = () => {
   const [form, setForm] = useState({
     practice_name: "",
     practice_number: "",
+    bhf_number: "",
     owner_doctor_name: "",
     owner_hpcsa_number: "",
     email: "",
     phone: "",
     address: "",
   });
+  const [photos, setPhotos] = useState<File[]>([]);
 
   useEffect(() => {
     (async () => {
