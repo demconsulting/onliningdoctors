@@ -438,7 +438,7 @@ serve(async (req) => {
       // amount before confirming.
       const { data: existingPayment } = await serviceClient
         .from("payments")
-        .select("appointment_id, amount, patient_id")
+        .select("appointment_id, amount, patient_id, doctor_id")
         .eq("paystack_reference", reference)
         .maybeSingle();
 
@@ -465,10 +465,49 @@ serve(async (req) => {
       const newStatus =
         txData.status === "success" && amountMatches ? "success" : "failed";
 
+      // Fee split — Founding Doctors use their locked-in tiered plan, everyone
+      // else falls back to the platform default plan.
+      let platformFee: number | null = null;
+      let processingFee: number | null = null;
+      let doctorNet: number | null = null;
+      if (newStatus === "success") {
+        try {
+          let settingsId: string | null = null;
+          if (existingPayment.doctor_id) {
+            const { data: doc } = await serviceClient
+              .from("doctors")
+              .select("fee_settings_id, founding_pricing_plan_id, founding_locked, is_founding_doctor")
+              .eq("profile_id", existingPayment.doctor_id)
+              .maybeSingle();
+            settingsId = (doc?.is_founding_doctor && doc?.founding_locked && doc?.founding_pricing_plan_id)
+              ? doc.founding_pricing_plan_id
+              : (doc?.fee_settings_id ?? null);
+          }
+          const { data: plan } = settingsId
+            ? await serviceClient.from("platform_fee_settings").select("*").eq("id", settingsId).eq("is_active", true).maybeSingle()
+            : await serviceClient.from("platform_fee_settings").select("*").eq("is_default", true).eq("is_active", true).maybeSingle();
+
+          const { data: fee } = await serviceClient.rpc("compute_platform_fee", {
+            _amount: paidAmount,
+            _settings_id: plan?.id ?? null,
+          });
+          platformFee = Number(fee ?? 0);
+          processingFee = Math.round((paidAmount * (Number(plan?.processing_fee_percent ?? 3) / 100) + Number(plan?.processing_fee_fixed ?? 0)) * 100) / 100;
+          doctorNet = Math.round((paidAmount - platformFee - processingFee) * 100) / 100;
+        } catch (e) {
+          console.error("fee split calculation failed", e);
+        }
+      }
+
       const { data: paymentRows } = await serviceClient
         .from("payments")
         .update({
           status: newStatus,
+          ...(platformFee !== null ? {
+            platform_fee_amount: platformFee,
+            processing_fee_amount: processingFee,
+            doctor_net_amount: doctorNet,
+          } : {}),
           paid_at: txData.paid_at || null,
           payment_method: txData.channel || null,
           fee_amount: txData.fees ? txData.fees / 100 : null,
