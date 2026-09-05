@@ -4354,6 +4354,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           bank_name: string | null
+          bhf_number: string | null
           created_at: string
           email: string
           id: string
@@ -4365,6 +4366,7 @@ export type Database = {
           owner_id: string
           paystack_subaccount_code: string | null
           phone: string
+          photo_urls: string[]
           practice_name: string
           practice_number: string
           rejection_reason: string | null
@@ -4378,6 +4380,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           bank_name?: string | null
+          bhf_number?: string | null
           created_at?: string
           email: string
           id?: string
@@ -4389,6 +4392,7 @@ export type Database = {
           owner_id: string
           paystack_subaccount_code?: string | null
           phone: string
+          photo_urls?: string[]
           practice_name: string
           practice_number: string
           rejection_reason?: string | null
@@ -4402,6 +4406,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           bank_name?: string | null
+          bhf_number?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -4413,6 +4418,7 @@ export type Database = {
           owner_id?: string
           paystack_subaccount_code?: string | null
           phone?: string
+          photo_urls?: string[]
           practice_name?: string
           practice_number?: string
           rejection_reason?: string | null
