@@ -1,11 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface PlatformFeeTier {
+  /** Upper bound (exclusive). null = no upper bound. */
+  max_amount: number | null;
+  fee: number;
+}
+
 export interface FeeSettings {
   id: string;
   name: string;
   description?: string | null;
   is_default: boolean;
   is_active: boolean;
+  platform_fee_mode?: "percent" | "tiered";
+  platform_fee_tiers?: PlatformFeeTier[] | null;
   platform_fee_percent: number;
   processing_fee_percent: number;
   processing_fee_fixed: number;
