@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
@@ -28,7 +28,7 @@ const Doctors = () => {
   const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
-  const [selectedCountry, setSelectedCountry] = useState("all");
+  const [locationQuery, setLocationQuery] = useState("");
   const [sortBy, setSortBy] = useState("earliest");
   const [availableOnly, setAvailableOnly] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,48 +36,72 @@ const Doctors = () => {
   const [bookAt, setBookAt] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [docRes, specRes, availRes] = await Promise.all([
-        supabase
-          .from("public_doctors" as any)
-          .select("*, specialty:specialty_id(name, icon)")
-          .order("rating", { ascending: false }),
-        supabase.from("specialties").select("*").order("name"),
-        supabase.rpc("list_public_doctor_availability" as any),
-      ]);
-      const availMap = new Map<string, { is_available_now: boolean; next_available_at: string | null }>();
-      if (availRes.data) {
-        (availRes.data as any[]).forEach((r) =>
-          availMap.set(r.doctor_id, {
-            is_available_now: !!r.is_available_now,
-            next_available_at: r.next_available_at,
-          })
-        );
-      }
-      if (docRes.data) {
-        const mapped = (docRes.data as any[]).map((d) => {
-          const a = availMap.get(d.profile_id);
-          return {
-            ...d,
-            // Override the manual flag with the real-time, calendar-derived value
-            is_available: a?.is_available_now ?? false,
-            next_available_at: a?.next_available_at ?? null,
-            profile: { full_name: d.full_name, avatar_url: d.avatar_url, city: d.city, country: d.country },
-          };
-        });
-        setDoctors(mapped as Doctor[]);
-      }
-      if (specRes.data) setSpecialties(specRes.data);
-      setLoading(false);
-    };
-    fetchData();
+  const locationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchDoctors = useCallback(async (location?: string) => {
+    setLoading(true);
+    const q = supabase
+      .from("public_doctors" as any)
+      .select("*, specialty:specialty_id(name, icon)")
+      .order("rating", { ascending: false });
+
+    if (location?.trim()) {
+      const term = location.trim();
+      q.or(`city.ilike.%${term}%,suburb.ilike.%${term}%`);
+    }
+
+    const [docRes, specRes, availRes] = await Promise.all([
+      q,
+      supabase.from("specialties").select("*").order("name"),
+      supabase.rpc("list_public_doctor_availability" as any),
+    ]);
+
+    const availMap = new Map<string, { is_available_now: boolean; next_available_at: string | null }>();
+    if (availRes.data) {
+      (availRes.data as any[]).forEach((r) =>
+        availMap.set(r.doctor_id, {
+          is_available_now: !!r.is_available_now,
+          next_available_at: r.next_available_at,
+        })
+      );
+    }
+    if (docRes.data) {
+      const mapped = (docRes.data as any[]).map((d) => {
+        const a = availMap.get(d.profile_id);
+        return {
+          ...d,
+          // Override the manual flag with the real-time, calendar-derived value
+          is_available: a?.is_available_now ?? false,
+          next_available_at: a?.next_available_at ?? null,
+          profile: {
+            full_name: d.full_name,
+            avatar_url: d.avatar_url,
+            city: d.city,
+            suburb: d.suburb,
+            country: d.country,
+          },
+        };
+      });
+      setDoctors(mapped as Doctor[]);
+    }
+    if (specRes.data) setSpecialties(specRes.data);
+    setLoading(false);
   }, []);
 
-  const countries = useMemo(
-    () => [...new Set(doctors.map((d) => d.profile?.country).filter(Boolean))].sort() as string[],
-    [doctors]
-  );
+  useEffect(() => {
+    fetchDoctors();
+  }, [fetchDoctors]);
+
+  // Refetch with PostgreSQL ILIKE filtering when the location query changes
+  useEffect(() => {
+    if (locationDebounceRef.current) clearTimeout(locationDebounceRef.current);
+    locationDebounceRef.current = setTimeout(() => {
+      fetchDoctors(locationQuery);
+    }, 300);
+    return () => {
+      if (locationDebounceRef.current) clearTimeout(locationDebounceRef.current);
+    };
+  }, [locationQuery, fetchDoctors]);
 
   // Handle ?book=<doctorId>&at=<iso> — used to resume booking after login
   useEffect(() => {
@@ -112,9 +136,8 @@ const Doctors = () => {
       const name = d.profile?.full_name?.toLowerCase() || "";
       const matchesSearch = name.includes(search.toLowerCase()) || (d.specialty?.name?.toLowerCase().includes(search.toLowerCase()));
       const matchesSpecialty = selectedSpecialty === "all" || d.specialty?.name === specialties.find((s) => s.id === selectedSpecialty)?.name;
-      const matchesCountry = selectedCountry === "all" || d.profile?.country === selectedCountry;
       const matchesAvailable = !availableOnly || d.is_available;
-      return matchesSearch && matchesSpecialty && matchesCountry && matchesAvailable;
+      return matchesSearch && matchesSpecialty && matchesAvailable;
     });
 
     // Sort — default is earliest genuine appointment; doctors with no slot go last
@@ -141,7 +164,7 @@ const Doctors = () => {
     });
 
     return result;
-  }, [doctors, search, selectedSpecialty, selectedCountry, sortBy, availableOnly, specialties]);
+  }, [doctors, search, selectedSpecialty, sortBy, availableOnly, specialties]);
 
   const availableNow = useMemo(() => filtered.filter((d) => d.is_available), [filtered]);
   const allOthers = useMemo(
@@ -175,10 +198,10 @@ const Doctors = () => {
         <DoctorsFilters
           search={search} onSearchChange={setSearch}
           selectedSpecialty={selectedSpecialty} onSpecialtyChange={setSelectedSpecialty}
-          selectedCountry={selectedCountry} onCountryChange={setSelectedCountry}
+          locationQuery={locationQuery} onLocationChange={setLocationQuery} onLocationClear={() => setLocationQuery("")}
           sortBy={sortBy} onSortChange={setSortBy}
           availableOnly={availableOnly} onAvailableOnlyChange={setAvailableOnly}
-          specialties={specialties} countries={countries}
+          specialties={specialties}
         />
 
         <div className="mt-8">
@@ -190,20 +213,22 @@ const Doctors = () => {
             <div className="py-20 text-center">
               <Stethoscope className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
               <p className="text-lg font-medium text-foreground">
-                {doctors.length === 0 ? "No doctors available yet" : "No doctors match your filters"}
+                {search || selectedSpecialty !== "all" || locationQuery || availableOnly
+                  ? "No doctors match your filters"
+                  : "No doctors available yet"}
               </p>
               <p className="mb-4 text-sm text-muted-foreground">
-                {doctors.length === 0
-                  ? "Please check back soon — new doctors are joining regularly."
-                  : `${doctors.length} doctor${doctors.length !== 1 ? "s are" : " is"} available. Clear your filters to see ${doctors.length !== 1 ? "them" : "them"}.`}
+                {search || selectedSpecialty !== "all" || locationQuery || availableOnly
+                  ? "Clear your filters to see all available doctors."
+                  : "Please check back soon — new doctors are joining regularly."}
               </p>
-              {doctors.length > 0 && (
+              {(search || selectedSpecialty !== "all" || locationQuery || availableOnly) && (
                 <button
                   type="button"
                   onClick={() => {
                     setSearch("");
                     setSelectedSpecialty("all");
-                    setSelectedCountry("all");
+                    setLocationQuery("");
                     setAvailableOnly(false);
                   }}
                   className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"

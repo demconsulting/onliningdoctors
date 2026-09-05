@@ -4571,6 +4571,7 @@ export type Database = {
           phone_verified: boolean
           state: string | null
           status: Database["public"]["Enums"]["user_status"]
+          suburb: string | null
           suspension_reason: string | null
           test_user: boolean
           updated_at: string
@@ -4601,6 +4602,7 @@ export type Database = {
           phone_verified?: boolean
           state?: string | null
           status?: Database["public"]["Enums"]["user_status"]
+          suburb?: string | null
           suspension_reason?: string | null
           test_user?: boolean
           updated_at?: string
@@ -4631,6 +4633,7 @@ export type Database = {
           phone_verified?: boolean
           state?: string | null
           status?: Database["public"]["Enums"]["user_status"]
+          suburb?: string | null
           suspension_reason?: string | null
           test_user?: boolean
           updated_at?: string
@@ -6730,6 +6733,7 @@ export type Database = {
           profile_id: string | null
           rating: number | null
           specialty_id: string | null
+          suburb: string | null
           title: string | null
           total_reviews: number | null
         }
