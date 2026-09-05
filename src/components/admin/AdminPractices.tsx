@@ -15,6 +15,7 @@ interface Practice {
   id: string;
   practice_name: string;
   practice_number: string;
+  bhf_number: string | null;
   owner_doctor_name: string;
   owner_hpcsa_number: string;
   email: string;
@@ -25,6 +26,7 @@ interface Practice {
   account_number: string | null;
   paystack_subaccount_code: string | null;
   is_payout_verified: boolean;
+  photo_urls: string[] | null;
   status: PracticeStatus | string;
   rejection_reason: string | null;
   approved_at: string | null;
@@ -52,7 +54,44 @@ const AdminPractices = () => {
   const [selected, setSelected] = useState<Practice | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [bankCode, setBankCode] = useState("");
+  const [creatingSubaccount, setCreatingSubaccount] = useState(false);
   const { toast } = useToast();
+
+  // Generate signed URLs for the selected practice's photos (private bucket)
+  useEffect(() => {
+    setPhotoUrls([]);
+    setBankCode("");
+    if (!selected?.photo_urls?.length) return;
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from("practice-photos")
+        .createSignedUrls(selected.photo_urls!, 3600);
+      if (!error && data) {
+        setPhotoUrls(data.map((d) => d.signedUrl).filter(Boolean));
+      }
+    })();
+  }, [selected]);
+
+  const createSubaccount = async (practice: Practice, bankCodeOverride?: string) => {
+    setCreatingSubaccount(true);
+    const { data, error } = await supabase.functions.invoke("create-practice-subaccount", {
+      body: { practice_id: practice.id, ...(bankCodeOverride ? { bank_code: bankCodeOverride } : {}) },
+    });
+    setCreatingSubaccount(false);
+    if (error || data?.error) {
+      const message = data?.error || error?.message || "Subaccount creation failed";
+      toast({ variant: "destructive", title: "Payout account not created", description: message });
+      return false;
+    }
+    toast({
+      title: data?.already_exists ? "Payout account already linked" : "Payout account created",
+      description: `Paystack subaccount ${data?.subaccount_code} linked to ${practice.practice_name}.`,
+    });
+    fetchPractices();
+    return true;
+  };
 
   const fetchPractices = async () => {
     setLoading(true);
