@@ -31,6 +31,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "payment-config": () => import("@/components/admin/AdminPaymentConfig"),
   "payments": () => import("@/components/admin/AdminPayments"),
   "payouts": () => import("@/components/admin/AdminPayouts"),
+  "fee-history": () => import("@/components/admin/AdminFeeHistory"),
   "ai-assistant": () => import("@/components/admin/AdminAIAssistant"),
   "countries": () => import("@/components/admin/AdminCountries"),
   "legal-documents": () => import("@/components/admin/AdminLegalDocuments"),
@@ -87,6 +88,7 @@ const AdminCountries = lazy(loaders["countries"]);
 const AdminLegalDocuments = lazy(loaders["legal-documents"]);
 const AdminConsultationCategories = lazy(loaders["consultation-categories"]);
 const AdminFinancialSettings = lazy(loaders["financial-settings"]);
+const AdminFeeHistory = lazy(loaders["fee-history"]);
 const AdminEmailTest = lazy(loaders["email-test"]);
 const AdminFoundingDoctors = lazy(loaders["founding-doctors"]);
 const AdminDoctorOnboarding = lazy(loaders["doctor-onboarding"]);
@@ -177,6 +179,7 @@ const AdminDashboard = () => {
       case "financial-settings": return <AdminFinancialSettings />;
       case "payments": return <AdminPayments />;
       case "payouts": return <AdminPayouts />;
+      case "fee-history": return <AdminFeeHistory />;
       case "countries": return <AdminCountries />;
       case "legal-documents": return <AdminLegalDocuments />;
       case "ai-assistant": return <AdminAIAssistant />;
