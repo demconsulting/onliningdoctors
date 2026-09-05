@@ -57,6 +57,7 @@ const AdminPractices = () => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [bankCode, setBankCode] = useState("");
+  const [bank, setBank] = useState({ bank_name: "", account_name: "", account_number: "" });
   const [creatingSubaccount, setCreatingSubaccount] = useState(false);
   const { toast } = useToast();
 
