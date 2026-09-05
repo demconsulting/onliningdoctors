@@ -45,7 +45,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
   const { data: { user } } = await supabase.auth.getUser();
   if (user && (!doctorProfileId || doctorProfileId === user.id)) {
     const { data } = await (supabase as any).rpc("get_my_fee_settings");
-    if (data) return data as FeeSettings;
+    if (data) return data as unknown as FeeSettings;
   }
   // Admin/server contexts (or other doctors) can still read directly when RLS permits.
   if (doctorProfileId) {
@@ -63,7 +63,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
         .eq("id", overrideId)
         .eq("is_active", true)
         .maybeSingle();
-      if (data) return data as FeeSettings;
+      if (data) return data as unknown as FeeSettings;
     }
   }
   const { data } = await supabase
@@ -72,7 +72,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
     .eq("is_default", true)
     .eq("is_active", true)
     .maybeSingle();
-  return (data as FeeSettings) || null;
+  return (data as unknown as FeeSettings) || null;
 }
 
 /** Normalise the tier list stored on a plan. */
