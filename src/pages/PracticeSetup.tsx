@@ -16,12 +16,15 @@ import type { User } from "@supabase/supabase-js";
 const schema = z.object({
   practice_name: z.string().trim().min(2).max(200),
   practice_number: z.string().trim().min(3).max(50),
+  bhf_number: z.string().trim().max(50).optional().or(z.literal("")),
   owner_doctor_name: z.string().trim().min(2).max(200),
   owner_hpcsa_number: z.string().trim().min(2).max(50),
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(3).max(50),
   address: z.string().trim().min(3).max(500),
 });
+
+const MAX_PHOTOS = 4;
 
 const PracticeSetup = () => {
   const navigate = useNavigate();
@@ -34,12 +37,14 @@ const PracticeSetup = () => {
   const [form, setForm] = useState({
     practice_name: "",
     practice_number: "",
+    bhf_number: "",
     owner_doctor_name: "",
     owner_hpcsa_number: "",
     email: "",
     phone: "",
     address: "",
   });
+  const [photos, setPhotos] = useState<File[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -74,15 +79,34 @@ const PracticeSetup = () => {
     }
     setSubmitting(true);
     const d = parsed.data;
+
+    // Upload verification photos first
+    const photoUrls: string[] = [];
+    for (const file of photos.slice(0, MAX_PHOTOS)) {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("practice-photos")
+        .upload(path, file, { contentType: file.type });
+      if (uploadError) {
+        setSubmitting(false);
+        toast.error(`Photo upload failed: ${uploadError.message}`);
+        return;
+      }
+      photoUrls.push(path);
+    }
+
     const { error } = await supabase.from("practices").insert([{
       practice_name: d.practice_name,
       practice_number: d.practice_number,
+      bhf_number: d.bhf_number || null,
       owner_doctor_name: d.owner_doctor_name,
       owner_hpcsa_number: d.owner_hpcsa_number,
       email: d.email,
       phone: d.phone,
       address: d.address,
       owner_id: user.id,
+      photo_urls: photoUrls,
     }]);
     setSubmitting(false);
     if (error) {
@@ -138,6 +162,7 @@ const PracticeSetup = () => {
               {([
                 ["practice_name", "Practice name"],
                 ["practice_number", "Practice number"],
+                ["bhf_number", "BHF number (optional)"],
                 ["owner_doctor_name", "Owner doctor name"],
                 ["owner_hpcsa_number", "Owner HPCSA number"],
                 ["email", "Email"],
@@ -150,13 +175,41 @@ const PracticeSetup = () => {
                     type={k === "email" ? "email" : "text"}
                     value={form[k]}
                     onChange={(e) => setForm({ ...form, [k]: e.target.value })}
-                    required
+                    required={k !== "bhf_number"}
                   />
                 </div>
               ))}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="photos">Verification photos (up to {MAX_PHOTOS})</Label>
+                <Input
+                  id="photos"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []).slice(0, MAX_PHOTOS);
+                    setPhotos(files);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Photos of the practice or registration documents help admins verify your practice faster.
+                </p>
+                {photos.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {photos.map((f) => (
+                      <img
+                        key={f.name + f.size}
+                        src={URL.createObjectURL(f)}
+                        alt={f.name}
+                        className="h-16 w-16 rounded-md border object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <Button type="submit" disabled={submitting} className="w-full">

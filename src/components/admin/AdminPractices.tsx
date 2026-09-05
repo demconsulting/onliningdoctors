@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Check, X, Building2, MapPin, Phone, Mail, ShieldCheck, ShieldX, Eye, Landmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,7 @@ interface Practice {
   id: string;
   practice_name: string;
   practice_number: string;
+  bhf_number: string | null;
   owner_doctor_name: string;
   owner_hpcsa_number: string;
   email: string;
@@ -25,6 +27,7 @@ interface Practice {
   account_number: string | null;
   paystack_subaccount_code: string | null;
   is_payout_verified: boolean;
+  photo_urls: string[] | null;
   status: PracticeStatus | string;
   rejection_reason: string | null;
   approved_at: string | null;
@@ -52,7 +55,44 @@ const AdminPractices = () => {
   const [selected, setSelected] = useState<Practice | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [bankCode, setBankCode] = useState("");
+  const [creatingSubaccount, setCreatingSubaccount] = useState(false);
   const { toast } = useToast();
+
+  // Generate signed URLs for the selected practice's photos (private bucket)
+  useEffect(() => {
+    setPhotoUrls([]);
+    setBankCode("");
+    if (!selected?.photo_urls?.length) return;
+    (async () => {
+      const { data, error } = await supabase.storage
+        .from("practice-photos")
+        .createSignedUrls(selected.photo_urls!, 3600);
+      if (!error && data) {
+        setPhotoUrls(data.map((d) => d.signedUrl).filter(Boolean));
+      }
+    })();
+  }, [selected]);
+
+  const createSubaccount = async (practice: Practice, bankCodeOverride?: string) => {
+    setCreatingSubaccount(true);
+    const { data, error } = await supabase.functions.invoke("create-practice-subaccount", {
+      body: { practice_id: practice.id, ...(bankCodeOverride ? { bank_code: bankCodeOverride } : {}) },
+    });
+    setCreatingSubaccount(false);
+    if (error || data?.error) {
+      const message = data?.error || error?.message || "Subaccount creation failed";
+      toast({ variant: "destructive", title: "Payout account not created", description: message });
+      return false;
+    }
+    toast({
+      title: data?.already_exists ? "Payout account already linked" : "Payout account created",
+      description: `Paystack subaccount ${data?.subaccount_code} linked to ${practice.practice_name}.`,
+    });
+    fetchPractices();
+    return true;
+  };
 
   const fetchPractices = async () => {
     setLoading(true);
@@ -77,13 +117,16 @@ const AdminPractices = () => {
       _practice_id: practice.id,
       _approve: true,
     });
-    setProcessing(null);
     if (error) {
+      setProcessing(null);
       toast({ variant: "destructive", title: "Approval failed", description: error.message });
       return;
     }
     toast({ title: "Practice approved", description: `${practice.practice_name} is now approved.` });
-    fetchPractices();
+    // Automatically create the Paystack payout subaccount
+    await createSubaccount({ ...practice, status: "approved" }, bankCode || undefined);
+    setProcessing(null);
+    setSelected(null);
   };
 
   const openReject = (practice: Practice) => {
@@ -166,8 +209,8 @@ const AdminPractices = () => {
       <CardContent className="pt-0">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="text-muted-foreground block text-xs uppercase tracking-wide">Practice Number</span>
-            {practice.practice_number}
+            <span className="text-muted-foreground block text-xs uppercase tracking-wide">Practice / BHF Number</span>
+            {practice.practice_number}{practice.bhf_number ? ` — BHF ${practice.bhf_number}` : ""}
           </div>
           <div>
             <span className="text-muted-foreground block text-xs uppercase tracking-wide">Owner / HPCSA</span>
@@ -254,6 +297,10 @@ const AdminPractices = () => {
                 <div className="mt-1">{selected && statusBadge(selected.status)}</div>
               </div>
               <div>
+                <Label className="text-muted-foreground text-xs uppercase">BHF Number</Label>
+                <p>{selected?.bhf_number || "—"}</p>
+              </div>
+              <div>
                 <Label className="text-muted-foreground text-xs uppercase">Owner</Label>
                 <p>{selected?.owner_doctor_name}</p>
               </div>
@@ -292,6 +339,47 @@ const AdminPractices = () => {
                 <p className="font-mono text-xs">{selected?.paystack_subaccount_code || "—"}</p>
               </div>
             </div>
+            {selected && (selected.photo_urls?.length ?? 0) > 0 && (
+              <div>
+                <Label className="text-muted-foreground text-xs uppercase">Verification Photos</Label>
+                {photoUrls.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {photoUrls.map((url) => (
+                      <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt="Practice verification" className="h-20 w-20 rounded-md border object-cover hover:opacity-80 transition-opacity" />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-1 text-muted-foreground flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Loading photos…</p>
+                )}
+              </div>
+            )}
+            {selected?.status === "approved" && !selected?.paystack_subaccount_code && (
+              <div className="rounded-md border p-3 space-y-2">
+                <p className="font-medium">Payout account not created yet</p>
+                <p className="text-muted-foreground text-xs">
+                  The bank code is matched automatically from the bank name. If matching fails, paste the Paystack bank code below and retry.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Bank code (optional)"
+                    value={bankCode}
+                    onChange={(e) => setBankCode(e.target.value)}
+                    className="h-8 text-sm max-w-[180px]"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={creatingSubaccount}
+                    onClick={() => selected && createSubaccount(selected, bankCode || undefined)}
+                  >
+                    {creatingSubaccount ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Landmark className="h-3.5 w-3.5 mr-1" />}
+                    Create payout account
+                  </Button>
+                </div>
+              </div>
+            )}
             {selected?.rejection_reason && (
               <div className="text-destructive bg-destructive/10 rounded-md p-3">
                 <strong>Rejection reason:</strong> {selected.rejection_reason}
