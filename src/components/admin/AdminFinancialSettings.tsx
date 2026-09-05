@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Plus, Trash2, Star, DollarSign, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { calculateFees, type FeeSettings } from "@/lib/feeCalculator";
+import { calculateFees, getPlatformFeeTiers, type FeeSettings, type PlatformFeeTier } from "@/lib/feeCalculator";
 import RecalcProcessingFees from "./RecalcProcessingFees";
 
 const BLANK: Omit<FeeSettings, "id"> = {
@@ -20,9 +20,15 @@ const BLANK: Omit<FeeSettings, "id"> = {
   description: "",
   is_default: false,
   is_active: true,
+  platform_fee_mode: "tiered",
+  platform_fee_tiers: [
+    { max_amount: 350, fee: 65 },
+    { max_amount: 700, fee: 75 },
+    { max_amount: null, fee: 90 },
+  ],
   platform_fee_percent: 10,
-  processing_fee_percent: 0,
-  processing_fee_fixed: 5.5,
+  processing_fee_percent: 3,
+  processing_fee_fixed: 0,
   fixed_transaction_fee: 0,
   vat_enabled: false,
   vat_percent: 0,
@@ -70,7 +76,7 @@ const AdminFinancialSettings = () => {
     if (editing.is_default) {
       await supabase.from("platform_fee_settings").update({ is_default: false }).neq("id", (editing as any).id || "00000000-0000-0000-0000-000000000000");
     }
-    const payload = { ...editing };
+    const payload = { ...editing } as any;
     let error;
     if ((editing as any).id) {
       ({ error } = await supabase.from("platform_fee_settings").update(payload).eq("id", (editing as any).id));
@@ -121,7 +127,7 @@ const AdminFinancialSettings = () => {
                     </div>
                     {p.description && <p className="text-sm text-muted-foreground mt-1">{p.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                      <span>Platform <strong className="text-foreground">{p.platform_fee_percent}%</strong></span>
+                      <span>Platform <strong className="text-foreground">{p.platform_fee_mode === "tiered" ? getPlatformFeeTiers(p).map(t => `R${t.fee}${t.max_amount === null ? "+" : ` <R${t.max_amount}`}`).join(" · ") : `${p.platform_fee_percent}%`}</strong></span>
                       <span>Processing <strong className="text-foreground">{p.processing_fee_percent}% + {p.processing_fee_fixed}</strong></span>
                       {p.fixed_transaction_fee > 0 && <span>Fixed <strong className="text-foreground">{p.fixed_transaction_fee}</strong></span>}
                       {p.vat_enabled && <span>VAT <strong className="text-foreground">{p.vat_percent}%</strong></span>}
@@ -202,12 +208,68 @@ const AdminFinancialSettings = () => {
                 <Input value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} placeholder="Optional" />
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-border p-3 space-y-3">
                 <div>
-                  <Label>Platform fee %</Label>
-                  <Input type="number" min={0} max={100} step={0.1} value={editing.platform_fee_percent}
-                    onChange={(e) => setEditing({ ...editing, platform_fee_percent: parseFloat(e.target.value) || 0 })} />
+                  <Label>Platform fee type</Label>
+                  <Select
+                    value={editing.platform_fee_mode || "percent"}
+                    onValueChange={(v) => setEditing({ ...editing, platform_fee_mode: v as "percent" | "tiered" })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tiered">Fixed amount per consultation price band</SelectItem>
+                      <SelectItem value="percent">Percentage of consultation fee</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {(editing.platform_fee_mode || "percent") === "tiered" ? (
+                  <div className="space-y-2">
+                    <Label>Price bands</Label>
+                    {getPlatformFeeTiers(editing).map((t, i, arr) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-28 shrink-0">
+                          {t.max_amount === null ? "R" + (arr[i - 1]?.max_amount ?? 0) + " and above" : "Under R"}
+                        </span>
+                        {t.max_amount !== null && (
+                          <Input type="number" min={0} step={1} value={t.max_amount}
+                            onChange={(e) => {
+                              const next = getPlatformFeeTiers(editing);
+                              next[i] = { ...next[i], max_amount: parseFloat(e.target.value) || 0 };
+                              setEditing({ ...editing, platform_fee_tiers: next });
+                            }} />
+                        )}
+                        <span className="text-xs text-muted-foreground shrink-0">fee R</span>
+                        <Input type="number" min={0} step={1} value={t.fee}
+                          onChange={(e) => {
+                            const next = getPlatformFeeTiers(editing);
+                            next[i] = { ...next[i], fee: parseFloat(e.target.value) || 0 };
+                            setEditing({ ...editing, platform_fee_tiers: next });
+                          }} />
+                        <Button variant="ghost" size="sm" onClick={() => {
+                          const next = getPlatformFeeTiers(editing).filter((_, j) => j !== i);
+                          setEditing({ ...editing, platform_fee_tiers: next });
+                        }}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const next: PlatformFeeTier[] = getPlatformFeeTiers(editing);
+                      const insertAt = Math.max(0, next.length - 1);
+                      next.splice(insertAt, 0, { max_amount: 0, fee: 0 });
+                      setEditing({ ...editing, platform_fee_tiers: next });
+                    }}><Plus className="mr-2 h-4 w-4" /> Add band</Button>
+                    <p className="text-xs text-muted-foreground">Bands are checked in order; the last band with no limit applies to everything above.</p>
+                  </div>
+                ) : (
+                  <div className="sm:max-w-[200px]">
+                    <Label>Platform fee %</Label>
+                    <Input type="number" min={0} max={100} step={0.1} value={editing.platform_fee_percent}
+                      onChange={(e) => setEditing({ ...editing, platform_fee_percent: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div>
                   <Label>Processing fee %</Label>
                   <Input type="number" min={0} max={100} step={0.1} value={editing.processing_fee_percent}

@@ -1,11 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface PlatformFeeTier {
+  /** Upper bound (exclusive). null = no upper bound. */
+  max_amount: number | null;
+  fee: number;
+}
+
 export interface FeeSettings {
   id: string;
   name: string;
   description?: string | null;
   is_default: boolean;
   is_active: boolean;
+  platform_fee_mode?: "percent" | "tiered";
+  platform_fee_tiers?: any;
   platform_fee_percent: number;
   processing_fee_percent: number;
   processing_fee_fixed: number;
@@ -37,7 +45,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
   const { data: { user } } = await supabase.auth.getUser();
   if (user && (!doctorProfileId || doctorProfileId === user.id)) {
     const { data } = await (supabase as any).rpc("get_my_fee_settings");
-    if (data) return data as FeeSettings;
+    if (data) return data as unknown as FeeSettings;
   }
   // Admin/server contexts (or other doctors) can still read directly when RLS permits.
   if (doctorProfileId) {
@@ -55,7 +63,7 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
         .eq("id", overrideId)
         .eq("is_active", true)
         .maybeSingle();
-      if (data) return data as FeeSettings;
+      if (data) return data as unknown as FeeSettings;
     }
   }
   const { data } = await supabase
@@ -64,12 +72,34 @@ export async function resolveFeeSettings(doctorProfileId?: string | null): Promi
     .eq("is_default", true)
     .eq("is_active", true)
     .maybeSingle();
-  return (data as FeeSettings) || null;
+  return (data as unknown as FeeSettings) || null;
+}
+
+/** Normalise the tier list stored on a plan. */
+export function getPlatformFeeTiers(settings: Pick<FeeSettings, "platform_fee_tiers">): PlatformFeeTier[] {
+  const raw = settings.platform_fee_tiers;
+  if (!Array.isArray(raw)) return [];
+  return raw.map((t: any) => ({
+    max_amount: t?.max_amount === null || t?.max_amount === undefined || t?.max_amount === "" ? null : Number(t.max_amount),
+    fee: Number(t?.fee) || 0,
+  }));
+}
+
+/** Platform fee for a consultation amount — fixed bands when the plan is tiered, else a percentage. */
+export function computePlatformFee(gross: number, settings: FeeSettings): number {
+  if (settings.platform_fee_mode === "tiered") {
+    const tiers = getPlatformFeeTiers(settings);
+    for (const t of tiers) {
+      if (t.max_amount === null || gross < t.max_amount) return round(t.fee);
+    }
+    return 0;
+  }
+  return round(gross * (settings.platform_fee_percent / 100));
 }
 
 /** Pure calculator — given a plan and gross amount, derive breakdown. */
 export function calculateFees(gross: number, settings: FeeSettings): FeeBreakdown {
-  const platformFee = round(gross * (settings.platform_fee_percent / 100));
+  const platformFee = computePlatformFee(gross, settings);
   const processingFee = round(gross * (settings.processing_fee_percent / 100) + settings.processing_fee_fixed);
   const fixedFee = round(settings.fixed_transaction_fee || 0);
   const vat = settings.vat_enabled ? round((platformFee + processingFee + fixedFee) * (settings.vat_percent / 100)) : 0;
