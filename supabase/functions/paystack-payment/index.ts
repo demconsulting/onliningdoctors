@@ -335,6 +335,42 @@ serve(async (req) => {
 
       const reference = `pay_${appointment_id}_${Date.now()}`;
 
+      // Resolve where this consultation should settle (practice or independent doctor)
+      const { data: payoutRows } = await supabaseAdmin.rpc("get_doctor_payout_target", {
+        _doctor_id: doctor_id,
+      });
+      const payout = (Array.isArray(payoutRows) ? payoutRows[0] : payoutRows) as
+        | {
+            practice_type?: string | null;
+            subaccount_code?: string | null;
+            hpcsa_number?: string | null;
+            bhf_number?: string | null;
+            practice_number?: string | null;
+            practice_name?: string | null;
+            doctor_name?: string | null;
+            is_ready?: boolean | null;
+          }
+        | null;
+
+      const customFields = [
+        { display_name: "Consultation ID", variable_name: "consultation_id", value: appointment_id },
+        ...(payout?.doctor_name
+          ? [{ display_name: "Doctor", variable_name: "doctor_name", value: payout.doctor_name }]
+          : []),
+        ...(payout?.hpcsa_number
+          ? [{ display_name: "HPCSA Number", variable_name: "hpcsa_number", value: payout.hpcsa_number }]
+          : []),
+        ...(payout?.practice_name
+          ? [{ display_name: "Practice", variable_name: "practice_name", value: payout.practice_name }]
+          : []),
+        ...(payout?.practice_number
+          ? [{ display_name: "Practice Number", variable_name: "practice_number", value: payout.practice_number }]
+          : []),
+        ...(payout?.bhf_number
+          ? [{ display_name: "BHF Number", variable_name: "bhf_number", value: payout.bhf_number }]
+          : []),
+      ];
+
       // Initialize transaction on Paystack
       const paystackRes = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
         method: "POST",
@@ -349,17 +385,23 @@ serve(async (req) => {
           reference,
           callback_url: callback_url || undefined,
           channels: (payConfig?.payment_methods as string[]) || ["card"],
+          ...(payout?.subaccount_code ? { subaccount: payout.subaccount_code } : {}),
           metadata: {
             appointment_id,
+            consultation_id: appointment_id,
             doctor_id,
+            doctor_name: payout?.doctor_name ?? null,
+            hpcsa_number: payout?.hpcsa_number ?? null,
+            practice_number: payout?.practice_number ?? null,
+            bhf_number: payout?.bhf_number ?? null,
+            practice_type: payout?.practice_type ?? null,
             patient_id: user.id,
-            custom_fields: [
-              { display_name: "Appointment ID", variable_name: "appointment_id", value: appointment_id },
-            ],
+            custom_fields: customFields,
           },
           ...(feeBearer === "patient" ? { bearer: "account" } : {}),
         }),
       });
+
 
       const paystackData = await paystackRes.json();
 
