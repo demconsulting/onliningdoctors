@@ -57,6 +57,7 @@ const AdminPractices = () => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [bankCode, setBankCode] = useState("");
+  const [bank, setBank] = useState({ bank_name: "", account_name: "", account_number: "" });
   const [creatingSubaccount, setCreatingSubaccount] = useState(false);
   const { toast } = useToast();
 
@@ -64,6 +65,11 @@ const AdminPractices = () => {
   useEffect(() => {
     setPhotoUrls([]);
     setBankCode("");
+    setBank({
+      bank_name: selected?.bank_name ?? "",
+      account_name: selected?.account_name ?? "",
+      account_number: selected?.account_number ?? "",
+    });
     if (!selected?.photo_urls?.length) return;
     (async () => {
       const { data, error } = await supabase.storage
@@ -76,9 +82,26 @@ const AdminPractices = () => {
   }, [selected]);
 
   const createSubaccount = async (practice: Practice, bankCodeOverride?: string) => {
+    const bankDetails = {
+      bank_name: bank.bank_name.trim() || practice.bank_name || "",
+      account_name: bank.account_name.trim() || practice.account_name || "",
+      account_number: bank.account_number.trim() || practice.account_number || "",
+    };
+    if (!bankDetails.bank_name || !bankDetails.account_name || !bankDetails.account_number) {
+      toast({
+        variant: "destructive",
+        title: "Bank details missing",
+        description: "Enter the bank name, account holder name and account number for this practice, then create the payout account.",
+      });
+      return false;
+    }
     setCreatingSubaccount(true);
     const { data, error } = await supabase.functions.invoke("create-practice-subaccount", {
-      body: { practice_id: practice.id, ...(bankCodeOverride ? { bank_code: bankCodeOverride } : {}) },
+      body: {
+        practice_id: practice.id,
+        ...bankDetails,
+        ...(bankCodeOverride ? { bank_code: bankCodeOverride } : {}),
+      },
     });
     setCreatingSubaccount(false);
     if (error || data?.error) {
@@ -324,15 +347,30 @@ const AdminPractices = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Bank Name</Label>
-                <p>{selected?.bank_name || "—"}</p>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="e.g. First National Bank"
+                  value={bank.bank_name}
+                  onChange={(e) => setBank({ ...bank, bank_name: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Account Name</Label>
-                <p>{selected?.account_name || "—"}</p>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Account holder name"
+                  value={bank.account_name}
+                  onChange={(e) => setBank({ ...bank, account_name: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Account Number</Label>
-                <p>{selected?.account_number || "—"}</p>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Account number"
+                  value={bank.account_number}
+                  onChange={(e) => setBank({ ...bank, account_number: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Paystack Subaccount</Label>

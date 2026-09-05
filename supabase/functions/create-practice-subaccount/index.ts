@@ -52,6 +52,12 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const practiceId = typeof body.practice_id === "string" ? body.practice_id : null;
     const bankCodeOverride = typeof body.bank_code === "string" ? body.bank_code.trim() : null;
+    const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+    const bankInput = {
+      bank_name: str(body.bank_name),
+      account_name: str(body.account_name),
+      account_number: str(body.account_number),
+    };
 
     if (!practiceId) {
       return new Response(JSON.stringify({ error: "practice_id is required" }), {
@@ -90,11 +96,27 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (!practice.bank_name || !practice.account_number || !practice.account_name) {
-      return new Response(JSON.stringify({ error: "Practice bank details are incomplete" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Admin may supply/patch missing bank details with the request
+    const merged = {
+      bank_name: bankInput.bank_name ?? practice.bank_name,
+      account_name: bankInput.account_name ?? practice.account_name,
+      account_number: bankInput.account_number ?? practice.account_number,
+    };
+
+    if (!merged.bank_name || !merged.account_number || !merged.account_name) {
+      return new Response(JSON.stringify({
+        error: "Practice bank details are incomplete. Add the bank name, account holder name and account number for this practice, then retry.",
+        needs_bank_details: true,
+        missing: Object.entries(merged).filter(([, v]) => !v).map(([k]) => k),
+      }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    if (bankInput.bank_name || bankInput.account_name || bankInput.account_number) {
+      await serviceClient.from("practices").update({ ...merged, updated_at: new Date().toISOString() }).eq("id", practiceId);
+    }
+    practice.bank_name = merged.bank_name;
+    practice.account_name = merged.account_name;
+    practice.account_number = merged.account_number;
 
     // Resolve the Paystack secret for the current mode (same logic as paystack-payment)
     const { data: configRow } = await serviceClient

@@ -22,6 +22,9 @@ const schema = z.object({
   email: z.string().trim().email().max(255),
   phone: z.string().trim().min(3).max(50),
   address: z.string().trim().min(3).max(500),
+  bank_name: z.string().trim().min(2).max(100),
+  account_name: z.string().trim().min(2).max(200),
+  account_number: z.string().trim().min(5).max(30),
 });
 
 const MAX_PHOTOS = 4;
@@ -43,6 +46,9 @@ const PracticeSetup = () => {
     email: "",
     phone: "",
     address: "",
+    bank_name: "",
+    account_name: "",
+    account_number: "",
   });
   const [photos, setPhotos] = useState<File[]>([]);
 
@@ -105,6 +111,9 @@ const PracticeSetup = () => {
       email: d.email,
       phone: d.phone,
       address: d.address,
+      bank_name: d.bank_name,
+      account_name: d.account_name,
+      account_number: d.account_number,
       owner_id: user.id,
       photo_urls: photoUrls,
     }]);
@@ -167,6 +176,9 @@ const PracticeSetup = () => {
                 ["owner_hpcsa_number", "Owner HPCSA number"],
                 ["email", "Email"],
                 ["phone", "Phone number"],
+                ["bank_name", "Bank name"],
+                ["account_name", "Account holder name"],
+                ["account_number", "Account number"],
               ] as const).map(([k, label]) => (
                 <div key={k} className="space-y-2">
                   <Label htmlFor={k}>{label}</Label>
