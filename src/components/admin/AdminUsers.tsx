@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye, FlaskConical } from "lucide-react";
+import { Loader2, Users, KeyRound, Trash2, ShieldBan, ShieldCheck, UserCog, Archive, PowerOff, Eye, FlaskConical, Crown, Building2 } from "lucide-react";
 import ImpersonateDialog from "@/components/admin/ImpersonateDialog";
 import UserActionDialog, { type UserAction } from "@/components/admin/UserActionDialog";
 import TestDeleteDialog from "@/components/admin/TestDeleteDialog";
@@ -51,6 +51,7 @@ const AdminUsers = () => {
   const [actionTarget, setActionTarget] = useState<{ userId: string; name: string; action: UserAction } | null>(null);
   const [viewTarget, setViewTarget] = useState<any | null>(null);
   const [testDeleteTarget, setTestDeleteTarget] = useState<{ userId: string; name: string; isTestUser: boolean } | null>(null);
+  const [practiceNames, setPracticeNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const canImpersonate = currentUserRoles.some((r) => IMPERSONATOR_ROLES.has(r));
   const canDestructive = canImpersonate; // platform_admin or super_admin
@@ -60,11 +61,17 @@ const AdminUsers = () => {
     const [profilesRes, rolesRes, doctorsRes] = await Promise.all([
       supabase.from("profiles").select(PROFILE_COLUMNS).order("created_at", { ascending: false }),
       supabase.from("user_roles").select("*"),
-      supabase.from("doctors").select("id, profile_id, is_suspended, suspension_reason"),
+      supabase.from("doctors").select("id, profile_id, is_suspended, suspension_reason, practice_type, practice_id, practice_approval_status, license_number, bhf_number, is_founding_doctor, paystack_subaccount_code"),
     ]);
     if (profilesRes.data) setProfiles(profilesRes.data);
     if (rolesRes.data) setRoles(rolesRes.data);
     if (doctorsRes.data) setDoctors(doctorsRes.data);
+
+    const practiceIds = [...new Set((doctorsRes.data ?? []).map((d: any) => d.practice_id).filter(Boolean))];
+    if (practiceIds.length) {
+      const { data: pracs } = await supabase.from("practices").select("id, practice_name").in("id", practiceIds);
+      setPracticeNames(Object.fromEntries((pracs ?? []).map((p: any) => [p.id, p.practice_name])));
+    }
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
