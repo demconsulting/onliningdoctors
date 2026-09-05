@@ -76,9 +76,26 @@ const AdminPractices = () => {
   }, [selected]);
 
   const createSubaccount = async (practice: Practice, bankCodeOverride?: string) => {
+    const bankDetails = {
+      bank_name: bank.bank_name.trim() || practice.bank_name || "",
+      account_name: bank.account_name.trim() || practice.account_name || "",
+      account_number: bank.account_number.trim() || practice.account_number || "",
+    };
+    if (!bankDetails.bank_name || !bankDetails.account_name || !bankDetails.account_number) {
+      toast({
+        variant: "destructive",
+        title: "Bank details missing",
+        description: "Enter the bank name, account holder name and account number for this practice, then create the payout account.",
+      });
+      return false;
+    }
     setCreatingSubaccount(true);
     const { data, error } = await supabase.functions.invoke("create-practice-subaccount", {
-      body: { practice_id: practice.id, ...(bankCodeOverride ? { bank_code: bankCodeOverride } : {}) },
+      body: {
+        practice_id: practice.id,
+        ...bankDetails,
+        ...(bankCodeOverride ? { bank_code: bankCodeOverride } : {}),
+      },
     });
     setCreatingSubaccount(false);
     if (error || data?.error) {
