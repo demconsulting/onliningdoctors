@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import { getCountries } from "@/data/locations";
 import logoSrc from "@/assets/logo.png";
+import { checkDoctorIdentity, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/doctorIdentity";
 
 const DoctorOnboarding = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const DoctorOnboarding = () => {
   const [title, setTitle] = useState("Dr.");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [country, setCountry] = useState("South Africa");
+  const [hpcsaError, setHpcsaError] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -48,6 +50,15 @@ const DoctorOnboarding = () => {
       return;
     }
     setSubmitting(true);
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const identity = await checkDoctorIdentity(currentUser?.email, licenseNumber, currentUser?.id ?? null);
+    if (identity.emailTaken || identity.hpcsaTaken) {
+      setSubmitting(false);
+      setHpcsaError(true);
+      toast({ variant: "destructive", title: DUPLICATE_IDENTITY_MESSAGE });
+      return;
+    }
+    setHpcsaError(false);
     const { error } = await supabase.rpc("complete_doctor_signup", {
       _license_number: licenseNumber.trim(),
       _title: title,
@@ -111,6 +122,7 @@ const DoctorOnboarding = () => {
               <div className="space-y-2">
                 <Label htmlFor="license">HPCSA Registration Number <span className="text-destructive">*</span></Label>
                 <Input id="license" placeholder="e.g. MP-0612345" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
+                {hpcsaError && <p className="text-xs font-medium text-destructive">{DUPLICATE_IDENTITY_MESSAGE}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">Country of Operation <span className="text-destructive">*</span></Label>

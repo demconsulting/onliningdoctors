@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
 import GoogleAuthButton from "@/components/auth/GoogleAuthButton";
 import { getCountries } from "@/data/locations";
+import { checkDoctorIdentity, DUPLICATE_IDENTITY_MESSAGE } from "@/lib/doctorIdentity";
 
 const DoctorSignup = () => {
   const [fullName, setFullName] = useState("");
@@ -23,6 +24,7 @@ const DoctorSignup = () => {
   const [country, setCountry] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [identityError, setIdentityError] = useState<{ email: boolean; hpcsa: boolean } | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,6 +39,14 @@ const DoctorSignup = () => {
       return;
     }
     setLoading(true);
+    const identity = await checkDoctorIdentity(email, licenseNumber, null);
+    if (identity.emailTaken || identity.hpcsaTaken) {
+      setIdentityError({ email: identity.emailTaken, hpcsa: identity.hpcsaTaken });
+      setLoading(false);
+      toast({ variant: "destructive", title: DUPLICATE_IDENTITY_MESSAGE });
+      return;
+    }
+    setIdentityError(null);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -99,7 +109,10 @@ const DoctorSignup = () => {
               <div className="space-y-2">
                 <Label htmlFor="license">HPCSA Registration Number</Label>
                 <Input id="license" placeholder="e.g. MP-0612345" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
-                <p className="text-xs text-muted-foreground">Verified with the Health Professions Council of South Africa (HPCSA).</p>
+                <p className="text-xs text-muted-foreground">Verified with the Health Professions Council of South Africa (HPCSA). Required for all doctors.</p>
+                {identityError?.hpcsa && (
+                  <p className="text-xs font-medium text-destructive">{DUPLICATE_IDENTITY_MESSAGE}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="country">Country of Operation <span className="text-destructive">*</span></Label>
@@ -115,6 +128,9 @@ const DoctorSignup = () => {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                {identityError?.email && (
+                  <p className="text-xs font-medium text-destructive">{DUPLICATE_IDENTITY_MESSAGE}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>

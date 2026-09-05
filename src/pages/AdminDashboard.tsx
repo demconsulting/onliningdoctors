@@ -49,7 +49,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "recruitment-crm": () => import("@/components/admin/recruitment/AdminRecruitmentCRM"),
   "referrals": () => import("@/components/admin/referrals/AdminReferralsCenter"),
   "patient-id-verification": () => import("@/components/admin/AdminPatientDocuments"),
-  "practices": () => import("@/components/admin/AdminPractices"),
+  "practices": () => import("@/components/admin/AdminPracticesClinicians"),
   "nalavation-overview": () => import("@/components/admin/nalavation/NalavationOverview"),
   "nala-payment-config": () => import("@/components/admin/AdminPaymentConfig"),
   "nala-payments": () => import("@/components/admin/nalavation/NalavationPayments"),
