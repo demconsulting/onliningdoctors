@@ -125,6 +125,26 @@ const requestStatusToStatus = (status: string | null | undefined): DigitalPracti
   }
 };
 
+/** A plan selected/activated on Nalavation is recorded as a service_subscriptions row. */
+const subscriptionStatusToStatus = (status: string | null | undefined): DigitalPracticeStatus | null => {
+  switch ((status || "").toLowerCase()) {
+    case "active":
+    case "trialing":
+      return "Live";
+    case "pending":
+    case "past_due":
+    case "unpaid":
+      return "Awaiting Payment";
+    case "suspended":
+      return "Suspended";
+    case "cancelled":
+    case "canceled":
+      return "Cancelled";
+    default:
+      return null;
+  }
+};
+
 const DoctorPracticeServices = ({ user }: Props) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
