@@ -347,15 +347,30 @@ const AdminPractices = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Bank Name</Label>
-                <p>{selected?.bank_name || "—"}</p>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="e.g. First National Bank"
+                  value={bank.bank_name}
+                  onChange={(e) => setBank({ ...bank, bank_name: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Account Name</Label>
-                <p>{selected?.account_name || "—"}</p>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Account holder name"
+                  value={bank.account_name}
+                  onChange={(e) => setBank({ ...bank, account_name: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Account Number</Label>
-                <p>{selected?.account_number || "—"}</p>
+                <Input
+                  className="h-8 text-sm"
+                  placeholder="Account number"
+                  value={bank.account_number}
+                  onChange={(e) => setBank({ ...bank, account_number: e.target.value })}
+                />
               </div>
               <div>
                 <Label className="text-muted-foreground text-xs uppercase">Paystack Subaccount</Label>
