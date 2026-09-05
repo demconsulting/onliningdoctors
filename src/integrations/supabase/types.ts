@@ -3820,6 +3820,8 @@ export type Database = {
           fee_bearer: string
           id: string
           is_active: boolean
+          merchant_id: string | null
+          merchant_key: string | null
           mode: string
           payment_methods: string[]
           payment_timing: string
@@ -3838,6 +3840,8 @@ export type Database = {
           fee_bearer?: string
           id?: string
           is_active?: boolean
+          merchant_id?: string | null
+          merchant_key?: string | null
           mode?: string
           payment_methods?: string[]
           payment_timing?: string
@@ -3856,6 +3860,8 @@ export type Database = {
           fee_bearer?: string
           id?: string
           is_active?: boolean
+          merchant_id?: string | null
+          merchant_key?: string | null
           mode?: string
           payment_methods?: string[]
           payment_timing?: string
