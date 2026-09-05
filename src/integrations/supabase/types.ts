@@ -6946,6 +6946,7 @@ export type Database = {
           practice_name: string
         }[]
       }
+      founding_doctor_slots: { Args: never; Returns: Json }
       generate_referral_code: { Args: never; Returns: string }
       get_consultation_summary: {
         Args: { _appointment_id: string }
