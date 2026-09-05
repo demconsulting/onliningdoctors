@@ -3962,7 +3962,9 @@ export type Database = {
           minimum_payout: number
           name: string
           payout_schedule: string
+          platform_fee_mode: string
           platform_fee_percent: number
+          platform_fee_tiers: Json
           processing_fee_fixed: number
           processing_fee_percent: number
           updated_at: string
@@ -3981,7 +3983,9 @@ export type Database = {
           minimum_payout?: number
           name: string
           payout_schedule?: string
+          platform_fee_mode?: string
           platform_fee_percent?: number
+          platform_fee_tiers?: Json
           processing_fee_fixed?: number
           processing_fee_percent?: number
           updated_at?: string
@@ -4000,7 +4004,9 @@ export type Database = {
           minimum_payout?: number
           name?: string
           payout_schedule?: string
+          platform_fee_mode?: string
           platform_fee_percent?: number
+          platform_fee_tiers?: Json
           processing_fee_fixed?: number
           processing_fee_percent?: number
           updated_at?: string
@@ -6780,6 +6786,10 @@ export type Database = {
         Args: { _country: string; _license_number: string; _title: string }
         Returns: undefined
       }
+      compute_platform_fee: {
+        Args: { _amount: number; _settings_id?: string }
+        Returns: number
+      }
       compute_referral_reward_amount: {
         Args: {
           _basis: Database["public"]["Enums"]["referral_reward_basis"]
@@ -6855,7 +6865,9 @@ export type Database = {
           minimum_payout: number
           name: string
           payout_schedule: string
+          platform_fee_mode: string
           platform_fee_percent: number
+          platform_fee_tiers: Json
           processing_fee_fixed: number
           processing_fee_percent: number
           updated_at: string
