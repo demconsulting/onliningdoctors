@@ -179,9 +179,7 @@ const AdminDoctorVerification = () => {
     fetchDoctors();
   };
 
-  const updatePaymentMethod = async (doctorId: string, value: "medical_aid_only" | "card_only" | "both") => {
-    setUpdating(doctorId);
-    const toggleFounding = async (d: DoctorRow, next: boolean) => {
+  const toggleFounding = async (d: DoctorRow, next: boolean) => {
     setUpdating(d.id);
     const { error } = await supabase
       .from("doctors")
@@ -197,7 +195,9 @@ const AdminDoctorVerification = () => {
     toast({ title: next ? "Founding Doctor assigned" : "Founding Doctor status removed" });
   };
 
-  const { error } = await supabase
+  const updatePaymentMethod = async (doctorId: string, value: "medical_aid_only" | "card_only" | "both") => {
+    setUpdating(doctorId);
+    const { error } = await supabase
       .from("doctors")
       .update({ accepted_payment_method: value } as any)
       .eq("id", doctorId);
