@@ -28,6 +28,10 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
   const { practice, loading: practiceLoading } = usePractice(user.id);
   const hasPractice = !!practice;
   const [foundingInfo, setFoundingInfo] = useState<{ doctor: any; plan: any } | null>(null);
+  // Authoritative payout fields live on the `doctors` row (same source the admin
+  // panel and subaccount creation use) — doctor_billing only stores the extras.
+  const [isGroupMember, setIsGroupMember] = useState(false);
+  const [practiceBank, setPracticeBank] = useState<{ bank_name: string | null; account_name: string | null; account_number: string | null } | null>(null);
 
   const [billing, setBilling] = useState({
     billing_type: "individual",
