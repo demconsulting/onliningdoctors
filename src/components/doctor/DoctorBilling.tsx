@@ -28,6 +28,10 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
   const { practice, loading: practiceLoading } = usePractice(user.id);
   const hasPractice = !!practice;
   const [foundingInfo, setFoundingInfo] = useState<{ doctor: any; plan: any } | null>(null);
+  // Authoritative payout fields live on the `doctors` row (same source the admin
+  // panel and subaccount creation use) — doctor_billing only stores the extras.
+  const [isGroupMember, setIsGroupMember] = useState(false);
+  const [practiceBank, setPracticeBank] = useState<{ bank_name: string | null; account_name: string | null; account_number: string | null } | null>(null);
 
   const [billing, setBilling] = useState({
     billing_type: "individual",
@@ -53,14 +57,30 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
         .eq("doctor_id", user.id)
         .single();
 
+      // Authoritative payout bank details on the doctors row
+      const { data: docBank } = await supabase
+        .from("doctors")
+        .select("practice_type, practice_id, bank_name, account_name, account_number")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+      const db = docBank as any;
+      const groupMember = db?.practice_type === "group_member" && !!db?.practice_id;
+      setIsGroupMember(groupMember);
+      if (groupMember) {
+        const { data: pb } = await (supabase as any).rpc("get_practice_banking", { _practice_id: db.practice_id });
+        const row = Array.isArray(pb) ? pb[0] : pb;
+        setPracticeBank(row ? { bank_name: row.bank_name ?? null, account_name: row.account_name ?? null, account_number: row.account_number ?? null } : null);
+      }
+
       if (data) {
         const d = data as any;
         setIsNew(false);
         setBilling({
           billing_type: d.billing_type || "individual",
-          bank_name: d.bank_name || "",
-          account_holder_name: d.account_holder_name || "",
-          account_number: d.account_number || "",
+          // Prefer the authoritative doctors-row payout details over stale billing copies
+          bank_name: db?.bank_name || d.bank_name || "",
+          account_holder_name: db?.account_name || d.account_holder_name || "",
+          account_number: db?.account_number || d.account_number || "",
           branch_code: d.branch_code || "",
           bank_swift_code: d.bank_swift_code || "",
           account_type: d.account_type || "",
@@ -112,6 +132,20 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
     } else {
       const res = await supabase.from("doctor_billing" as any).update(payload as any).eq("doctor_id", user.id);
       error = res.error;
+    }
+
+    if (!error && !isGroupMember) {
+      // Keep the authoritative payout details on the doctors row in sync,
+      // so the admin panel and subaccount creation see the same bank details.
+      const { error: docError } = await supabase
+        .from("doctors")
+        .update({
+          bank_name: billing.bank_name || null,
+          account_name: billing.account_holder_name || null,
+          account_number: billing.account_number || null,
+        })
+        .eq("profile_id", user.id);
+      if (docError) error = docError;
     }
 
     setSaving(false);
@@ -265,51 +299,80 @@ const DoctorBilling = ({ user }: DoctorBillingProps) => {
           )}
 
           {/* Bank Details */}
-          <div className="space-y-4">
-            <h3 className="font-display font-semibold flex items-center gap-2">
-              <Landmark className="h-4 w-4 text-primary" /> Bank Account Details
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Bank Name</Label>
-                <Input value={billing.bank_name} onChange={(e) => update("bank_name", e.target.value)} placeholder="e.g. FNB, Standard Bank, Nedbank" />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Holder Name</Label>
-                <Input value={billing.account_holder_name} onChange={(e) => update("account_holder_name", e.target.value)} placeholder="Name as it appears on the account" />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Number</Label>
-                <Input value={billing.account_number} onChange={(e) => update("account_number", e.target.value)} placeholder="Your bank account number" />
-              </div>
-              <div className="space-y-2">
-                <Label>Account Type</Label>
-                <Select value={billing.account_type} onValueChange={(v) => update("account_type", v)}>
-                  <SelectTrigger><SelectValue placeholder="Select account type" /></SelectTrigger>
-                  <SelectContent>
-                    {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Branch Code</Label>
-                <Input value={billing.branch_code} onChange={(e) => update("branch_code", e.target.value)} placeholder="e.g. 250655" />
+          {isGroupMember ? (
+            <div className="space-y-4">
+              <h3 className="font-display font-semibold flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-primary" /> Payout Bank Account
+              </h3>
+              <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">Bank</span>
+                    {practiceBank?.bank_name || "—"}
+                  </div>
+                  <div>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">Account Holder</span>
+                    {practiceBank?.account_name || "—"}
+                  </div>
+                  <div>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground">Account Number</span>
+                    {practiceBank?.account_number ? `•••• ${practiceBank.account_number.slice(-4)}` : "—"}
+                  </div>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Payments settle into your practice's account. Only the practice owner can change these details in Practice settings.
+                </p>
               </div>
             </div>
-            <details className="group rounded-lg border bg-muted/30 p-3">
-              <summary className="cursor-pointer text-sm font-medium text-muted-foreground">International payouts (SWIFT)</summary>
-              <div className="mt-3 space-y-2">
-                <Label>SWIFT Code</Label>
-                <Input value={billing.bank_swift_code} onChange={(e) => update("bank_swift_code", e.target.value)} placeholder="e.g. FIRNZAJJ" />
-                <p className="text-xs text-muted-foreground">Only required if you receive international payouts.</p>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="font-display font-semibold flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-primary" /> Bank Account Details
+              </h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Bank Name</Label>
+                  <Input value={billing.bank_name} onChange={(e) => update("bank_name", e.target.value)} placeholder="e.g. FNB, Standard Bank, Nedbank" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Holder Name</Label>
+                  <Input value={billing.account_holder_name} onChange={(e) => update("account_holder_name", e.target.value)} placeholder="Name as it appears on the account" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Number</Label>
+                  <Input value={billing.account_number} onChange={(e) => update("account_number", e.target.value)} placeholder="Your bank account number" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <Select value={billing.account_type} onValueChange={(v) => update("account_type", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select account type" /></SelectTrigger>
+                    <SelectContent>
+                      {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Branch Code</Label>
+                  <Input value={billing.branch_code} onChange={(e) => update("branch_code", e.target.value)} placeholder="e.g. 250655" />
+                </div>
               </div>
-            </details>
-          </div>
+              <details className="group rounded-lg border bg-muted/30 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-muted-foreground">International payouts (SWIFT)</summary>
+                <div className="mt-3 space-y-2">
+                  <Label>SWIFT Code</Label>
+                  <Input value={billing.bank_swift_code} onChange={(e) => update("bank_swift_code", e.target.value)} placeholder="e.g. FIRNZAJJ" />
+                  <p className="text-xs text-muted-foreground">Only required if you receive international payouts.</p>
+                </div>
+              </details>
+            </div>
+          )}
 
-          <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save Billing Details
-          </Button>
+          {!isGroupMember && (
+            <Button onClick={handleSave} disabled={saving} className="gap-2 gradient-primary border-0 text-primary-foreground">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Save Billing Details
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
