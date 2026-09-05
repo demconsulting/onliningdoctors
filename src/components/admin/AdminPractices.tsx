@@ -116,13 +116,16 @@ const AdminPractices = () => {
       _practice_id: practice.id,
       _approve: true,
     });
-    setProcessing(null);
     if (error) {
+      setProcessing(null);
       toast({ variant: "destructive", title: "Approval failed", description: error.message });
       return;
     }
     toast({ title: "Practice approved", description: `${practice.practice_name} is now approved.` });
-    fetchPractices();
+    // Automatically create the Paystack payout subaccount
+    await createSubaccount({ ...practice, status: "approved" }, bankCode || undefined);
+    setProcessing(null);
+    setSelected(null);
   };
 
   const openReject = (practice: Practice) => {
@@ -205,8 +208,8 @@ const AdminPractices = () => {
       <CardContent className="pt-0">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="text-muted-foreground block text-xs uppercase tracking-wide">Practice Number</span>
-            {practice.practice_number}
+            <span className="text-muted-foreground block text-xs uppercase tracking-wide">Practice / BHF Number</span>
+            {practice.practice_number}{practice.bhf_number ? ` — BHF ${practice.bhf_number}` : ""}
           </div>
           <div>
             <span className="text-muted-foreground block text-xs uppercase tracking-wide">Owner / HPCSA</span>
