@@ -52,6 +52,8 @@ interface PaystackConfig {
   mode: "test" | "live";
   public_key_test: string;
   public_key_live: string;
+  merchant_id: string;
+  merchant_key: string;
   supported_currencies: string[];
   payment_methods: string[];
   fee_bearer: string;
@@ -64,6 +66,8 @@ const DEFAULT_CONFIG: PaystackConfig = {
   mode: "test",
   public_key_test: "",
   public_key_live: "",
+  merchant_id: "",
+  merchant_key: "",
   supported_currencies: ["ZAR"],
   payment_methods: ["card"],
   fee_bearer: "patient",
@@ -82,7 +86,10 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
 
   const isNala = context === "nalavation";
   const platformLabel = isNala ? "Nalavation" : "DoctorsOnlining";
+  const gatewayLabel = isNala ? "Payfast" : "Paystack";
+  const provider = isNala ? "payfast" : "paystack";
   const timings = isNala ? NALA_PAYMENT_TIMINGS : PAYMENT_TIMINGS;
+  const [passphrase, setPassphrase] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -91,14 +98,16 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
         .from("payment_gateway_configs")
         .select("*")
         .eq("context", context)
-        .eq("provider", "paystack")
+        .eq("provider", provider)
         .maybeSingle();
       if (data) {
         setConfig({
           mode: (data.mode as "test" | "live") ?? "test",
           public_key_test: data.public_key_test ?? "",
           public_key_live: data.public_key_live ?? "",
-          supported_currencies: data.supported_currencies ?? ["ZAR"],
+          merchant_id: (data as Record<string, unknown>).merchant_id as string ?? "",
+          merchant_key: (data as Record<string, unknown>).merchant_key as string ?? "",
+          supported_currencies: isNala ? ["ZAR"] : (data.supported_currencies ?? ["ZAR"]),
           payment_methods: data.payment_methods ?? ["card"],
           fee_bearer: data.fee_bearer ?? (isNala ? "customer" : "patient"),
           payment_timing: data.payment_timing ?? "at_booking",
@@ -118,11 +127,13 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
       .upsert(
         {
           context,
-          provider: "paystack",
+          provider,
           mode: config.mode,
           public_key_test: config.public_key_test,
           public_key_live: config.public_key_live,
-          supported_currencies: config.supported_currencies,
+          merchant_id: config.merchant_id,
+          merchant_key: config.merchant_key,
+          supported_currencies: isNala ? ["ZAR"] : config.supported_currencies,
           payment_methods: config.payment_methods,
           fee_bearer: config.fee_bearer,
           payment_timing: config.payment_timing,
@@ -172,9 +183,13 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
-            {platformLabel} Paystack Configuration
+            {platformLabel} {gatewayLabel} Configuration
           </CardTitle>
-          <CardDescription>Configure the Paystack keys and environment mode used by {platformLabel}. Each platform keeps its own gateway configuration.</CardDescription>
+          <CardDescription>
+            {isNala
+              ? "Configure the Payfast merchant credentials and environment mode used for Nalavation care plan subscriptions."
+              : `Configure the Paystack keys and environment mode used by ${platformLabel}. Each platform keeps its own gateway configuration.`}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className={`flex items-center justify-between rounded-lg border-2 p-5 transition-colors ${config.mode === "live" ? "border-destructive bg-destructive/5" : "border-green-500/50 bg-green-500/5"}`}>
@@ -219,7 +234,7 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               <div className="text-sm text-destructive">
                 <p className="font-semibold">Live mode is active</p>
-                <p>Real payments will be processed. Ensure your <strong>{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</strong> is set in Supabase Edge Function secrets.</p>
+                <p>Real payments will be processed. Ensure your <strong>{isNala ? "NALAVATION_PAYFAST_MERCHANT_ID, NALAVATION_PAYFAST_MERCHANT_KEY and NALAVATION_PAYFAST_PASSPHRASE" : "PAYSTACK_LIVE_SECRET_KEY"}</strong> are set in Supabase Edge Function secrets.</p>
               </div>
             </div>
           )}
@@ -232,8 +247,12 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {pendingMode === "live"
-                    ? "Switching to live mode will process real payments. Make sure your live Paystack secret key (PAYSTACK_LIVE_SECRET_KEY) is configured in Supabase secrets. This change takes effect after you save."
-                    : "Switching to test mode will stop processing real payments. Only test transactions will be processed using your test secret key (PAYSTACK_TEST_SECRET_KEY). This change takes effect after you save."}
+                    ? isNala
+                      ? "Switching to live mode will process real payments. Make sure your live Payfast merchant credentials (NALAVATION_PAYFAST_MERCHANT_ID, NALAVATION_PAYFAST_MERCHANT_KEY, NALAVATION_PAYFAST_PASSPHRASE) are configured in Supabase secrets. This change takes effect after you save."
+                      : "Switching to live mode will process real payments. Make sure your live Paystack secret key (PAYSTACK_LIVE_SECRET_KEY) is configured in Supabase secrets. This change takes effect after you save."
+                    : isNala
+                      ? "Switching to test mode will stop processing real payments. Only sandbox transactions will be processed using the Payfast sandbox environment. This change takes effect after you save."
+                      : "Switching to test mode will stop processing real payments. Only test transactions will be processed using your test secret key (PAYSTACK_TEST_SECRET_KEY). This change takes effect after you save."}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -255,29 +274,71 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
           </AlertDialog>
 
           <div className="space-y-3">
-            <div>
-              <Label>Test Public Key</Label>
-              <Input
-                placeholder="pk_test_..."
-                value={config.public_key_test}
-                onChange={(e) => setConfig((prev) => ({ ...prev, public_key_test: e.target.value }))}
-                className="mt-1 font-mono text-sm"
-              />
-            </div>
-            <div>
-              <Label>Live Public Key</Label>
-              <Input
-                placeholder="pk_live_..."
-                value={config.public_key_live}
-                onChange={(e) => setConfig((prev) => ({ ...prev, public_key_live: e.target.value }))}
-                className="mt-1 font-mono text-sm"
-              />
-            </div>
+            {isNala ? (
+              <>
+                <div>
+                  <Label>Merchant ID</Label>
+                  <Input
+                    placeholder="e.g. 10000100"
+                    value={config.merchant_id}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, merchant_id: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label>Merchant Key</Label>
+                  <Input
+                    placeholder="e.g. 46f0cd694581a"
+                    value={config.merchant_key}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, merchant_key: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label>Passphrase (optional)</Label>
+                  <Input
+                    type="password"
+                    placeholder="Payfast MD5 passphrase"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    className="mt-1 font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The passphrase is never stored in the database — set it as the <code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_PASSPHRASE</code> Edge Function secret below.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Label>Test Public Key</Label>
+                  <Input
+                    placeholder="pk_test_..."
+                    value={config.public_key_test}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, public_key_test: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+                <div>
+                  <Label>Live Public Key</Label>
+                  <Input
+                    placeholder="pk_live_..."
+                    value={config.public_key_live}
+                    onChange={(e) => setConfig((prev) => ({ ...prev, public_key_live: e.target.value }))}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </div>
+              </>
+            )}
             <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
               <div>
-                <Label className="text-sm font-semibold">Secret Keys</Label>
+                <Label className="text-sm font-semibold">{isNala ? "Payfast Credentials" : "Secret Keys"}</Label>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_TEST_SECRET_KEY" : "PAYSTACK_TEST_SECRET_KEY"}</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">{isNala ? "NALAVATION_PAYSTACK_LIVE_SECRET_KEY" : "PAYSTACK_LIVE_SECRET_KEY"}</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.
+                  {isNala ? (
+                    <>Payfast credentials and passphrases (<code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_MERCHANT_ID</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_MERCHANT_KEY</code>, <code className="text-xs bg-muted px-1 py-0.5 rounded">NALAVATION_PAYFAST_PASSPHRASE</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.</>
+                  ) : (
+                    <>Secret keys (<code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_TEST_SECRET_KEY</code> and <code className="text-xs bg-muted px-1 py-0.5 rounded">PAYSTACK_LIVE_SECRET_KEY</code>) are stored securely as encrypted Edge Function secrets — never in the browser or database.</>
+                  )}
                 </p>
               </div>
               <a
@@ -302,26 +363,41 @@ const AdminPaymentConfig = ({ context = "doctorsonlining" }: { context?: Payment
             <Banknote className="h-5 w-5 text-primary" />
             Supported Currencies
           </CardTitle>
-          <CardDescription>Select which currencies patients can pay in.</CardDescription>
+          <CardDescription>
+            {isNala
+              ? "Nalavation subscriptions exclusively bill in South African Rand via Payfast."
+              : "Select which currencies patients can pay in."}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {CURRENCIES.map((c) => (
-              <label
-                key={c.code}
-                className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-              >
-                <Checkbox
-                  checked={config.supported_currencies.includes(c.code)}
-                  onCheckedChange={() => toggleCurrency(c.code)}
-                />
-                <div>
-                  <span className="font-medium text-sm">{c.code}</span>
-                  <span className="text-xs text-muted-foreground ml-1">{c.name}</span>
-                </div>
-              </label>
-            ))}
-          </div>
+          {isNala ? (
+            <div className="flex items-center gap-2 rounded-lg border border-primary bg-primary/5 p-3 w-fit">
+              <Checkbox checked disabled />
+              <div>
+                <span className="font-medium text-sm">ZAR</span>
+                <span className="text-xs text-muted-foreground ml-1">South African Rand</span>
+              </div>
+              <Badge variant="secondary" className="ml-2">Locked</Badge>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {CURRENCIES.map((c) => (
+                <label
+                  key={c.code}
+                  className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
+                >
+                  <Checkbox
+                    checked={config.supported_currencies.includes(c.code)}
+                    onCheckedChange={() => toggleCurrency(c.code)}
+                  />
+                  <div>
+                    <span className="font-medium text-sm">{c.code}</span>
+                    <span className="text-xs text-muted-foreground ml-1">{c.name}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
