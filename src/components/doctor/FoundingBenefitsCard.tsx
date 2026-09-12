@@ -15,12 +15,10 @@ interface Props {
 const FoundingBenefitsCard = ({ doctor, plan }: Props) => {
   if (!doctor?.is_founding_doctor) return null;
 
-  const tiers = Array.isArray(plan?.platform_fee_tiers) ? plan!.platform_fee_tiers : [];
-  const feeDesc = plan?.platform_fee_mode === "tiered" && tiers.length > 0
-    ? `Fixed ${tiers.map((t: any) => `R${t.fee}`).join(" / ")} per consultation + ${plan?.processing_fee_percent ?? 3}% gateway fee`
-    : plan?.platform_fee_percent != null
-      ? `${plan.platform_fee_percent}% commission (vs standard 15%)`
-      : "Exclusive low commission rate";
+  const tiers = Array.isArray(plan?.platform_fee_tiers) && plan!.platform_fee_tiers.length > 0
+    ? plan!.platform_fee_tiers
+    : [{ fee: 60 }, { fee: 70 }, { fee: 80 }];
+  const feeDesc = `Fixed ${tiers.map((t: any) => `R${t.fee}`).join(" / ")} per consultation + ${plan?.processing_fee_percent ?? 3}% gateway fee (vs standard R65 / R75 / R90)`;
 
   return (
     <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-background to-accent/10 shadow-xl">
