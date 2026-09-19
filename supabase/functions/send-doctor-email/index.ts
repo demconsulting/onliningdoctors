@@ -106,11 +106,20 @@ serve(async (req) => {
       : "Account Verification Update";
 
     const htmlBody = verified
-      ? `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-          <h2 style="color: #16a34a;">Congratulations, ${safeName}!</h2>
-          <p>Your doctor account has been <strong>verified</strong> by our admin team. You are now visible to patients and can start accepting appointments.</p>
-          <p>Log in to your dashboard to set up your availability and pricing.</p>
-          <p style="color: #6b7280; font-size: 14px; margin-top: 32px;">— The Medical Team</p>
+      ? `<div style="font-family: Inter, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #0f172a;">
+          <h2 style="color: #0d9488; margin: 0 0 12px;">Congratulations, ${safeName}! Your account is verified ✅</h2>
+          <p>Your doctor account on <strong>Doctors Onlining</strong> has been successfully verified. You are now visible to patients and can start consulting on the platform.</p>
+          <p><strong>One last step before patients can book you:</strong></p>
+          <ol style="line-height: 1.8;">
+            <li><strong>Set your availability</strong> — choose the days and time slots you're open for consultations.</li>
+            <li><strong>Confirm your consultation fee</strong> — review your pricing in your profile settings.</li>
+            <li><strong>Add your bank details</strong> — so your earnings can be paid out to you.</li>
+          </ol>
+          <p style="margin-top: 20px;">
+            <a href="https://doctorsonlining.com/doctor-dashboard" style="background:#0d9488;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;">Set up my availability</a>
+          </p>
+          <p>Once your availability is set, patients will be able to book consultations with you immediately.</p>
+          <p style="color: #64748b; font-size: 13px; margin-top: 28px;">Need help? Reply to this email and our team will assist.<br/>— The Doctors Onlining Team</p>
         </div>`
       : `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
           <h2 style="color: #dc2626;">Verification Update</h2>
