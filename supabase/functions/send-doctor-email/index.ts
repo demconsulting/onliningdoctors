@@ -127,7 +127,8 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev",
+        from: "Doctors Onlining <assist@doctorsonlining.com>",
+        reply_to: "assist@doctorsonlining.com",
         to: [doctorEmail],
         subject,
         html: htmlBody,
