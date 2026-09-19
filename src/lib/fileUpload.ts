@@ -9,7 +9,8 @@ export type UploadProfileKey =
   | "referral"
   | "medical_report"
   | "practice_logo"
-  | "practice_signature";
+  | "practice_signature"
+  | "practice_photo";
 
 export interface UploadProfile {
   maxBytes: number;
@@ -80,6 +81,12 @@ export const UPLOAD_PROFILES: Record<UploadProfileKey, UploadProfile> = {
     // PNG preserved to keep transparency for signatures
     image: { maxDimension: 600, quality: 0.95, convertToWebp: false },
   },
+  practice_photo: {
+    maxBytes: 5 * 1024 * 1024,
+    extensions: ["jpg", "jpeg", "png", "webp"],
+    mimes: ["image/jpeg", "image/png", "image/webp"],
+    image: { maxDimension: 1600, quality: 0.85, convertToWebp: true },
+  },
 };
 
 /** Universally blocked extensions (defense-in-depth on top of allowlist). */
@@ -118,12 +125,21 @@ export function validateFile(file: File, profileKey: UploadProfileKey): Validati
     }
   }
   if (file.size > profile.maxBytes) {
-    return { ok: false, message: `File exceeds maximum size limit (${formatBytes(profile.maxBytes)}).` };
+    // Images with an optimisation profile are auto-compressed during upload,
+    // so don't hard-reject them here — uploadFile re-checks after compression.
+    const canAutoShrink = !!profile.image && file.type.startsWith("image/");
+    if (!canAutoShrink) {
+      return { ok: false, message: `File exceeds maximum size limit (${formatBytes(profile.maxBytes)}).` };
+    }
   }
   return { ok: true };
 }
 
-/** Resize + recompress an image client-side. Returns a new File (or original if no shrink). */
+/**
+ * Resize + recompress an image client-side. If the result is still over the
+ * profile's size limit, progressively lower quality and dimensions until it
+ * fits (or we hit a floor). Returns a new File (or original if no shrink).
+ */
 export async function optimizeImage(file: File, profileKey: UploadProfileKey): Promise<File> {
   const profile = UPLOAD_PROFILES[profileKey];
   if (!profile.image) return file;
@@ -133,25 +149,41 @@ export async function optimizeImage(file: File, profileKey: UploadProfileKey): P
   if (!bitmap) return file;
 
   const { maxDimension, quality, convertToWebp } = profile.image;
-  const { width, height } = scaleDown(bitmap.width, bitmap.height, maxDimension);
+  const outType = convertToWebp ? "image/webp" : file.type === "image/png" ? "image/png" : "image/jpeg";
 
   const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return file;
-  ctx.drawImage(bitmap, 0, 0, width, height);
 
-  const outType = convertToWebp ? "image/webp" : file.type === "image/png" ? "image/png" : "image/jpeg";
-  const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, outType, quality));
-  if (!blob) return file;
+  const qualitySteps = [quality, 0.75, 0.6, 0.45, 0.3];
+  const dimScales = [1, 0.75, 0.5, 0.35];
 
+  let best: Blob | null = null;
+  outer: for (const dimScale of dimScales) {
+    const { width, height } = scaleDown(
+      Math.round(bitmap.width * dimScale),
+      Math.round(bitmap.height * dimScale),
+      maxDimension,
+    );
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(bitmap, 0, 0, width, height);
+
+    for (const q of qualitySteps) {
+      const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, outType, q));
+      if (!blob) continue;
+      if (!best || blob.size < best.size) best = blob;
+      if (blob.size <= profile.maxBytes) break outer;
+    }
+  }
+
+  if (!best) return file;
   // If "optimisation" made it bigger, keep the original
-  if (blob.size >= file.size && !convertToWebp) return file;
+  if (best.size >= file.size && !convertToWebp) return file;
 
   const baseName = file.name.replace(/\.[^.]+$/, "");
   const ext = outType === "image/webp" ? "webp" : outType === "image/png" ? "png" : "jpg";
-  return new File([blob], `${baseName}.${ext}`, { type: outType, lastModified: Date.now() });
+  return new File([best], `${baseName}.${ext}`, { type: outType, lastModified: Date.now() });
 }
 
 async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement | null> {
