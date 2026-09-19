@@ -13,6 +13,7 @@ import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
 import { Switch } from "@/components/ui/switch";
 import { Crown } from "lucide-react";
 import { useFoundingDoctorSlots } from "@/hooks/useFoundingDoctorSlots";
+import AdminAvatarEditor from "@/components/admin/AdminAvatarEditor";
 
 
 interface DoctorRow {
@@ -232,6 +233,13 @@ const AdminDoctorVerification = () => {
   const renderDoctorRow = (d: DoctorRow, actions: React.ReactNode) => (
     <tr key={d.id} className="text-foreground">
       <td className="py-3 pr-4 font-medium">
+        <div className="flex items-start gap-3">
+        <AdminAvatarEditor
+          profileId={d.profile_id}
+          currentUrl={d.profile?.avatar_url ?? null}
+          fullName={d.profile?.full_name ?? null}
+          onUploaded={() => fetchDoctors()}
+        />
         <div className="flex flex-col gap-1">
           <span className="flex items-center gap-2">
             {d.profile?.full_name || "—"}
@@ -249,6 +257,7 @@ const AdminDoctorVerification = () => {
             />
             Founding ({foundingSlots.used}/{foundingSlots.cap})
           </span>
+        </div>
         </div>
       </td>
       <td className="py-3 pr-4">{d.title || "—"}</td>
