@@ -80,6 +80,12 @@ export const UPLOAD_PROFILES: Record<UploadProfileKey, UploadProfile> = {
     // PNG preserved to keep transparency for signatures
     image: { maxDimension: 600, quality: 0.95, convertToWebp: false },
   },
+  practice_photo: {
+    maxBytes: 5 * 1024 * 1024,
+    extensions: ["jpg", "jpeg", "png", "webp"],
+    mimes: ["image/jpeg", "image/png", "image/webp"],
+    image: { maxDimension: 1600, quality: 0.85, convertToWebp: true },
+  },
 };
 
 /** Universally blocked extensions (defense-in-depth on top of allowlist). */
@@ -118,7 +124,12 @@ export function validateFile(file: File, profileKey: UploadProfileKey): Validati
     }
   }
   if (file.size > profile.maxBytes) {
-    return { ok: false, message: `File exceeds maximum size limit (${formatBytes(profile.maxBytes)}).` };
+    // Images with an optimisation profile are auto-compressed during upload,
+    // so don't hard-reject them here — uploadFile re-checks after compression.
+    const canAutoShrink = !!profile.image && file.type.startsWith("image/");
+    if (!canAutoShrink) {
+      return { ok: false, message: `File exceeds maximum size limit (${formatBytes(profile.maxBytes)}).` };
+    }
   }
   return { ok: true };
 }
