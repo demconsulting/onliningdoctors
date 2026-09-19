@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X } from "lucide-react";
+import { Loader2, ShieldCheck, ShieldX, ShieldBan, MapPin, FileText, Eye, Check, X, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DocumentViewerModal from "@/components/admin/DocumentViewerModal";
 import { Switch } from "@/components/ui/switch";
@@ -127,6 +127,21 @@ const AdminDoctorVerification = () => {
         console.error("Email notification failed:", emailErr);
       }
       fetchDoctors();
+    }
+    setUpdating(null);
+  };
+
+  const handleResendVerificationEmail = async (d: DoctorRow) => {
+    setUpdating(d.id);
+    try {
+      const { error } = await supabase.functions.invoke("send-doctor-email", {
+        body: { doctorProfileId: d.profile_id, verified: true },
+      });
+      if (error) throw error;
+      toast({ title: "Verification email resent", description: `Sent to ${d.profile?.full_name || "doctor"}.` });
+    } catch (emailErr: any) {
+      console.error("Email resend failed:", emailErr);
+      toast({ variant: "destructive", title: "Failed to resend email", description: emailErr?.message });
     }
     setUpdating(null);
   };
@@ -483,6 +498,16 @@ const AdminDoctorVerification = () => {
                   {verified.map((d) =>
                     renderDoctorRow(d, (
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResendVerificationEmail(d)}
+                          disabled={updating === d.id}
+                          title="Resend verification success email"
+                        >
+                          {updating === d.id ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Mail className="mr-1 h-3 w-3" />}
+                          Resend Email
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
