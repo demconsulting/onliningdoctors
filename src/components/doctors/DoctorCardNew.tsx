@@ -55,14 +55,14 @@ const DoctorCardNew = ({ doctor, onBookNextAvailable }: DoctorCardNewProps) => {
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/60">
       {/* Image */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted/40">
         {doctor.profile?.avatar_url ? (
           <img
             src={doctor.profile.avatar_url}
             alt={displayName}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-contain"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
