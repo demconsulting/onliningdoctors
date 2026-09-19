@@ -9,7 +9,8 @@ export type UploadProfileKey =
   | "referral"
   | "medical_report"
   | "practice_logo"
-  | "practice_signature";
+  | "practice_signature"
+  | "practice_photo";
 
 export interface UploadProfile {
   maxBytes: number;
