@@ -16,7 +16,7 @@ import type { User } from "@supabase/supabase-js";
 const schema = z.object({
   practice_name: z.string().trim().min(2).max(200),
   practice_number: z.string().trim().min(3).max(50),
-  bhf_number: z.string().trim().min(3, "A BHF practice number is required for group practices").max(50),
+  bhf_number: z.string().trim().max(50).optional().or(z.literal("")),
   owner_doctor_name: z.string().trim().min(2).max(200),
   owner_hpcsa_number: z.string().trim().min(2).max(50),
   email: z.string().trim().email().max(255),
@@ -171,7 +171,7 @@ const PracticeSetup = () => {
               {([
                 ["practice_name", "Practice name"],
                 ["practice_number", "Practice number"],
-                ["bhf_number", "BHF number"],
+                ["bhf_number", "BHF number (optional — add later for medical aid claims)"],
                 ["owner_doctor_name", "Owner doctor name"],
                 ["owner_hpcsa_number", "Owner HPCSA number"],
                 ["email", "Email"],
@@ -187,7 +187,7 @@ const PracticeSetup = () => {
                     type={k === "email" ? "email" : "text"}
                     value={form[k]}
                     onChange={(e) => setForm({ ...form, [k]: e.target.value })}
-                    required
+                    required={k !== "bhf_number"}
                   />
                 </div>
               ))}
