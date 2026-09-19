@@ -258,6 +258,7 @@ const AdminDoctorVerification = () => {
             Founding ({foundingSlots.used}/{foundingSlots.cap})
           </span>
         </div>
+        </div>
       </td>
       <td className="py-3 pr-4">{d.title || "—"}</td>
       <td className="py-3 pr-4">
