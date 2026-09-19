@@ -103,20 +103,21 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
   const uploadFile = async (file: File, type: "logo" | "signature") => {
     const setter = type === "logo" ? setUploadingLogo : setUploadingSig;
     setter(true);
-    const ext = file.name.split(".").pop();
-    const path = `${doctorId}/${type}_${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("prescription-assets").upload(path, file, { upsert: true });
-    if (error) {
-      toast({ variant: "destructive", title: "Upload failed", description: error.message });
-      setter(false);
-      return;
+    try {
+      const { uploadFile: sharedUpload } = await import("@/lib/fileUpload");
+      const { path } = await sharedUpload({
+        bucket: "prescription-assets",
+        path: `${doctorId}/${type}_${Date.now()}.${file.name.split(".").pop()}`,
+        file,
+        profile: type === "logo" ? "practice_logo" : "practice_signature",
+      });
+      if (type === "logo") setLogoUrl(path);
+      else setSignatureUrl(path);
+      toast({ title: `${type === "logo" ? "Logo" : "Signature"} uploaded` });
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Upload failed", description: err.message });
     }
-    const { data: urlData } = supabase.storage.from("prescription-assets").getPublicUrl(path);
-    // Since bucket is private, we'll store the path and use signed URLs
-    if (type === "logo") setLogoUrl(path);
-    else setSignatureUrl(path);
     setter(false);
-    toast({ title: `${type === "logo" ? "Logo" : "Signature"} uploaded` });
   };
 
   const applyTemplate = (templateId: string) => {
