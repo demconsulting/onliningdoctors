@@ -1497,6 +1497,35 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_patient_assignments: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_patient_assignments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_pricing_tiers: {
         Row: {
           created_at: string
@@ -2813,6 +2842,33 @@ export type Database = {
           scheme_name?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      medical_audit_logs: {
+        Row: {
+          action_type: string
+          actor_id: string
+          created_at: string
+          id: string
+          record_type: string
+          target_patient_id: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          record_type: string
+          target_patient_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string
+          created_at?: string
+          id?: string
+          record_type?: string
+          target_patient_id?: string | null
         }
         Relationships: []
       }
@@ -6955,6 +7011,19 @@ export type Database = {
         Args: { _ledger_id: string; _reference: string }
         Returns: undefined
       }
+      admin_medical_audit_logs: {
+        Args: { _limit?: number }
+        Returns: {
+          action_type: string
+          actor_id: string
+          actor_name: string
+          created_at: string
+          id: string
+          patient_name: string
+          record_type: string
+          target_patient_id: string
+        }[]
+      }
       admin_recalculate_processing_fees: {
         Args: {
           _new_pct: number
@@ -7104,6 +7173,10 @@ export type Database = {
       }
       founding_doctor_slots: { Args: never; Returns: Json }
       generate_referral_code: { Args: never; Returns: string }
+      get_assigned_patient_detail: {
+        Args: { _patient_id: string }
+        Returns: Json
+      }
       get_consultation_summary: {
         Args: { _appointment_id: string }
         Returns: {
@@ -7146,6 +7219,16 @@ export type Database = {
         }[]
       }
       get_founding_slots: { Args: never; Returns: Json }
+      get_my_assigned_patients: {
+        Args: never
+        Returns: {
+          assigned_at: string
+          email: string
+          full_name: string
+          patient_id: string
+          phone: string
+        }[]
+      }
       get_my_fee_settings: {
         Args: never
         Returns: {

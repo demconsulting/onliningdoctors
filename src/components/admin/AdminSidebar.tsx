@@ -89,6 +89,7 @@ const platformItems: Item[] = [
   { title: "Legal Documents", key: "legal-documents", icon: FileText },
   { title: "AI Assistant", key: "ai-assistant", icon: Bot },
   { title: "Audit Logs", key: "audit-logs", icon: ScrollText },
+  { title: "Medical Audit", key: "medical-audit", icon: ScrollText },
   { title: "Site Settings", key: "site-settings", icon: Settings },
   { title: "Storage Usage", key: "storage-usage", icon: HardDrive },
   { title: "Email Test & Logs", key: "email-test", icon: Mail },

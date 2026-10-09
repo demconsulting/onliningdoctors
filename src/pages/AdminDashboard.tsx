@@ -20,6 +20,7 @@ const loaders: Record<string, () => Promise<{ default: React.ComponentType }>> =
   "hero": () => import("@/components/admin/AdminHero"),
   "stats": () => import("@/components/admin/AdminStats"),
   "audit-logs": () => import("@/components/admin/AdminAuditLogs"),
+  "medical-audit": () => import("@/components/admin/AdminMedicalAuditLogs"),
   "doctor-verification": () => import("@/components/admin/AdminDoctorVerification"),
   "site-settings": () => import("@/components/admin/AdminSiteSettings"),
   "why-choose": () => import("@/components/admin/AdminWhyChoose"),
@@ -73,6 +74,7 @@ const AdminFaqs = lazy(loaders["faqs"]);
 const AdminHero = lazy(loaders["hero"]);
 const AdminStats = lazy(loaders["stats"]);
 const AdminAuditLogs = lazy(loaders["audit-logs"]);
+const AdminMedicalAuditLogs = lazy(loaders["medical-audit"]);
 const AdminDoctorVerification = lazy(loaders["doctor-verification"]);
 const AdminSiteSettings = lazy(loaders["site-settings"]);
 const AdminWhyChoose = lazy(loaders["why-choose"]);
@@ -186,6 +188,7 @@ const AdminDashboard = () => {
       case "legal-documents": return <AdminLegalDocuments />;
       case "ai-assistant": return <AdminAIAssistant />;
       case "audit-logs": return <AdminAuditLogs />;
+      case "medical-audit": return <AdminMedicalAuditLogs />;
       case "doctor-verification": return <AdminDoctorVerification />;
       case "site-settings": return <AdminSiteSettings />;
       case "email-test": return <AdminEmailTest />;
