@@ -420,6 +420,81 @@ export type Database = {
           },
         ]
       }
+      business_onboarding: {
+        Row: {
+          address: string | null
+          brand_colours: string | null
+          business_name: string
+          contact_person: string
+          created_at: string
+          email: string
+          example_sites: string[]
+          existing_domain: string | null
+          id: string
+          industry: string | null
+          internal_notes: string | null
+          logo_path: string | null
+          m_payment_id: string | null
+          notes: string | null
+          operating_hours: string | null
+          phone: string
+          photo_paths: string[]
+          preferred_domain: string | null
+          services_offered: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          brand_colours?: string | null
+          business_name: string
+          contact_person: string
+          created_at?: string
+          email: string
+          example_sites?: string[]
+          existing_domain?: string | null
+          id?: string
+          industry?: string | null
+          internal_notes?: string | null
+          logo_path?: string | null
+          m_payment_id?: string | null
+          notes?: string | null
+          operating_hours?: string | null
+          phone: string
+          photo_paths?: string[]
+          preferred_domain?: string | null
+          services_offered?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          brand_colours?: string | null
+          business_name?: string
+          contact_person?: string
+          created_at?: string
+          email?: string
+          example_sites?: string[]
+          existing_domain?: string | null
+          id?: string
+          industry?: string | null
+          internal_notes?: string | null
+          logo_path?: string | null
+          m_payment_id?: string | null
+          notes?: string | null
+          operating_hours?: string | null
+          phone?: string
+          photo_paths?: string[]
+          preferred_domain?: string | null
+          services_offered?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       business_profiles: {
         Row: {
           address: string | null
@@ -3760,7 +3835,10 @@ export type Database = {
           plan_name: string
           practice_name: string | null
           reconcile_note: string | null
+          setup_fee: number | null
+          start_date: string | null
           status: string
+          term: string | null
           updated_at: string
           user_id: string | null
         }
@@ -3789,7 +3867,10 @@ export type Database = {
           plan_name: string
           practice_name?: string | null
           reconcile_note?: string | null
+          setup_fee?: number | null
+          start_date?: string | null
           status?: string
+          term?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -3818,7 +3899,10 @@ export type Database = {
           plan_name?: string
           practice_name?: string | null
           reconcile_note?: string | null
+          setup_fee?: number | null
+          start_date?: string | null
           status?: string
+          term?: string | null
           updated_at?: string
           user_id?: string | null
         }
