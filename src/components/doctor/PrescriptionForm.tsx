@@ -258,7 +258,7 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
                 <Button variant="outline" size="sm" className="gap-1 text-xs" disabled={uploadingLogo} onClick={() => document.getElementById("logo-upload")?.click()}>
                   {uploadingLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} Upload Logo
                 </Button>
-                <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "logo")} />
+                <input id="logo-upload" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "logo")} />
               </div>
               <div className="space-y-2">
                 <Label className="text-xs">Signature</Label>
@@ -270,7 +270,7 @@ const PrescriptionForm = ({ appointmentId, doctorId, patientId, patientName, onS
                 <Button variant="outline" size="sm" className="gap-1 text-xs" disabled={uploadingSig} onClick={() => document.getElementById("sig-upload")?.click()}>
                   {uploadingSig ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} Upload Signature
                 </Button>
-                <input id="sig-upload" type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "signature")} />
+                <input id="sig-upload" type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => e.target.files?.[0] && uploadFile(e.target.files[0], "signature")} />
               </div>
             </div>
 

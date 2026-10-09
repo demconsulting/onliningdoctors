@@ -76,8 +76,8 @@ export const UPLOAD_PROFILES: Record<UploadProfileKey, UploadProfile> = {
   },
   practice_signature: {
     maxBytes: 2 * 1024 * 1024,
-    extensions: ["png", "webp"],
-    mimes: ["image/png", "image/webp"],
+    extensions: ["jpg", "jpeg", "png", "webp"],
+    mimes: ["image/jpeg", "image/png", "image/webp"],
     // PNG preserved to keep transparency for signatures
     image: { maxDimension: 600, quality: 0.95, convertToWebp: false },
   },
