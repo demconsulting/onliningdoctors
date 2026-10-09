@@ -22,6 +22,7 @@ const DoctorMedicalAids = lazy(() => import("@/components/doctor/DoctorMedicalAi
 const DoctorMedicalAidRequests = lazy(() => import("@/components/doctor/DoctorMedicalAidRequests"));
 const PracticeCalendar = lazy(() => import("@/components/calendar/PracticeCalendar"));
 const DoctorProfileChanges = lazy(() => import("@/components/doctor/DoctorProfileChanges"));
+const AssignedPatients = lazy(() => import("@/components/doctor/AssignedPatients"));
 const PracticePatients = lazy(() => import("@/components/doctor/PracticePatients"));
 const ReferralCenter = lazy(() => import("@/components/referrals/ReferralCenter"));
 const DoctorPracticeServices = lazy(() => import("@/components/doctor/DoctorPracticeServices"));
@@ -136,6 +137,9 @@ const DoctorDashboard = () => {
             <TabsTrigger value="appointments" className="gap-1.5">
               <Calendar className="h-4 w-4" /> Appointments
             </TabsTrigger>
+            <TabsTrigger value="assigned-patients" className="gap-1.5">
+              <Users className="h-4 w-4" /> My Patients
+            </TabsTrigger>
             <TabsTrigger value="practice-patients" className="gap-1.5">
               <Users className="h-4 w-4" /> Practice Patients
             </TabsTrigger>
@@ -186,6 +190,11 @@ const DoctorDashboard = () => {
           </TabsContent>
           <TabsContent value="appointments">
             <DoctorAppointments user={user} />
+          </TabsContent>
+          <TabsContent value="assigned-patients">
+            <Suspense fallback={<TabFallback />}>
+              <AssignedPatients user={user} />
+            </Suspense>
           </TabsContent>
           <TabsContent value="practice-patients">
             <Suspense fallback={<TabFallback />}>
