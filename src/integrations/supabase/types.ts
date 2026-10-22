@@ -1636,8 +1636,10 @@ export type Database = {
           founding_status: string
           founding_tier: string
           hospital_affiliation: string | null
+          hpcsa_number: string | null
           id: string
           id_document_path: string | null
+          individual_bhf_number: string | null
           is_available: boolean | null
           is_founding_doctor: boolean
           is_payout_verified: boolean
@@ -1648,6 +1650,7 @@ export type Database = {
           license_document_path: string | null
           license_number: string | null
           paystack_subaccount_code: string | null
+          physical_practice_address: string | null
           practice_address: string | null
           practice_approval_status: string | null
           practice_email: string | null
@@ -1691,8 +1694,10 @@ export type Database = {
           founding_status?: string
           founding_tier?: string
           hospital_affiliation?: string | null
+          hpcsa_number?: string | null
           id?: string
           id_document_path?: string | null
+          individual_bhf_number?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
           is_payout_verified?: boolean
@@ -1703,6 +1708,7 @@ export type Database = {
           license_document_path?: string | null
           license_number?: string | null
           paystack_subaccount_code?: string | null
+          physical_practice_address?: string | null
           practice_address?: string | null
           practice_approval_status?: string | null
           practice_email?: string | null
@@ -1746,8 +1752,10 @@ export type Database = {
           founding_status?: string
           founding_tier?: string
           hospital_affiliation?: string | null
+          hpcsa_number?: string | null
           id?: string
           id_document_path?: string | null
+          individual_bhf_number?: string | null
           is_available?: boolean | null
           is_founding_doctor?: boolean
           is_payout_verified?: boolean
@@ -1758,6 +1766,7 @@ export type Database = {
           license_document_path?: string | null
           license_number?: string | null
           paystack_subaccount_code?: string | null
+          physical_practice_address?: string | null
           practice_address?: string | null
           practice_approval_status?: string | null
           practice_email?: string | null
@@ -4331,13 +4340,57 @@ export type Database = {
         }
         Relationships: []
       }
+      practice_admins: {
+        Row: {
+          created_at: string
+          id: string
+          practice_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          practice_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          practice_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_admins_practice_id_fkey"
+            columns: ["practice_id"]
+            isOneToOne: false
+            referencedRelation: "practices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practice_admins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       practice_members: {
         Row: {
           created_at: string
+          doctor_id: string | null
           email: string
           full_name: string
           hpcsa_number: string | null
           id: string
+          individual_bhf_number: string | null
+          is_active: boolean | null
+          joined_at: string
+          member_role: Database["public"]["Enums"]["group_member_role"]
           phone: string | null
           practice_id: string
           role: Database["public"]["Enums"]["practice_role"]
@@ -4347,10 +4400,15 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          doctor_id?: string | null
           email: string
           full_name: string
           hpcsa_number?: string | null
           id?: string
+          individual_bhf_number?: string | null
+          is_active?: boolean | null
+          joined_at?: string
+          member_role?: Database["public"]["Enums"]["group_member_role"]
           phone?: string | null
           practice_id: string
           role: Database["public"]["Enums"]["practice_role"]
@@ -4360,10 +4418,15 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          doctor_id?: string | null
           email?: string
           full_name?: string
           hpcsa_number?: string | null
           id?: string
+          individual_bhf_number?: string | null
+          is_active?: boolean | null
+          joined_at?: string
+          member_role?: Database["public"]["Enums"]["group_member_role"]
           phone?: string | null
           practice_id?: string
           role?: Database["public"]["Enums"]["practice_role"]
@@ -4372,6 +4435,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "practice_members_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "practice_members_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "public_doctors"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "practice_members_practice_id_fkey"
             columns: ["practice_id"]
@@ -4516,11 +4593,16 @@ export type Database = {
           approved_by: string | null
           bank_name: string | null
           bhf_number: string | null
+          bhf_practice_number: string | null
+          city: string | null
           created_at: string
           email: string
           id: string
           is_active: boolean
+          is_medical_aid_practice: boolean
           is_payout_verified: boolean
+          logo_url: string | null
+          name: string | null
           nurses_can_support_consultations: boolean
           owner_doctor_name: string
           owner_hpcsa_number: string
@@ -4528,11 +4610,15 @@ export type Database = {
           paystack_subaccount_code: string | null
           phone: string
           photo_urls: string[]
+          physical_address: string | null
           practice_name: string
           practice_number: string
+          practice_type: Database["public"]["Enums"]["group_practice_type"]
+          province: string | null
           rejection_reason: string | null
           status: string
           updated_at: string
+          vat_number: string | null
         }
         Insert: {
           account_name?: string | null
@@ -4542,11 +4628,16 @@ export type Database = {
           approved_by?: string | null
           bank_name?: string | null
           bhf_number?: string | null
+          bhf_practice_number?: string | null
+          city?: string | null
           created_at?: string
           email: string
           id?: string
           is_active?: boolean
+          is_medical_aid_practice?: boolean
           is_payout_verified?: boolean
+          logo_url?: string | null
+          name?: string | null
           nurses_can_support_consultations?: boolean
           owner_doctor_name: string
           owner_hpcsa_number: string
@@ -4554,11 +4645,15 @@ export type Database = {
           paystack_subaccount_code?: string | null
           phone: string
           photo_urls?: string[]
+          physical_address?: string | null
           practice_name: string
           practice_number: string
+          practice_type?: Database["public"]["Enums"]["group_practice_type"]
+          province?: string | null
           rejection_reason?: string | null
           status?: string
           updated_at?: string
+          vat_number?: string | null
         }
         Update: {
           account_name?: string | null
@@ -4568,11 +4663,16 @@ export type Database = {
           approved_by?: string | null
           bank_name?: string | null
           bhf_number?: string | null
+          bhf_practice_number?: string | null
+          city?: string | null
           created_at?: string
           email?: string
           id?: string
           is_active?: boolean
+          is_medical_aid_practice?: boolean
           is_payout_verified?: boolean
+          logo_url?: string | null
+          name?: string | null
           nurses_can_support_consultations?: boolean
           owner_doctor_name?: string
           owner_hpcsa_number?: string
@@ -4580,11 +4680,15 @@ export type Database = {
           paystack_subaccount_code?: string | null
           phone?: string
           photo_urls?: string[]
+          physical_address?: string | null
           practice_name?: string
           practice_number?: string
+          practice_type?: Database["public"]["Enums"]["group_practice_type"]
+          province?: string | null
           rejection_reason?: string | null
           status?: string
           updated_at?: string
+          vat_number?: string | null
         }
         Relationships: []
       }
@@ -6963,6 +7067,14 @@ export type Database = {
       }
     }
     Functions: {
+      add_group_practice_doctor: {
+        Args: {
+          _email: string
+          _member_role: Database["public"]["Enums"]["group_member_role"]
+          _practice_id: string
+        }
+        Returns: string
+      }
       admin_approve_patient_document: {
         Args: { _doc_id: string }
         Returns: undefined
@@ -7112,6 +7224,10 @@ export type Database = {
       }
       approve_profile_change: {
         Args: { _change_id: string }
+        Returns: undefined
+      }
+      assign_group_practice_admin: {
+        Args: { _email: string; _practice_id: string }
         Returns: undefined
       }
       attach_referral_on_signup: {
@@ -7299,6 +7415,8 @@ export type Database = {
         }[]
       }
       get_user_referral_stats: { Args: { _user_id?: string }; Returns: Json }
+      group_practice_directory: { Args: never; Returns: Json }
+      group_practice_members: { Args: { _practice_id: string }; Returns: Json }
       has_permission: {
         Args: {
           _permission: Database["public"]["Enums"]["app_permission"]
@@ -7320,6 +7438,10 @@ export type Database = {
       is_doctor_available_now: { Args: { _doctor: string }; Returns: boolean }
       is_identity_verified: { Args: { _user: string }; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_practice_admin: {
+        Args: { _practice_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_practice_manager: {
         Args: { _practice_id: string; _user_id: string }
         Returns: boolean
@@ -7540,6 +7662,12 @@ export type Database = {
         | "won"
         | "lost"
         | "archived"
+      group_member_role: "principal" | "partner" | "associate"
+      group_practice_type:
+        | "solo"
+        | "partnership"
+        | "association"
+        | "incorporated"
       practice_member_status: "invited" | "active" | "suspended"
       practice_role:
         | "owner"
@@ -7783,6 +7911,13 @@ export const Constants = {
         "won",
         "lost",
         "archived",
+      ],
+      group_member_role: ["principal", "partner", "associate"],
+      group_practice_type: [
+        "solo",
+        "partnership",
+        "association",
+        "incorporated",
       ],
       practice_member_status: ["invited", "active", "suspended"],
       practice_role: [
