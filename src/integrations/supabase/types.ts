@@ -7524,6 +7524,7 @@ export type Database = {
         | "finance_admin"
         | "support_admin"
         | "user"
+        | "practice_admin"
       business_unit:
         | "doctorsonlining"
         | "nalavation"
@@ -7764,6 +7765,7 @@ export const Constants = {
         "finance_admin",
         "support_admin",
         "user",
+        "practice_admin",
       ],
       business_unit: [
         "doctorsonlining",
