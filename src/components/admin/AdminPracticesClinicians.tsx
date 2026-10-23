@@ -2,6 +2,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Stethoscope } from "lucide-react";
 import AdminPractices from "@/components/admin/AdminPractices";
 import AdminIndependentDoctors from "@/components/admin/AdminIndependentDoctors";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const AdminPracticesClinicians = () => (
   <div className="space-y-6">
@@ -10,6 +12,7 @@ const AdminPracticesClinicians = () => (
       <p className="text-sm text-muted-foreground">
         Approve group practices and independent doctors, and set up their Paystack payout accounts.
       </p>
+      <Button asChild variant="outline" className="mt-3"><Link to="/practice-dashboard">Practice Dashboard</Link></Button>
     </div>
     <Tabs defaultValue="group" className="space-y-4">
       <TabsList>

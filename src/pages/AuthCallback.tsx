@@ -52,6 +52,7 @@ const AuthCallback = () => {
         .select("role")
         .eq("user_id", user.id);
       const isDoctor = roles?.some((r) => r.role === "doctor");
+      const isPracticeAdmin = roles?.some((r) => r.role === "practice_admin");
       const isAdmin = roles?.some((r) => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
 
       // Audit-log Google sign-ins / registrations. New users were created within the last 60s.
@@ -84,7 +85,7 @@ const AuthCallback = () => {
         navigate(redirectTo, { replace: true });
         return;
       }
-      navigate(isAdmin ? "/admin" : isDoctor ? "/doctor-dashboard" : "/dashboard", { replace: true });
+      navigate(isAdmin ? "/admin" : isPracticeAdmin ? "/practice-dashboard" : isDoctor ? "/doctor-dashboard" : "/dashboard", { replace: true });
     };
     run();
   }, [navigate]);

@@ -13,6 +13,7 @@ const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isDoctor, setIsDoctor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isPracticeAdmin, setIsPracticeAdmin] = useState(false);
   const { branding, logoSrc } = useBranding();
   const navigate = useNavigate();
 
@@ -20,7 +21,7 @@ const Navbar = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) checkRole(session.user.id);
-      else { setIsDoctor(false); setIsAdmin(false); }
+      else { setIsDoctor(false); setIsAdmin(false); setIsPracticeAdmin(false); }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -36,6 +37,7 @@ const Navbar = () => {
       .eq("user_id", userId);
     if (data) {
       setIsDoctor(data.some(r => r.role === "doctor"));
+      setIsPracticeAdmin(data.some(r => r.role === "practice_admin"));
       setIsAdmin(data.some(r => ["admin", "super_admin", "platform_admin"].includes(r.role as string)));
     }
   };
@@ -83,6 +85,7 @@ const Navbar = () => {
               {isDoctor && (
                 <Button variant="ghost" size="sm" onClick={() => navigate("/practice/team")}>Practice</Button>
               )}
+              {isPracticeAdmin && <Button variant="ghost" size="sm" onClick={() => navigate("/practice-dashboard")}>Practice Dashboard</Button>}
               <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
                 {dashboardLabel}
               </Button>
@@ -131,6 +134,7 @@ const Navbar = () => {
                   {isDoctor && (
                     <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice/team"); setIsOpen(false); }}>Practice</Button>
                   )}
+                  {isPracticeAdmin && <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice-dashboard"); setIsOpen(false); }}>Practice Dashboard</Button>}
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
                   <Button variant="outline" size="sm" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>Log out</Button>
                 </>
