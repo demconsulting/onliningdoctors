@@ -70,6 +70,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     experience_years: 0,
     hospital_affiliation: "",
     license_number: "",
+    bhf_number: "",
+    physical_practice_address: "",
     consultation_fee: 0,
     languages: [] as string[],
     is_available: true,
@@ -129,6 +131,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
           experience_years: d.experience_years || 0,
           hospital_affiliation: d.hospital_affiliation || "",
           license_number: d.license_number || "",
+          bhf_number: d.bhf_number || "",
+          physical_practice_address: d.physical_practice_address || "",
           consultation_fee: d.consultation_fee || 0,
           languages: d.languages || [],
           is_available: d.is_available ?? true,
@@ -185,6 +189,8 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
     const missing: string[] = [];
     if (!profile.country) missing.push("Country");
     if (!profile.city) missing.push("City");
+    if (!doctor.license_number.trim()) missing.push("HPCSA Registration Number");
+    if (!doctor.physical_practice_address.trim()) missing.push("Physical Practice Address");
     if (!doctor.education?.trim()) missing.push("Education / Qualifications");
     if (!doctor.languages || doctor.languages.length === 0) missing.push("Languages");
     if (!doctor.bio?.trim()) missing.push("Bio");
@@ -341,6 +347,19 @@ const DoctorProfile = ({ user }: DoctorProfileProps) => {
               <p className="text-xs text-muted-foreground">
                 This number is verified with the Health Professions Council of South Africa (HPCSA).
               </p>
+            </div>
+          </div>
+
+          <div className="space-y-2 rounded-md border border-primary/20 bg-primary/5 p-3">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="individual-bhf-number">Individual BHF number</Label>
+                <Input id="individual-bhf-number" maxLength={50} value={doctor.bhf_number} onChange={event => setDoctor({ ...doctor, bhf_number: event.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="physical-practice-address">Physical practice address <span className="text-destructive">*</span></Label>
+                <Input id="physical-practice-address" required maxLength={500} value={doctor.physical_practice_address} onChange={event => setDoctor({ ...doctor, physical_practice_address: event.target.value })} />
+              </div>
             </div>
           </div>
 

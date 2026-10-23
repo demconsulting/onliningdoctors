@@ -34,6 +34,7 @@ const Login = () => {
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
     const isAdmin = roles?.some(r => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
     if (isAdmin) { navigate("/admin"); return; }
+    if (roles?.some(r => r.role === "practice_admin")) { navigate("/practice-dashboard"); return; }
     const isDoctor = roles?.some(r => r.role === "doctor");
     navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
   };
