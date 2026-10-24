@@ -5,7 +5,7 @@
 - [x] Verify signed-out navigation, four tests, successful app checks and schema; authenticated end-to-end checks unavailable for external unmanaged Supabase.
 
 # Practice pre-phase review
-- [ ] Document live practice schema, policies, enums and payout relationships.
-- [ ] Verify the five group-practice security-definer functions and fix unsafe access.
+- [x] Document live practice schema, policies, enums and payout relationships.
+- [x] Verify the five group-practice security-definer functions and fix unsafe access; executed database denial tests and four frontend tests.
 - [ ] Public practice-logos bucket: blocked by workspace public-bucket policy; retain private logos until an owner enables public buckets.
-- [ ] Confirm existing administrator assignment control and document how to use it.
+- [x] Confirm existing administrator assignment control and document how to use it; real-account browser checks unavailable with external unmanaged Supabase.
