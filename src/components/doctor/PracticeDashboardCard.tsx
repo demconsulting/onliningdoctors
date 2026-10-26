@@ -54,7 +54,7 @@ const PracticeDashboardCard = ({ userId }: Props) => {
   return (
     <Card className="mb-6">
       <CardContent className="p-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-primary" />
             <div>
@@ -62,8 +62,8 @@ const PracticeDashboardCard = ({ userId }: Props) => {
               <div className="text-xs text-muted-foreground">Practice #{practice.practice_number}</div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => navigate("/practice/dashboard")}>Practice dashboard</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/practice/dashboard")}>Practice Team &amp; Earnings</Button>
             <Button size="sm" variant="outline" onClick={() => navigate("/practice/team")}>Manage team</Button>
           </div>
         </div>

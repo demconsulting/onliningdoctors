@@ -154,8 +154,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     if (!preselectDoctorId) return;
     let cancelled = false;
     supabase
-      .from("public_doctors" as any)
-      .select("specialty_id")
+      .rpc("list_public_doctors")
       .eq("profile_id", preselectDoctorId)
       .maybeSingle()
       .then(({ data }: any) => {
@@ -177,8 +176,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     if (!selectedSpecialty || loadingDoctors) return;
     let cancelled = false;
     supabase
-      .from("public_doctors" as any)
-      .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
+      .rpc("list_public_doctors")
       .eq("profile_id", preselectDoctorId)
       .maybeSingle()
       .then(({ data }: any) => {
@@ -210,8 +208,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
     // Preserve preselect during reload; otherwise clear selection
     if (!preselectDoctorId) setSelectedDoctor("");
     supabase
-      .from("public_doctors" as any)
-      .select("*, specialty:specialty_id(name), consultation_category:consultation_category_id(id, name, description, min_price, max_price)")
+      .rpc("list_public_doctors")
       .eq("specialty_id", selectedSpecialty)
       .eq("is_available", true)
       .then(({ data }: any) => {

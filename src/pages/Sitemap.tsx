@@ -55,8 +55,7 @@ const Sitemap = () => {
   useEffect(() => {
     (async () => {
       const { data } = await supabase
-        .from("public_doctors" as any)
-        .select("profile_id, full_name, specialty:specialty_id(name)")
+        .rpc("list_public_doctors")
         .order("full_name", { ascending: true });
       if (data) setDoctors(data as any);
       setLoading(false);

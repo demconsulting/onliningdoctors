@@ -7456,12 +7456,50 @@ export type Database = {
         Args: { _practice_patient_id: string }
         Returns: string
       }
+      list_group_practice_admins: {
+        Args: { _practice_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+          user_id: string
+        }[]
+      }
       list_public_doctor_availability: {
         Args: never
         Returns: {
           doctor_id: string
           is_available_now: boolean
           next_available_at: string
+        }[]
+      }
+      list_public_doctors: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          bio: string
+          city: string
+          consultation_category: Json
+          consultation_category_id: string
+          consultation_fee: number
+          country: string
+          education: string
+          experience_years: number
+          full_name: string
+          hospital_affiliation: string
+          id: string
+          is_available: boolean
+          is_verified: boolean
+          languages: string[]
+          practice_logo_url: string
+          practice_name: string
+          profile_id: string
+          rating: number
+          specialty: Json
+          specialty_id: string
+          suburb: string
+          title: string
+          total_reviews: number
         }[]
       }
       log_audit_event_self: {
@@ -7547,6 +7585,10 @@ export type Database = {
       }
       release_appointment_slot: {
         Args: { _reservation_id: string }
+        Returns: undefined
+      }
+      remove_group_practice_admin: {
+        Args: { _practice_id: string; _user_id: string }
         Returns: undefined
       }
       request_join_practice: {

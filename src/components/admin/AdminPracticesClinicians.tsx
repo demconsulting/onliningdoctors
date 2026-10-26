@@ -12,7 +12,7 @@ const AdminPracticesClinicians = () => (
       <p className="text-sm text-muted-foreground">
         Approve group practices and independent doctors, and set up their Paystack payout accounts.
       </p>
-      <Button asChild variant="outline" className="mt-3"><Link to="/practice-dashboard">Practice Dashboard</Link></Button>
+      <div className="mt-3 flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/practice-dashboard">Group Practice &amp; Medical Aid</Link></Button><Button asChild variant="outline"><Link to="/practice/dashboard">Practice Team &amp; Earnings</Link></Button></div>
     </div>
     <Tabs defaultValue="group" className="space-y-4">
       <TabsList>

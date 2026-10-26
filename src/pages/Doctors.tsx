@@ -41,8 +41,7 @@ const Doctors = () => {
   const fetchDoctors = useCallback(async (location?: string) => {
     setLoading(true);
     const q = supabase
-      .from("public_doctors" as any)
-      .select("*, specialty:specialty_id(name, icon)")
+      .rpc("list_public_doctors")
       .order("rating", { ascending: false });
 
     if (location?.trim()) {

@@ -66,14 +66,14 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden items-center gap-6 md:flex">
+        <div className={`${user ? "hidden 2xl:flex" : "hidden md:flex"} items-center gap-6`}>
           <Link to="/doctors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Find Doctors</Link>
           <Link to="/wellness-plus" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Wellness+</Link>
           <a href="/#how-it-works" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">How It Works</a>
           <a href="/#for-doctors" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">For Doctors</a>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className={`${user ? "hidden 2xl:flex" : "hidden md:flex"} items-center gap-3`}>
           {user ? (
             <>
               <Suspense fallback={null}>
@@ -83,9 +83,9 @@ const Navbar = () => {
                 <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>Admin</Button>
               )}
               {isDoctor && (
-                <Button variant="ghost" size="sm" onClick={() => navigate("/practice/team")}>Practice</Button>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/practice/dashboard")}>Practice Team &amp; Earnings</Button>
               )}
-              {isPracticeAdmin && <Button variant="ghost" size="sm" onClick={() => navigate("/practice-dashboard")}>Practice Dashboard</Button>}
+              {(isPracticeAdmin || isAdmin) && <Button variant="ghost" size="sm" onClick={() => navigate("/practice-dashboard")}>Group Practice &amp; Medical Aid</Button>}
               <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
                 {dashboardLabel}
               </Button>
@@ -102,7 +102,7 @@ const Navbar = () => {
         {/* Mobile toggle */}
         <button
           type="button"
-          className="md:hidden"
+          className={user ? "2xl:hidden" : "md:hidden"}
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
@@ -114,7 +114,7 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {isOpen && (
-        <div id="mobile-menu" className="border-t border-border bg-card p-4 md:hidden">
+        <div id="mobile-menu" className={`border-t border-border bg-card p-4 ${user ? "2xl:hidden" : "md:hidden"}`}>
           <div className="flex flex-col gap-3">
             <Link to="/doctors" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Find Doctors</Link>
             <Link to="/wellness-plus" className="text-sm font-medium text-muted-foreground" onClick={() => setIsOpen(false)}>Wellness+</Link>
@@ -132,9 +132,9 @@ const Navbar = () => {
                     <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/admin"); setIsOpen(false); }}>Admin</Button>
                   )}
                   {isDoctor && (
-                    <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice/team"); setIsOpen(false); }}>Practice</Button>
+                    <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice/dashboard"); setIsOpen(false); }}>Practice Team &amp; Earnings</Button>
                   )}
-                  {isPracticeAdmin && <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice-dashboard"); setIsOpen(false); }}>Practice Dashboard</Button>}
+                  {(isPracticeAdmin || isAdmin) && <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice-dashboard"); setIsOpen(false); }}>Group Practice &amp; Medical Aid</Button>}
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
                   <Button variant="outline" size="sm" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>Log out</Button>
                 </>
