@@ -7479,6 +7479,7 @@ export type Database = {
           avatar_url: string
           bio: string
           city: string
+          consultation_category: Json
           consultation_category_id: string
           consultation_fee: number
           country: string
