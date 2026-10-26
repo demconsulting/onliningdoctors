@@ -75,8 +75,7 @@ const DoctorDetail = () => {
     const fetch = async () => {
       const [docRes, availRes, tierRes] = await Promise.all([
         supabase
-          .from("public_doctors" as any)
-          .select("*, specialty:specialty_id(name, icon)")
+          .rpc("list_public_doctors")
           .eq("profile_id", id)
           .maybeSingle(),
         supabase

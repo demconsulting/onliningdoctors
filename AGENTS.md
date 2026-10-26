@@ -4,5 +4,7 @@
 - HPCSA and individual BHF columns are generated aliases of existing license/BHF fields; edit the source fields to preserve identity approval and avoid diverging credentials.
 - Booking-directory RPCs return only active, non-banking practice/member fields rather than granting all authenticated users access to sensitive legacy rows.
 - Foundation doctor membership does not mutate doctors.practice_id or payout approval; legacy owner approval continues governing cash settlement.
-- Practice logos use private storage with signed URLs and practice-scoped write policies because workspace policy prohibits public buckets.
+- Practice logos use private storage with authenticated reads, signed URLs and practice-scoped write policies to keep clinical assets separate.
 - Practice administrator links are created or changed only by platform admins; a global practice_admin role alone never authorizes a practice, and the legacy payout-manager relationships remain separate.
+- Practice administrator listing and removal use platform-admin-checked RPCs; removal cleans up the role only after the final link and serializes against assignment.
+- Public doctor-directory consumers use an allowlisted RPC because the invoker view must not bypass restricted doctor/profile RLS or expose banking fields.
