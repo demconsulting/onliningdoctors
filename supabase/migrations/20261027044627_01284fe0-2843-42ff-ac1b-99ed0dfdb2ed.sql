@@ -1,0 +1,2 @@
+GRANT EXECUTE ON FUNCTION public.record_referral_click(text,text,text) TO anon;
+COMMENT ON FUNCTION public.record_referral_click(text,text,text) IS 'Intentional signed-out referral-page exception: bounded code/browser metadata insertion only, void return, no referrer identity or code-validity response; fixed public search_path.';
