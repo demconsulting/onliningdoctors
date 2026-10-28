@@ -2801,6 +2801,7 @@ export type Database = {
         Row: {
           appointment_id: string | null
           approved_rate: number | null
+          consent_given_at: string | null
           copayment_amount: number | null
           created_at: string
           dependent_code: string | null
@@ -2819,6 +2820,7 @@ export type Database = {
         Insert: {
           appointment_id?: string | null
           approved_rate?: number | null
+          consent_given_at?: string | null
           copayment_amount?: number | null
           created_at?: string
           dependent_code?: string | null
@@ -2837,6 +2839,7 @@ export type Database = {
         Update: {
           appointment_id?: string | null
           approved_rate?: number | null
+          consent_given_at?: string | null
           copayment_amount?: number | null
           created_at?: string
           dependent_code?: string | null
@@ -2878,6 +2881,30 @@ export type Database = {
           id?: string
           record_type?: string
           target_patient_id?: string | null
+        }
+        Relationships: []
+      }
+      medical_schemes: {
+        Row: {
+          administrator: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          administrator?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          administrator?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
         }
         Relationships: []
       }
@@ -3730,6 +3757,81 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "patient_documents_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_medical_aid: {
+        Row: {
+          consent_given_at: string | null
+          consent_to_share_with_scheme: boolean
+          created_at: string
+          dependent_code: string | null
+          dependent_id: string | null
+          id: string
+          is_main_member: boolean
+          last_verified_at: string | null
+          main_member_dob: string | null
+          main_member_id_number: string | null
+          main_member_name: string | null
+          membership_number: string
+          patient_id: string
+          plan: string | null
+          scheme_name: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          consent_given_at?: string | null
+          consent_to_share_with_scheme?: boolean
+          created_at?: string
+          dependent_code?: string | null
+          dependent_id?: string | null
+          id?: string
+          is_main_member?: boolean
+          last_verified_at?: string | null
+          main_member_dob?: string | null
+          main_member_id_number?: string | null
+          main_member_name?: string | null
+          membership_number: string
+          patient_id: string
+          plan?: string | null
+          scheme_name: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          consent_given_at?: string | null
+          consent_to_share_with_scheme?: boolean
+          created_at?: string
+          dependent_code?: string | null
+          dependent_id?: string | null
+          id?: string
+          is_main_member?: boolean
+          last_verified_at?: string | null
+          main_member_dob?: string | null
+          main_member_id_number?: string | null
+          main_member_name?: string | null
+          membership_number?: string
+          patient_id?: string
+          plan?: string | null
+          scheme_name?: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_medical_aid_dependent_id_fkey"
+            columns: ["dependent_id"]
+            isOneToOne: false
+            referencedRelation: "dependents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_medical_aid_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -7549,6 +7651,10 @@ export type Database = {
       }
       owns_doctor_record: {
         Args: { _doctor_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_medical_aid_row: {
+        Args: { _dependent: string; _patient: string }
         Returns: boolean
       }
       owns_np_project: {
