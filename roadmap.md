@@ -11,8 +11,8 @@
 - [x] Confirm existing administrator assignment control and document how to use it; real-account browser checks unavailable with external unmanaged Supabase.
 
 # Phase 6A fix
-- [ ] Audit currency counts and live Paystack currency; change defaults only if current consultations use ZAR.
-- [ ] Harden definer view and function grants; report remaining findings; leave no-policy table unchanged.
-- [ ] Add platform-admin-only administrator removal with last-link role cleanup.
-- [ ] Distinguish practice dashboard navigation labels.
-- [ ] Allow authenticated private logo reads without widening writes; verify changes and provide report.
+- [x] Audit currency counts and live Paystack currency; ZAR defaults changed without modifying existing rows.
+- [x] Harden definer view and function grants; report 118 remaining findings; leave no-policy table unchanged.
+- [x] Add platform-admin-only administrator removal with last-link role cleanup; rollback-only database tests passed.
+- [x] Distinguish practice dashboard navigation labels.
+- [x] Confirm authenticated private logo reads without widening writes; public browser and four unit tests passed; signed-in end-to-end checks unavailable for external unmanaged Supabase.
