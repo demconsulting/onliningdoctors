@@ -72,6 +72,14 @@ serve(async (req) => {
         .eq("id", doctor_id)
         .single();
 
+      // SECURITY: profile_id must belong to the selected doctor record
+      if (!doctorInfo || (doctorInfo as any).profile_id !== profile_id) {
+        return new Response(JSON.stringify({ error: "profile_id does not match doctor" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       // Delete doctor record (cascade will handle related records)
       const { error: delDoctorErr } = await serviceClient
         .from("doctors")

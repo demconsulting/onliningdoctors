@@ -1,6 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Only allow payment return URLs on our own domains
+function safeCallbackUrl(raw: unknown): string | undefined {
+  if (typeof raw !== "string" || !raw) return undefined;
+  try {
+    const u = new URL(raw);
+    const h = u.hostname.toLowerCase();
+    const ok =
+      (u.protocol === "https:" &&
+        (h === "doctorsonlining.com" || h.endsWith(".doctorsonlining.com") ||
+         h === "nalavation.com" || h.endsWith(".nalavation.com") ||
+         h.endsWith(".lovable.app") || h.endsWith(".lovableproject.com"))) ||
+      (u.protocol === "http:" && (h === "localhost" || h === "127.0.0.1"));
+    return ok ? u.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -383,7 +402,7 @@ serve(async (req) => {
           amount: amountInSmallestUnit,
           ...(mode !== "test" ? { currency: finalCurrency } : {}),
           reference,
-          callback_url: callback_url || undefined,
+          callback_url: safeCallbackUrl(callback_url),
           channels: (payConfig?.payment_methods as string[]) || ["card"],
           ...(payout?.subaccount_code ? { subaccount: payout.subaccount_code } : {}),
           metadata: {

@@ -592,8 +592,16 @@ serve(async (req) => {
     // injection. Only allow `user` / `assistant` roles, coerce content to a
     // string, and cap per-message length. This blocks attempts to inject
     // fake `system` or `tool` messages that could override the system prompt.
-    const recentMessages = (Array.isArray(messages) ? messages : [])
-      .slice(-20)
+    // SECURITY: history comes from server-stored messages, not the client,
+    // so callers cannot forge assistant turns.
+    const { data: storedMsgs } = await supabase
+      .from("ai_messages")
+      .select("role, content, created_at")
+      .eq("conversation_id", convId)
+      .in("role", ["user", "assistant"])
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const recentMessages = ((storedMsgs || []) as any[]).reverse()
       .filter((m: any) => m && (m.role === "user" || m.role === "assistant"))
       .map((m: any) => ({
         role: m.role as "user" | "assistant",

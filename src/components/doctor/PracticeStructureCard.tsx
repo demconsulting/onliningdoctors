@@ -71,11 +71,14 @@ const PracticeStructureCard = ({ user }: Props) => {
   const searchPractices = async () => {
     if (query.trim().length < 2) return;
     setSearching(true);
+    // Strip PostgREST filter syntax characters so typed text can't alter the filter
+    const safe = query.trim().replace(/[%,()*.:\\"']/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+    if (safe.length < 2) { setSearching(false); return; }
     const { data } = await supabase
       .from("practices")
       .select("id, practice_name, practice_number, bhf_number")
       .eq("status", "approved")
-      .or(`practice_name.ilike.%${query.trim()}%,practice_number.ilike.%${query.trim()}%`)
+      .or(`practice_name.ilike.%${safe}%,practice_number.ilike.%${safe}%`)
       .limit(10);
     setResults((data || []) as PracticeOption[]);
     setSearching(false);

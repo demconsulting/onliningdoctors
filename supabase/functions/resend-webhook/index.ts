@@ -196,7 +196,8 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Processed event: ${eventType} for ${email}`);
+    const maskedEmail = typeof email === "string" ? email.replace(/^(.).*(@.*)$/, "$1***$2") : "unknown";
+    console.log(`Processed event: ${eventType} for ${maskedEmail}`);
 
     return new Response(JSON.stringify({ status: "success" }), {
       status: 200,
