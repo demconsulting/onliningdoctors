@@ -85,6 +85,14 @@ serve(async (req) => {
       });
     }
 
+    // SECURITY: test emails may only go to the signed-in admin's own address
+    const ownEmail = (userData?.user?.email || "").toLowerCase();
+    if (!ownEmail || String(to).trim().toLowerCase() !== ownEmail) {
+      return new Response(JSON.stringify({ error: "Test emails can only be sent to your own email address" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const finalHtml = html && html.trim().length > 0 ? html : defaultHtml(message || "");
 
     const res = await fetch("https://api.resend.com/emails", {

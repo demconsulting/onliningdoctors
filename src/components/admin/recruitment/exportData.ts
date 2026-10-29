@@ -41,8 +41,10 @@ export function exportData(
 function formatCell(v: any) {
   if (v === null || v === undefined) return "";
   if (v instanceof Date) return v.toISOString();
-  if (typeof v === "object") return JSON.stringify(v);
-  return v;
+  const s = typeof v === "object" ? JSON.stringify(v) : v;
+  // Neutralize spreadsheet formula injection (CSV/Excel)
+  if (typeof s === "string" && /^[=+\-@\t\r]/.test(s)) return `'${s}`;
+  return s;
 }
 
 function download(blob: Blob, filename: string) {
