@@ -524,6 +524,14 @@ serve(async (req) => {
       }
     }
 
+    // Paid AI answers are for signed-in users only
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "Please sign in to use the assistant.", code: "auth_required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Create or reuse conversation
     let convId = conversationId;
     if (!convId) {
