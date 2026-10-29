@@ -100,6 +100,19 @@ const ChatWidget = () => {
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
+
+    if (!userId) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Please sign in or create a free account to chat with our assistant. You can sign in at doctorsonlining.com/login.",
+        },
+      ]);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
