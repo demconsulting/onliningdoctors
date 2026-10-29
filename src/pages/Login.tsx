@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { hasDoctorAccount } from "@/lib/doctorAccount";
 import logoSrc from "@/assets/logo.png";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +36,7 @@ const Login = () => {
     const isAdmin = roles?.some(r => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
     if (isAdmin) { navigate("/admin"); return; }
     if (roles?.some(r => r.role === "practice_admin")) { navigate("/practice-dashboard"); return; }
-    const isDoctor = roles?.some(r => r.role === "doctor");
+    const isDoctor = await hasDoctorAccount(userId, roles);
     navigate(isDoctor ? "/doctor-dashboard" : "/dashboard");
   };
 

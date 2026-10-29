@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
+import { hasDoctorAccount } from "@/lib/doctorAccount";
 import { useBranding } from "@/hooks/useBranding";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ const Navbar = () => {
       .select("role")
       .eq("user_id", userId);
     if (data) {
-      setIsDoctor(data.some(r => r.role === "doctor"));
+      setIsDoctor(await hasDoctorAccount(userId, data));
       setIsPracticeAdmin(data.some(r => r.role === "practice_admin"));
       setIsAdmin(data.some(r => ["admin", "super_admin", "platform_admin"].includes(r.role as string)));
     }

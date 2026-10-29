@@ -1,4 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from "react";
+import { hasDoctorAccount } from "@/lib/doctorAccount";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
@@ -58,7 +59,7 @@ const DoctorDashboard = () => {
         .eq("user_id", session.user.id)
         .eq("role", "doctor");
 
-      if (!roles || roles.length === 0) {
+      if (!(await hasDoctorAccount(session.user.id, roles))) {
         navigate("/dashboard"); // Redirect patients to patient dashboard
         return;
       }

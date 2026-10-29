@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { hasDoctorAccount } from "@/lib/doctorAccount";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ const DoctorOnboarding = () => {
         return;
       }
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", session.user.id);
-      if (roles?.some((r) => r.role === "doctor")) {
+      if (await hasDoctorAccount(session.user.id, roles)) {
         navigate("/doctor-dashboard", { replace: true });
         return;
       }
