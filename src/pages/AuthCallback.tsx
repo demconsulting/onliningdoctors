@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { hasDoctorAccount } from "@/lib/doctorAccount";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ const AuthCallback = () => {
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id);
-      const isDoctor = roles?.some((r) => r.role === "doctor");
+      const isDoctor = await hasDoctorAccount(user.id, roles);
       const isPracticeAdmin = roles?.some((r) => r.role === "practice_admin");
       const isAdmin = roles?.some((r) => ["admin", "super_admin", "platform_admin"].includes(r.role as string));
 

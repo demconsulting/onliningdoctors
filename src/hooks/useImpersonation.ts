@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { hasDoctorAccount } from "@/lib/doctorAccount";
 import { supabase } from "@/integrations/supabase/client";
 import {
   ActiveImpersonation,
@@ -85,7 +86,7 @@ export function useImpersonation() {
           const isAdmin = roles?.some((r) =>
             ["admin", "super_admin", "platform_admin"].includes(r.role as string),
           );
-          const isDoctor = roles?.some((r) => r.role === "doctor");
+          const isDoctor = await hasDoctorAccount(payload.target.id, roles);
           if (isAdmin) destination = "/admin";
           else if (isDoctor) destination = "/doctor-dashboard";
         } catch (e) {
