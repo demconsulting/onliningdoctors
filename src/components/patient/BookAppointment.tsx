@@ -791,6 +791,7 @@ const BookAppointment = ({ user, onBooked, preselectDoctorId }: BookAppointmentP
                       <MedicalAidPanel
                         patientId={user.id}
                         doctorId={selectedDoctor}
+                        dependentId={forWhom === "self" ? null : forWhom}
                         currencySymbol={feeSymbol}
                         onActiveRequestChange={setActiveMedicalAid}
                       />

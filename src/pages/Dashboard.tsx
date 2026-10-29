@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, User, Calendar, FileText, HeartPulse, Users, Gift } from "lucide-react";
+import { Loader2, User, Calendar, FileText, HeartPulse, Users, Gift, ShieldCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User as SupaUser } from "@supabase/supabase-js";
 import AppointmentList from "@/components/patient/AppointmentList";
@@ -18,6 +18,7 @@ const FamilyMembers = lazy(() => import("@/components/patient/FamilyMembers"));
 const ProfileEdit = lazy(() => import("@/components/patient/ProfileEdit"));
 const MedicalInfo = lazy(() => import("@/components/patient/MedicalInfo"));
 const DocumentUpload = lazy(() => import("@/components/patient/DocumentUpload"));
+const MedicalAidDetails = lazy(() => import("@/components/patient/MedicalAidDetails"));
 const ReferralCenter = lazy(() => import("@/components/referrals/ReferralCenter"));
 
 const TabFallback = () => (
@@ -121,7 +122,7 @@ const Dashboard = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           {/* Mobile: 3-col wrapping grid (2 rows) — no horizontal scroll. Desktop: single row. */}
-          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-7">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:grid-cols-4 lg:grid-cols-8">
             <TabsTrigger value="appointments" className="gap-1.5 whitespace-nowrap">
               <Calendar className="h-4 w-4" /> <span className="truncate">Appointments</span>
             </TabsTrigger>
@@ -136,6 +137,9 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="medical" className="gap-1.5 whitespace-nowrap">
               <HeartPulse className="h-4 w-4" /> Medical
+            </TabsTrigger>
+            <TabsTrigger value="medical-aid" className="gap-1.5 whitespace-nowrap">
+              <ShieldCheck className="h-4 w-4" /> <span className="truncate">Medical Aid</span>
             </TabsTrigger>
             <TabsTrigger value="documents" className="gap-1.5 whitespace-nowrap">
               <FileText className="h-4 w-4" /> <span className="truncate">Documents</span>
@@ -167,6 +171,11 @@ const Dashboard = () => {
           <TabsContent value="medical">
             <Suspense fallback={<TabFallback />}>
               <MedicalInfo user={user} />
+            </Suspense>
+          </TabsContent>
+          <TabsContent value="medical-aid">
+            <Suspense fallback={<TabFallback />}>
+              <MedicalAidDetails user={user} />
             </Suspense>
           </TabsContent>
           <TabsContent value="documents">

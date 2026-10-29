@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ShieldCheck, Send, Clock, XCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MEDICAL_AID_CONSENT_TEXT } from "@/lib/medicalAid";
+import { saveMedicalAid } from "@/components/patient/MedicalAidDetails";
 
 export interface ActiveMedicalAidRequest {
   id: string;
@@ -19,6 +22,7 @@ export interface ActiveMedicalAidRequest {
 interface Props {
   patientId: string;
   doctorId: string;
+  dependentId?: string | null;
   currencySymbol: string;
   onActiveRequestChange: (req: ActiveMedicalAidRequest | null) => void;
 }
@@ -32,7 +36,7 @@ const STATUS_LABEL: Record<string, { label: string; tone: "default" | "secondary
   cancelled: { label: "Cancelled", tone: "outline" },
 };
 
-const MedicalAidPanel = ({ patientId, doctorId, currencySymbol, onActiveRequestChange }: Props) => {
+const MedicalAidPanel = ({ patientId, doctorId, dependentId = null, currencySymbol, onActiveRequestChange }: Props) => {
   const { toast } = useToast();
   const [schemes, setSchemes] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -43,6 +47,26 @@ const MedicalAidPanel = ({ patientId, doctorId, currencySymbol, onActiveRequestC
   const [membershipNumber, setMembershipNumber] = useState("");
   const [mainMember, setMainMember] = useState("");
   const [dependentCode, setDependentCode] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [saveForLater, setSaveForLater] = useState(true);
+  const [saved, setSaved] = useState<any>(null);
+
+  // Prefill from saved details for the selected patient / dependant
+  useEffect(() => {
+    let q = (supabase as any).from("patient_medical_aid").select("*").eq("patient_id", patientId);
+    q = dependentId ? q.eq("dependent_id", dependentId) : q.is("dependent_id", null);
+    q.maybeSingle().then(({ data }: any) => {
+      setSaved(data || null);
+      if (data) {
+        setScheme(data.scheme_name || ""); setPlan(data.plan || "");
+        setMembershipNumber(data.membership_number || ""); setDependentCode(data.dependent_code || "");
+        setMainMember(data.is_main_member ? "" : (data.main_member_name || ""));
+        setConsent(!!data.consent_to_share_with_scheme);
+      } else {
+        setScheme(""); setPlan(""); setMembershipNumber(""); setDependentCode(""); setMainMember(""); setConsent(false);
+      }
+    });
+  }, [patientId, dependentId]);
 
   const load = async () => {
     setLoading(true);
@@ -82,8 +106,24 @@ const MedicalAidPanel = ({ patientId, doctorId, currencySymbol, onActiveRequestC
       toast({ variant: "destructive", title: "Please complete required fields" });
       return;
     }
+    if (!consent) {
+      toast({ variant: "destructive", title: "Please tick the consent box to continue" });
+      return;
+    }
     setSubmitting(true);
+    if (saveForLater) {
+      const { data: s, error: se } = await saveMedicalAid(patientId, dependentId, {
+        scheme_name: scheme, plan, membership_number: membershipNumber, dependent_code: dependentCode,
+        is_main_member: saved ? saved.is_main_member && !mainMember.trim() : false,
+        main_member_name: mainMember, main_member_id_number: saved?.main_member_id_number || "",
+        main_member_dob: saved?.main_member_dob || "", consent_to_share_with_scheme: true,
+      }, saved);
+      if (se) toast({ variant: "destructive", title: "Details not saved for next time", description: se.message });
+      else setSaved(s);
+    }
     const { error } = await supabase.from("medical_aid_requests").insert({
+      dependent_id: dependentId,
+      consent_given_at: new Date().toISOString(),
       patient_id: patientId,
       doctor_id: doctorId,
       scheme_name: scheme.trim(),
@@ -95,7 +135,6 @@ const MedicalAidPanel = ({ patientId, doctorId, currencySymbol, onActiveRequestC
     setSubmitting(false);
     if (error) { toast({ variant: "destructive", title: "Could not submit", description: error.message }); return; }
     toast({ title: "Verification request sent", description: "We'll notify you once the doctor responds." });
-    setScheme(""); setPlan(""); setMembershipNumber(""); setMainMember(""); setDependentCode("");
     load();
   };
 
@@ -200,7 +239,15 @@ const MedicalAidPanel = ({ patientId, doctorId, currencySymbol, onActiveRequestC
               <Input value={dependentCode} onChange={(e) => setDependentCode(e.target.value)} maxLength={20} />
             </div>
           </div>
-          <Button type="button" onClick={submit} disabled={submitting} className="gap-2 gradient-primary border-0 text-primary-foreground">
+          <div className="flex items-start gap-2 rounded-md border border-border p-3">
+            <Checkbox id="maid-req-consent" checked={consent} onCheckedChange={(v) => setConsent(v === true)} />
+            <Label htmlFor="maid-req-consent" className="text-sm font-normal leading-snug">{MEDICAL_AID_CONSENT_TEXT} *</Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox id="maid-save" checked={saveForLater} onCheckedChange={(v) => setSaveForLater(v === true)} />
+            <Label htmlFor="maid-save" className="text-sm font-normal">Save these details for next time</Label>
+          </div>
+          <Button type="button" onClick={submit} disabled={submitting || !consent} className="gap-2 gradient-primary border-0 text-primary-foreground">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             Request Verification
           </Button>
