@@ -61,6 +61,16 @@ Deno.serve(async (req) => {
     const authorized = !!rx && (rx.doctor_id === caller.id || rx.patient_id === caller.id || isAdmin === true);
     if (!authorized) return json({ error: 'Not found' }, 404);
 
+    // SECURITY: only send to the patient's registered email or the caller's own email.
+    const recipient = to.trim().toLowerCase();
+    const { data: patientUser } = await supabase.auth.admin.getUserById(rx!.patient_id);
+    const allowed = new Set(
+      [patientUser?.user?.email, caller.email].filter(Boolean).map((e) => String(e).toLowerCase()),
+    );
+    if (!allowed.has(recipient)) {
+      return json({ error: "Prescriptions can only be sent to the patient's registered email or your own email" }, 403);
+    }
+
     const { data: doctor } = await supabase
       .from('profiles').select('full_name').eq('id', rx!.doctor_id).maybeSingle();
 
@@ -92,14 +102,14 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Doctors Onlining <noreply@onliningdoctors.lovable.app>',
-        to: [to.trim()],
+        from: 'Doctors Onlining <assist@doctorsonlining.com>',
+        to: [recipient],
         subject: `Prescription ${rx!.prescription_number} from Dr. ${doctor?.full_name || ''}`,
         html,
       }),
     });
     const payload = await r.json();
-    if (!r.ok) return json({ error: 'Email send failed', details: payload }, 502);
+    if (!r.ok) { console.error('resend error', payload); return json({ error: 'Email send failed' }, 502); }
 
     return json({ ok: true, id: payload.id });
   } catch (e) {
