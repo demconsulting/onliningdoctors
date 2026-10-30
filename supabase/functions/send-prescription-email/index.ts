@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: 'Doctors Onlining <noreply@onliningdoctors.lovable.app>',
+        from: 'Doctors Onlining <assist@doctorsonlining.com>',
         to: [to.trim()],
         subject: `Prescription ${rx!.prescription_number} from Dr. ${doctor?.full_name || ''}`,
         html,
