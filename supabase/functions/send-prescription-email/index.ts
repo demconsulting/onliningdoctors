@@ -103,13 +103,13 @@ Deno.serve(async (req) => {
       headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'Doctors Onlining <assist@doctorsonlining.com>',
-        to: [to.trim()],
+        to: [recipient],
         subject: `Prescription ${rx!.prescription_number} from Dr. ${doctor?.full_name || ''}`,
         html,
       }),
     });
     const payload = await r.json();
-    if (!r.ok) return json({ error: 'Email send failed', details: payload }, 502);
+    if (!r.ok) { console.error('resend error', payload); return json({ error: 'Email send failed' }, 502); }
 
     return json({ ok: true, id: payload.id });
   } catch (e) {
