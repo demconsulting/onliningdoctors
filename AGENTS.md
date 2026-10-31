@@ -9,3 +9,4 @@
 - Practice administrator listing and removal use platform-admin-checked RPCs; removal cleans up the role only after the final link and serializes against assignment.
 - Public doctor-directory consumers use an allowlisted RPC because the invoker view must not bypass restricted doctor/profile RLS or expose banking fields.- Saved patient medical aid rows are owner-only (patient, or guardian for dependants) plus platform-admin read; verification fields are trigger-protected so patients cannot self-verify, and doctor/practice access must be added via explicit scoped policies.
 - The doctor role is granted only by the doctors.is_verified trigger; pending applicants are recognised by their doctors row (hasDoctorAccount) so onboarding works without doctor privileges.
+- Doctor reminder processing uses shared checklist rules and service-role-only cron repair; never authorize scheduled email sends with the public anon key.
