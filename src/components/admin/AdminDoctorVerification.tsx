@@ -77,14 +77,14 @@ const AdminDoctorVerification = () => {
     if (rows.length) {
       const ids = rows.map(r => r.profile_id);
       const [{ data: avail }, { data: emailLogs }] = await Promise.all([
-        supabase.from("doctor_availability").select("doctor_id").in("doctor_id", ids),
+        supabase.from("doctor_availability").select("doctor_id, start_time, end_time").in("doctor_id", ids).eq("is_available", true),
         supabase.from("doctor_onboarding_email_log").select("doctor_profile_id, email_type, sent_at, status").in("doctor_profile_id", ids).eq("status", "sent").order("sent_at", { ascending: false }),
       ]);
-      const availSet = new Set((avail ?? []).map((a: any) => a.doctor_id));
+      const availSet = new Set((avail ?? []).filter(a => a.start_time < a.end_time).map(a => a.doctor_id));
       const emailMap = new Map<string, { reminders: number; last: string | null }>();
       for (const log of (emailLogs ?? []) as any[]) {
         const cur = emailMap.get(log.doctor_profile_id) ?? { reminders: 0, last: null };
-        if (log.email_type === "reminder") cur.reminders += 1;
+        if (log.email_type.includes("reminder")) cur.reminders += 1;
         if (!cur.last || log.sent_at > cur.last) cur.last = log.sent_at;
         emailMap.set(log.doctor_profile_id, cur);
       }

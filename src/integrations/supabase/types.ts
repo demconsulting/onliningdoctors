@@ -7367,6 +7367,10 @@ export type Database = {
         }
         Returns: number
       }
+      configure_doctor_reminder_schedule: {
+        Args: { _service_authorization: string }
+        Returns: undefined
+      }
       deny_practice_patient: {
         Args: { _practice_patient_id: string }
         Returns: undefined
