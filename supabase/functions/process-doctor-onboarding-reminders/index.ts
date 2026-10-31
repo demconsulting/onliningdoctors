@@ -1,22 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { missingItems, hasUsableAvailability, nextDueReminder } from "./rules.ts";
 
 const FROM = "Doctors Onlining <assist@doctorsonlining.com>";
 
-function missingItems(doctor: any, hasAvailability: boolean): string[] {
-  const missing: string[] = [];
-  if (!doctor.id_document_path) missing.push("ID Copy");
-  if (!doctor.license_document_path) missing.push("HPCSA Document");
-  if (!doctor.profile?.avatar_url) missing.push("Profile Photo");
-  if (!doctor.consultation_fee || Number(doctor.consultation_fee) <= 0) missing.push("Consultation Fee");
-  if (!hasAvailability) missing.push("Availability");
-  return missing;
-}
+// Deployment reconciliation uses only server-owned credentials, never caller input.
+// It repairs the existing cron even when its old public token is rejected below.
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+if (!supabaseUrl || !serviceKey) throw new Error("Supabase server configuration missing");
+const service = createClient(supabaseUrl, serviceKey);
+const { error: scheduleError } = await service.rpc("configure_doctor_reminder_schedule", {
+  _service_authorization: serviceKey,
+});
+if (scheduleError) console.error("Doctor reminder schedule reconciliation failed", scheduleError.code);
 
 function escapeHtml(s: string) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -33,11 +31,6 @@ serve(async (req) => {
   try {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY missing");
-
-    const service = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
 
     // SECURITY: restrict to cron/service-role callers or platform admins so this
     // job cannot be triggered anonymously to mass-email doctors.
@@ -59,11 +52,16 @@ serve(async (req) => {
       });
     }
 
-    const { data: reminders } = await service
+    const body = await req.json().catch(() => ({}));
+    if (!body || typeof body !== "object" || (body.dryRun !== undefined && typeof body.dryRun !== "boolean")) {
+      return new Response(JSON.stringify({ error: "dryRun must be a boolean" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const { data: reminders, error: remindersError } = await service
       .from("doctor_onboarding_reminders")
       .select("*")
       .eq("is_active", true)
       .order("delay_minutes", { ascending: true });
+    if (remindersError) throw new Error("Could not load reminder settings");
 
     if (!reminders?.length) {
       return new Response(JSON.stringify({ ok: true, sent: 0, reason: "no active reminders" }), {
@@ -72,9 +70,10 @@ serve(async (req) => {
     }
 
     // Unverified doctors (still onboarding)
-    const { data: doctors } = await service
+    const { data: doctors, error: doctorsError } = await service
       .from("doctors")
       .select("id, profile_id, license_document_path, id_document_path, consultation_fee, created_at, is_verified, is_suspended, profile:profiles!doctors_profile_id_fkey(full_name, avatar_url)");
+    if (doctorsError) throw new Error("Could not load doctors");
 
     if (!doctors?.length) {
       return new Response(JSON.stringify({ ok: true, sent: 0 }), {
@@ -85,38 +84,37 @@ serve(async (req) => {
     const onboarding = doctors.filter((d: any) => !d.is_verified && !d.is_suspended);
     let sent = 0;
     let skipped = 0;
+    let failed = 0;
+    let due = 0;
     const now = Date.now();
 
     for (const d of onboarding as any[]) {
       // availability check
-      const { count: availCount } = await service
+      const { data: availability, error: availabilityError } = await service
         .from("doctor_availability")
-        .select("id", { count: "exact", head: true })
+        .select("is_available, start_time, end_time")
         .eq("doctor_id", d.profile_id);
-      const hasAvailability = (availCount ?? 0) > 0;
+      if (availabilityError) throw new Error("Could not check doctor scheduling");
+      const hasAvailability = hasUsableAvailability(availability ?? []);
 
       const missing = missingItems(d, hasAvailability);
       if (missing.length === 0) { skipped++; continue; }
 
       const ageMin = (now - new Date(d.created_at).getTime()) / 60000;
 
-      const { data: userData } = await service.auth.admin.getUserById(d.profile_id);
+      const { data: previous, error: previousError } = await service.from("doctor_onboarding_email_log")
+        .select("reminder_id").eq("doctor_profile_id", d.profile_id).in("status", ["sent", "delivered", "opened", "clicked"]);
+      if (previousError) throw new Error("Could not check previous reminders");
+      const sentIds = new Set<string>((previous ?? []).map(log => log.reminder_id).filter((id): id is string => typeof id === "string"));
+      const r = nextDueReminder(reminders, sentIds, ageMin);
+      if (!r) continue;
+      due++;
+      if (body.dryRun === true) continue;
+      const { data: userData, error: userError } = await service.auth.admin.getUserById(d.profile_id);
+      if (userError) { failed++; continue; }
       const email = userData?.user?.email;
       if (!email) continue;
       const fullName = d.profile?.full_name || "Doctor";
-
-      for (const r of reminders) {
-        if (ageMin < r.delay_minutes) continue;
-
-        // duplicate check
-        const { data: existing } = await service
-          .from("doctor_onboarding_email_log")
-          .select("id")
-          .eq("doctor_profile_id", d.profile_id)
-          .eq("reminder_id", r.id)
-          .eq("status", "sent")
-          .maybeSingle();
-        if (existing) continue;
 
         const vars = {
           doctor_name: fullName,
@@ -135,8 +133,9 @@ serve(async (req) => {
         });
         const data = await resp.json();
 
-        await service.from("doctor_onboarding_email_log").insert({
+        const { error: logError } = await service.from("doctor_onboarding_email_log").insert({
           doctor_profile_id: d.profile_id,
+          doctor_name: fullName,
           email_type: "reminder",
           reminder_id: r.id,
           recipient: email,
@@ -145,13 +144,13 @@ serve(async (req) => {
           error: resp.ok ? null : JSON.stringify(data),
           resend_id: resp.ok ? data.id : null,
         });
+        if (logError) throw new Error("Could not record reminder result");
         if (resp.ok) sent++;
-        // Send at most one reminder per doctor per run (the latest due not yet sent)
-        if (resp.ok) break;
-      }
+        else { failed++; console.error("Doctor reminder provider rejected send", resp.status); }
     }
 
-    return new Response(JSON.stringify({ ok: true, sent, completeSkipped: skipped }), {
+    console.info("Doctor reminders processed", JSON.stringify({ sent, failed, due, completeSkipped: skipped, dryRun: body.dryRun === true }));
+    return new Response(JSON.stringify({ ok: failed === 0, sent, failed, due, completeSkipped: skipped, dryRun: body.dryRun === true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

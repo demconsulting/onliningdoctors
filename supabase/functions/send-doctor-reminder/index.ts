@@ -86,12 +86,13 @@ serve(async (req) => {
     let doctorIdForLog = doctorProfileId || null;
 
     if (doctorProfileId) {
-      const [{ data: userData }, { data: profile }, { data: doctor }, { count: availCount }] = await Promise.all([
+      const [{ data: userData }, { data: profile }, { data: doctor }, { data: availability, error: availabilityError }] = await Promise.all([
         service.auth.admin.getUserById(doctorProfileId),
         service.from("profiles").select("full_name, avatar_url").eq("id", doctorProfileId).single(),
         service.from("doctors").select("id_document_path, license_document_path, consultation_fee").eq("profile_id", doctorProfileId).single(),
-        service.from("doctor_availability").select("id", { count: "exact", head: true }).eq("doctor_id", doctorProfileId),
+        service.from("doctor_availability").select("start_time, end_time").eq("doctor_id", doctorProfileId).eq("is_available", true),
       ]);
+      if (availabilityError) throw new Error("Could not check doctor scheduling");
       doctorName = profile?.full_name || "Doctor";
       if (!recipient) recipient = userData?.user?.email || "";
 
@@ -100,7 +101,7 @@ serve(async (req) => {
       if (!doctor?.license_document_path) missing.push("HPCSA Document");
       if (!profile?.avatar_url) missing.push("Profile Photo");
       if (!doctor?.consultation_fee || Number(doctor.consultation_fee) <= 0) missing.push("Consultation Fee");
-      if ((availCount ?? 0) === 0) missing.push("Availability");
+      if (!(availability ?? []).some(row => row.start_time < row.end_time)) missing.push("Availability");
 
       const vars = { doctor_name: doctorName, missing_items: missing.map((m) => `• ${m}`).join("\n") || "All required information is complete." };
       subject = render(subject, vars);

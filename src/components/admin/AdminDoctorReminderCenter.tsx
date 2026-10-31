@@ -94,10 +94,10 @@ const AdminDoctorReminderCenter = () => {
       supabase.from("doctors").select("profile_id, created_at, is_verified, is_suspended, id_document_path, license_document_path, consultation_fee, is_founding_doctor, founding_status, profile:profiles!doctors_profile_id_fkey(full_name, avatar_url)").order("created_at", { ascending: false }).limit(500),
       supabase.from("doctor_onboarding_email_log").select("*").order("sent_at", { ascending: false }).limit(500),
       supabase.from("doctor_onboarding_reminders").select("id, name, subject, body").order("delay_minutes"),
-      supabase.from("doctor_availability").select("doctor_id"),
+      supabase.from("doctor_availability").select("doctor_id, start_time, end_time").eq("is_available", true),
     ]);
 
-    const availSet = new Set((availRes.data || []).map((r: any) => r.doctor_id));
+    const availSet = new Set((availRes.data || []).filter(r => r.start_time < r.end_time).map(r => r.doctor_id));
     const logRows = (logsRes.data || []) as LogRow[];
     const lastByDoctor = new Map<string, { last: string; count: number }>();
     for (const l of logRows) {
