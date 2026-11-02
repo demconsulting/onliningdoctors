@@ -1,6 +1,6 @@
 # Group practice foundation
-- [ ] Repair authenticated automatic doctor reminders and validate real email sends for incomplete onboarding.
-- [ ] Align scheduling completion checks and add reminder regression tests.
+- [x] Repair authenticated automatic doctor reminders; scheduled runs and delivery confirmations verified for four incomplete doctors.
+- [x] Align scheduling completion checks; six reminder regression tests passed and app checks succeeded (external Supabase admin UI testing unavailable).
 - [x] Extend existing practice schema and secure practice-admin access without changing cash booking.
 - [x] Add practice details and doctor membership dashboard with role-based navigation.
 - [x] Add doctor regulatory profile fields and validate the requested rules.
