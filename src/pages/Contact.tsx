@@ -32,7 +32,22 @@ const Contact = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [contact, setContact] = useState<FooterContent>(fallbackContact);
   const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.from("site_content").select("value").eq("key", "footer").maybeSingle().then(({ data }) => {
+      if (data?.value) {
+        const v = data.value as unknown as FooterContent;
+        setContact({
+          email: v.email || fallbackContact.email,
+          whatsapp: v.whatsapp || fallbackContact.whatsapp,
+          whatsapp_display: v.whatsapp_display || fallbackContact.whatsapp_display,
+          address: v.address || fallbackContact.address,
+        });
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
