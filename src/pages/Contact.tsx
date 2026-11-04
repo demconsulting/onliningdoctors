@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -11,6 +11,20 @@ import { Mail, Phone, MapPin, Send, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Seo from "@/components/seo/Seo";
 
+interface FooterContent {
+  email: string;
+  whatsapp: string;
+  whatsapp_display: string;
+  address: string;
+}
+
+const fallbackContact: FooterContent = {
+  email: "assist@doctorsonlining.com",
+  whatsapp: "27605445802",
+  whatsapp_display: "+27 60 544 5802",
+  address: "61 Albatross Drive, Fourways, 2191, South Africa",
+};
+
 const Contact = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,7 +32,22 @@ const Contact = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [contact, setContact] = useState<FooterContent>(fallbackContact);
   const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.from("site_content").select("value").eq("key", "footer").maybeSingle().then(({ data }) => {
+      if (data?.value) {
+        const v = data.value as unknown as FooterContent;
+        setContact({
+          email: v.email || fallbackContact.email,
+          whatsapp: v.whatsapp || fallbackContact.whatsapp,
+          whatsapp_display: v.whatsapp_display || fallbackContact.whatsapp_display,
+          address: v.address || fallbackContact.address,
+        });
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +86,9 @@ const Contact = () => {
             {/* Contact Info */}
             <div className="md:col-span-2 space-y-6">
               {[
-                { icon: Mail, label: "Email", value: "support@doco.health" },
-                { icon: Phone, label: "Phone", value: "+1 (555) 000-0000" },
-                { icon: MapPin, label: "Address", value: "123 Health Street, Medical City, MC 10001" },
+                { icon: Mail, label: "Email", value: contact.email, href: `mailto:${contact.email}` },
+                { icon: Phone, label: "WhatsApp", value: contact.whatsapp_display, href: `https://wa.me/${contact.whatsapp}` },
+                { icon: MapPin, label: "Address", value: contact.address, href: null },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
@@ -67,7 +96,11 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">{item.value}</p>
+                    {item.href ? (
+                      <a href={item.href} className="text-sm text-primary hover:underline">{item.value}</a>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">{item.value}</p>
+                    )}
                   </div>
                 </div>
               ))}
