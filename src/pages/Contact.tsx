@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -10,6 +10,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Seo from "@/components/seo/Seo";
+
+interface FooterContent {
+  email: string;
+  whatsapp: string;
+  whatsapp_display: string;
+  address: string;
+}
+
+const fallbackContact: FooterContent = {
+  email: "assist@doctorsonlining.com",
+  whatsapp: "27605445802",
+  whatsapp_display: "+27 60 544 5802",
+  address: "61 Albatross Drive, Fourways, 2191, South Africa",
+};
 
 const Contact = () => {
   const [name, setName] = useState("");
