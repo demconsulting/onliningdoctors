@@ -86,9 +86,9 @@ const Contact = () => {
             {/* Contact Info */}
             <div className="md:col-span-2 space-y-6">
               {[
-                { icon: Mail, label: "Email", value: "support@doco.health" },
-                { icon: Phone, label: "Phone", value: "+1 (555) 000-0000" },
-                { icon: MapPin, label: "Address", value: "123 Health Street, Medical City, MC 10001" },
+                { icon: Mail, label: "Email", value: contact.email, href: `mailto:${contact.email}` },
+                { icon: Phone, label: "WhatsApp", value: contact.whatsapp_display, href: `https://wa.me/${contact.whatsapp}` },
+                { icon: MapPin, label: "Address", value: contact.address, href: null },
               ].map((item, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
@@ -96,7 +96,11 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-sm text-muted-foreground">{item.value}</p>
+                    {item.href ? (
+                      <a href={item.href} className="text-sm text-primary hover:underline">{item.value}</a>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">{item.value}</p>
+                    )}
                   </div>
                 </div>
               ))}
