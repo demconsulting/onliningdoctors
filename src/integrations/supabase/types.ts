@@ -3596,6 +3596,7 @@ export type Database = {
       }
       pages: {
         Row: {
+          body: string | null
           canonical_url: string | null
           created_at: string
           created_by: string | null
@@ -3603,6 +3604,7 @@ export type Database = {
           id: string
           is_followable: boolean
           is_indexable: boolean
+          is_system: boolean
           meta_description: string | null
           meta_title: string | null
           og_description: string | null
@@ -3622,6 +3624,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          body?: string | null
           canonical_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -3629,6 +3632,7 @@ export type Database = {
           id?: string
           is_followable?: boolean
           is_indexable?: boolean
+          is_system?: boolean
           meta_description?: string | null
           meta_title?: string | null
           og_description?: string | null
@@ -3648,6 +3652,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          body?: string | null
           canonical_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -3655,6 +3660,7 @@ export type Database = {
           id?: string
           is_followable?: boolean
           is_indexable?: boolean
+          is_system?: boolean
           meta_description?: string | null
           meta_title?: string | null
           og_description?: string | null
@@ -7616,6 +7622,11 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_permission"][]
       }
+      nalavation_claim_subscription: {
+        Args: { reference: string }
+        Returns: boolean
+      }
+      nalavation_create_order: { Args: { payload: Json }; Returns: Json }
       nalavation_log_audit: {
         Args: {
           _action: string
@@ -7626,6 +7637,7 @@ export type Database = {
         }
         Returns: string
       }
+      nalavation_payment_order: { Args: { reference: string }; Returns: Json }
       nalavation_request_service: {
         Args: {
           _contact_email?: string
@@ -7652,6 +7664,10 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      nalavation_update_order: {
+        Args: { patch: Json; reference: string }
+        Returns: Json
       }
       owns_doctor_record: {
         Args: { _doctor_id: string; _user_id: string }
