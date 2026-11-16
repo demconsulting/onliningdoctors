@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ShieldCheck, Send, Clock, XCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MEDICAL_AID_CONSENT_TEXT } from "@/lib/medicalAid";
+import { Switch } from "@/components/ui/switch";
+import { MEDICAL_AID_CONSENT_TEXT, validateMedicalAidForm, type MedicalAidForm } from "@/lib/medicalAid";
 import { saveMedicalAid } from "@/components/patient/MedicalAidDetails";
 
 export interface ActiveMedicalAidRequest {
@@ -46,6 +47,9 @@ const MedicalAidPanel = ({ patientId, doctorId, dependentId = null, currencySymb
   const [plan, setPlan] = useState("");
   const [membershipNumber, setMembershipNumber] = useState("");
   const [mainMember, setMainMember] = useState("");
+  const [isMainMember, setIsMainMember] = useState(!dependentId);
+  const [mainMemberId, setMainMemberId] = useState("");
+  const [mainMemberDob, setMainMemberDob] = useState("");
   const [dependentCode, setDependentCode] = useState("");
   const [consent, setConsent] = useState(false);
   const [saveForLater, setSaveForLater] = useState(true);
@@ -53,10 +57,15 @@ const MedicalAidPanel = ({ patientId, doctorId, dependentId = null, currencySymb
 
   // Prefill from saved details for the selected patient / dependant
   useEffect(() => {
+    let cancelled = false;
     let q = (supabase as any).from("patient_medical_aid").select("*").eq("patient_id", patientId);
     q = dependentId ? q.eq("dependent_id", dependentId) : q.is("dependent_id", null);
     q.maybeSingle().then(({ data }: any) => {
+      if (cancelled) return;
       setSaved(data || null);
+      setIsMainMember(data?.is_main_member ?? !dependentId);
+      setMainMemberId(data?.main_member_id_number || "");
+      setMainMemberDob(data?.main_member_dob || "");
       if (data) {
         setScheme(data.scheme_name || ""); setPlan(data.plan || "");
         setMembershipNumber(data.membership_number || ""); setDependentCode(data.dependent_code || "");
@@ -66,6 +75,7 @@ const MedicalAidPanel = ({ patientId, doctorId, dependentId = null, currencySymb
         setScheme(""); setPlan(""); setMembershipNumber(""); setDependentCode(""); setMainMember(""); setConsent(false);
       }
     });
+    return () => { cancelled = true; };
   }, [patientId, dependentId]);
 
   const load = async () => {
@@ -110,14 +120,22 @@ const MedicalAidPanel = ({ patientId, doctorId, dependentId = null, currencySymb
       toast({ variant: "destructive", title: "Please tick the consent box to continue" });
       return;
     }
+    const savedForm: MedicalAidForm = {
+      scheme_name: scheme, plan, membership_number: membershipNumber, dependent_code: dependentCode,
+      is_main_member: isMainMember, main_member_name: mainMember,
+      main_member_id_number: mainMemberId, main_member_dob: mainMemberDob,
+      consent_to_share_with_scheme: consent,
+    };
+    if (saveForLater) {
+      const validationError = validateMedicalAidForm(savedForm);
+      if (validationError) {
+        toast({ variant: "destructive", title: validationError });
+        return;
+      }
+    }
     setSubmitting(true);
     if (saveForLater) {
-      const { data: s, error: se } = await saveMedicalAid(patientId, dependentId, {
-        scheme_name: scheme, plan, membership_number: membershipNumber, dependent_code: dependentCode,
-        is_main_member: saved ? saved.is_main_member && !mainMember.trim() : false,
-        main_member_name: mainMember, main_member_id_number: saved?.main_member_id_number || "",
-        main_member_dob: saved?.main_member_dob || "", consent_to_share_with_scheme: true,
-      }, saved);
+      const { data: s, error: se } = await saveMedicalAid(patientId, dependentId, savedForm, saved);
       if (se) toast({ variant: "destructive", title: "Details not saved for next time", description: se.message });
       else setSaved(s);
     }
@@ -231,14 +249,30 @@ const MedicalAidPanel = ({ patientId, doctorId, dependentId = null, currencySymb
               <Input value={membershipNumber} onChange={(e) => setMembershipNumber(e.target.value)} maxLength={40} />
             </div>
             <div>
-              <Label>Main member name *</Label>
-              <Input value={mainMember} onChange={(e) => setMainMember(e.target.value)} maxLength={120} />
+              <Label htmlFor="maid-main-name">Main member name *</Label>
+              <Input id="maid-main-name" value={mainMember} onChange={(e) => setMainMember(e.target.value)} maxLength={120} />
             </div>
             <div className="sm:col-span-2">
               <Label>Dependent code (optional)</Label>
               <Input value={dependentCode} onChange={(e) => setDependentCode(e.target.value)} maxLength={20} />
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <Switch id="maid-main-member" checked={isMainMember} onCheckedChange={setIsMainMember} />
+            <Label htmlFor="maid-main-member">This person is the main member</Label>
+          </div>
+          {!isMainMember && saveForLater && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="maid-main-id">Main member ID number *</Label>
+                <Input id="maid-main-id" value={mainMemberId} maxLength={20} onChange={(e) => setMainMemberId(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="maid-main-dob">Main member date of birth *</Label>
+                <Input id="maid-main-dob" type="date" value={mainMemberDob} onChange={(e) => setMainMemberDob(e.target.value)} />
+              </div>
+            </div>
+          )}
           <div className="flex items-start gap-2 rounded-md border border-border p-3">
             <Checkbox id="maid-req-consent" checked={consent} onCheckedChange={(v) => setConsent(v === true)} />
             <Label htmlFor="maid-req-consent" className="text-sm font-normal leading-snug">{MEDICAL_AID_CONSENT_TEXT} *</Label>
