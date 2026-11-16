@@ -23,8 +23,8 @@ interface FooterContent {
 const defaultContent: FooterContent = {
   tagline: "Making healthcare accessible, one consultation at a time.",
   email: "support2@doctorsonlining.com",
-  whatsapp: "27605445802",
-  whatsapp_display: "+27 60 544 5802",
+  whatsapp: "27817330210",
+  whatsapp_display: "+27 81 733 0210",
   address: "61 Albatross Drive, Fourways, 2191, South Africa",
   copyright: "Doctors Onlining. All rights reserved.",
   disclaimer_consultation: "All consultations are conducted by independently licensed and registered healthcare professionals.",
