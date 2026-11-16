@@ -75,7 +75,7 @@ const baseTermsSections: LegalSection[] = [
   {
     title: "13. Termination",
     content:
-      "We may suspend or terminate your account at our sole discretion, with or without notice, for conduct that we determine violates these Terms or is harmful to other users, the Platform, or third parties. Upon termination: (a) your right to access the Platform ceases immediately; (b) we may delete your account data after a retention period required by applicable law; (c) provisions that by their nature should survive termination shall remain in effect, including intellectual property, limitation of liability, and indemnification clauses. You may terminate your account at any time by contacting support@onliningdoctors.com.",
+      "We may suspend or terminate your account at our sole discretion, with or without notice, for conduct that we determine violates these Terms or is harmful to other users, the Platform, or third parties. Upon termination: (a) your right to access the Platform ceases immediately; (b) we may delete your account data after a retention period required by applicable law; (c) provisions that by their nature should survive termination shall remain in effect, including intellectual property, limitation of liability, and indemnification clauses. You may terminate your account at any time by contacting assist@doctorsonlining.com.",
   },
   {
     title: "14. Modifications to Terms",
@@ -95,7 +95,7 @@ const baseTermsSections: LegalSection[] = [
   {
     title: "17. Contact Information",
     content:
-      "For questions, concerns, or complaints about these Terms of Service, please contact us at: Email: legal@onliningdoctors.com | Support: support@onliningdoctors.com | Website: www.onliningdoctors.com. We aim to respond to all enquiries within 5 business days.",
+      "For questions, concerns, or complaints about these Terms of Service, please contact us at: Email: assist@doctorsonlining.com | Support: assist@doctorsonlining.com | Website: www.onliningdoctors.com. We aim to respond to all enquiries within 5 business days.",
   },
   {
     title: "18. Limitation of Services and Emergency Disclaimer",
@@ -148,7 +148,7 @@ const basePrivacySections: LegalSection[] = [
   {
     title: "9. Your Rights",
     content:
-      "Subject to applicable law, you have the following rights regarding your personal data: (a) Right of Access — request a copy of the personal data we hold about you; (b) Right to Rectification — request correction of inaccurate or incomplete data; (c) Right to Erasure — request deletion of your personal data (subject to legal retention requirements); (d) Right to Restrict Processing — request that we limit how we use your data; (e) Right to Data Portability — receive your data in a structured, commonly used, machine-readable format; (f) Right to Object — object to processing based on legitimate interests or for direct marketing; (g) Right to Withdraw Consent — withdraw consent at any time without affecting the lawfulness of prior processing. To exercise any of these rights, contact privacy@onliningdoctors.com. We will respond within 30 days.",
+      "Subject to applicable law, you have the following rights regarding your personal data: (a) Right of Access — request a copy of the personal data we hold about you; (b) Right to Rectification — request correction of inaccurate or incomplete data; (c) Right to Erasure — request deletion of your personal data (subject to legal retention requirements); (d) Right to Restrict Processing — request that we limit how we use your data; (e) Right to Data Portability — receive your data in a structured, commonly used, machine-readable format; (f) Right to Object — object to processing based on legitimate interests or for direct marketing; (g) Right to Withdraw Consent — withdraw consent at any time without affecting the lawfulness of prior processing. To exercise any of these rights, contact assist@doctorsonlining.com. We will respond within 30 days.",
   },
   {
     title: "10. Cookies and Tracking Technologies",
@@ -163,7 +163,7 @@ const basePrivacySections: LegalSection[] = [
   {
     title: "12. Children's Privacy",
     content:
-      "The Platform is not intended for use by individuals under 18 years of age without parental or guardian supervision. We do not knowingly collect personal data from children under 13. If we become aware that we have collected data from a child under 13 without parental consent, we will take steps to delete that information promptly. Parents or guardians who believe their child has provided personal data without consent should contact us at privacy@onliningdoctors.com.",
+      "The Platform is not intended for use by individuals under 18 years of age without parental or guardian supervision. We do not knowingly collect personal data from children under 13. If we become aware that we have collected data from a child under 13 without parental consent, we will take steps to delete that information promptly. Parents or guardians who believe their child has provided personal data without consent should contact us at assist@doctorsonlining.com.",
   },
   {
     title: "13. Changes to This Policy",
@@ -173,7 +173,7 @@ const basePrivacySections: LegalSection[] = [
   {
     title: "14. Data Protection Officer",
     content:
-      "We have appointed a Data Protection Officer (DPO) to oversee compliance with this Privacy Policy and applicable data protection laws. For any privacy-related enquiries, requests, or complaints, contact our DPO at: Email: privacy@onliningdoctors.com | Subject line: 'DPO Enquiry'. We aim to respond to all enquiries within 5 business days and resolve complaints within 30 days.",
+      "We have appointed a Data Protection Officer (DPO) to oversee compliance with this Privacy Policy and applicable data protection laws. For any privacy-related enquiries, requests, or complaints, contact our DPO at: Email: assist@doctorsonlining.com | Subject line: 'DPO Enquiry'. We aim to respond to all enquiries within 5 business days and resolve complaints within 30 days.",
   },
 ];
 
@@ -505,7 +505,7 @@ const zaPrivacy: LegalDocument = {
     {
       title: "15. POPIA — Your Rights (South Africa)",
       content:
-        "Under the Protection of Personal Information Act (POPIA), 2013, as a data subject in South Africa you have the right to: (a) be notified that your personal information is being collected and the purpose thereof; (b) request access to your personal information held by us; (c) request correction or deletion of inaccurate, irrelevant, excessive, out of date, or misleading personal information; (d) object to the processing of your personal information on reasonable grounds; (e) object to processing for purposes of direct marketing; (f) not be subject to a decision based solely on automated processing; (g) lodge a complaint with the Information Regulator (inforeg.org.za). We have appointed an Information Officer as required by POPIA. Contact our Information Officer at privacy@onliningdoctors.com. Requests will be processed within 30 days.",
+        "Under the Protection of Personal Information Act (POPIA), 2013, as a data subject in South Africa you have the right to: (a) be notified that your personal information is being collected and the purpose thereof; (b) request access to your personal information held by us; (c) request correction or deletion of inaccurate, irrelevant, excessive, out of date, or misleading personal information; (d) object to the processing of your personal information on reasonable grounds; (e) object to processing for purposes of direct marketing; (f) not be subject to a decision based solely on automated processing; (g) lodge a complaint with the Information Regulator (inforeg.org.za). We have appointed an Information Officer as required by POPIA. Contact our Information Officer at assist@doctorsonlining.com. Requests will be processed within 30 days.",
     },
   ],
 };
@@ -518,7 +518,7 @@ const ngPrivacy: LegalDocument = {
     {
       title: "15. NDPA/NDPR — Your Rights (Nigeria)",
       content:
-        "Under the Nigeria Data Protection Act (NDPA) 2023 and the Nigeria Data Protection Regulation (NDPR) 2019, you have the right to: (a) be informed about how your personal data is collected and used; (b) access your personal data held by us; (c) rectify inaccurate personal data; (d) withdraw your consent at any time; (e) request erasure of your personal data; (f) data portability — receive your data in a structured, commonly used format; (g) object to processing; (h) not be subject to decisions based solely on automated processing. We conduct annual Data Protection Compliance Audits as required by the NDPC. Complaints may be filed with the Nigeria Data Protection Commission. Contact our Data Protection Officer at privacy@onliningdoctors.com.",
+        "Under the Nigeria Data Protection Act (NDPA) 2023 and the Nigeria Data Protection Regulation (NDPR) 2019, you have the right to: (a) be informed about how your personal data is collected and used; (b) access your personal data held by us; (c) rectify inaccurate personal data; (d) withdraw your consent at any time; (e) request erasure of your personal data; (f) data portability — receive your data in a structured, commonly used format; (g) object to processing; (h) not be subject to decisions based solely on automated processing. We conduct annual Data Protection Compliance Audits as required by the NDPC. Complaints may be filed with the Nigeria Data Protection Commission. Contact our Data Protection Officer at assist@doctorsonlining.com.",
     },
   ],
 };
@@ -531,7 +531,7 @@ const kePrivacy: LegalDocument = {
     {
       title: "15. DPA — Your Rights (Kenya)",
       content:
-        "Under the Kenya Data Protection Act, 2019, you have the right to: (a) be informed of the use of your personal data including what data is collected, the purpose, and third parties with whom it is shared; (b) access your personal data held by us free of charge; (c) object to the processing of your personal data; (d) correction of false or misleading data; (e) deletion of false, misleading, or unlawfully obtained data; (f) data portability; (g) not be subject to automated decision-making without safeguards. We process health data as sensitive personal data with your explicit consent and under the additional safeguards required by the Act. Complaints may be lodged with the Office of the Data Protection Commissioner (ODPC). Contact: privacy@onliningdoctors.com.",
+        "Under the Kenya Data Protection Act, 2019, you have the right to: (a) be informed of the use of your personal data including what data is collected, the purpose, and third parties with whom it is shared; (b) access your personal data held by us free of charge; (c) object to the processing of your personal data; (d) correction of false or misleading data; (e) deletion of false, misleading, or unlawfully obtained data; (f) data portability; (g) not be subject to automated decision-making without safeguards. We process health data as sensitive personal data with your explicit consent and under the additional safeguards required by the Act. Complaints may be lodged with the Office of the Data Protection Commissioner (ODPC). Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -544,7 +544,7 @@ const ghPrivacy: LegalDocument = {
     {
       title: "15. Data Protection Act — Your Rights (Ghana)",
       content:
-        "Under the Data Protection Act, 2012 (Act 843), you have the right to: (a) access your personal data; (b) request correction of inaccurate data; (c) object to processing that causes unwarranted damage or distress; (d) prevent processing for direct marketing; (e) compensation for damage caused by contravention of the Act; (f) lodge a complaint with the Data Protection Commission. Health data is treated as sensitive data under the Act. Contact: privacy@onliningdoctors.com.",
+        "Under the Data Protection Act, 2012 (Act 843), you have the right to: (a) access your personal data; (b) request correction of inaccurate data; (c) object to processing that causes unwarranted damage or distress; (d) prevent processing for direct marketing; (e) compensation for damage caused by contravention of the Act; (f) lodge a complaint with the Data Protection Commission. Health data is treated as sensitive data under the Act. Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -557,7 +557,7 @@ const tzPrivacy: LegalDocument = {
     {
       title: "15. Data Protection — Your Rights (Tanzania)",
       content:
-        "Under the Personal Data Protection Act and the Electronic and Postal Communications Act (EPOCA), you have the right to access, correct, and request deletion of your personal data. We process data with your consent and implement appropriate technical safeguards. Complaints regarding data handling may be directed to the Tanzania Communications Regulatory Authority (TCRA). Contact: privacy@onliningdoctors.com.",
+        "Under the Personal Data Protection Act and the Electronic and Postal Communications Act (EPOCA), you have the right to access, correct, and request deletion of your personal data. We process data with your consent and implement appropriate technical safeguards. Complaints regarding data handling may be directed to the Tanzania Communications Regulatory Authority (TCRA). Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -570,7 +570,7 @@ const ugPrivacy: LegalDocument = {
     {
       title: "15. Data Protection and Privacy Act — Your Rights (Uganda)",
       content:
-        "Under the Data Protection and Privacy Act, 2019 of Uganda, you have the right to: (a) access your personal data; (b) request correction of inaccurate data; (c) request deletion of data no longer needed; (d) object to processing; (e) not be subject to automated decisions. Health data is classified as special personal data with enhanced protections. Complaints may be filed with the Personal Data Protection Office (PDPO). Contact: privacy@onliningdoctors.com.",
+        "Under the Data Protection and Privacy Act, 2019 of Uganda, you have the right to: (a) access your personal data; (b) request correction of inaccurate data; (c) request deletion of data no longer needed; (d) object to processing; (e) not be subject to automated decisions. Health data is classified as special personal data with enhanced protections. Complaints may be filed with the Personal Data Protection Office (PDPO). Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -583,7 +583,7 @@ const egPrivacy: LegalDocument = {
     {
       title: "15. Personal Data Protection Law — Your Rights (Egypt)",
       content:
-        "Under the Egyptian Personal Data Protection Law No. 151 of 2020, you have the right to: (a) be informed about data processing activities; (b) access your personal data; (c) request correction of inaccurate data; (d) request restriction of processing; (e) request deletion or anonymisation of data; (f) object to processing; (g) data portability; (h) withdraw consent at any time; (i) lodge complaints with the Data Protection Center. Health data is classified as sensitive and requires explicit consent. Contact: privacy@onliningdoctors.com.",
+        "Under the Egyptian Personal Data Protection Law No. 151 of 2020, you have the right to: (a) be informed about data processing activities; (b) access your personal data; (c) request correction of inaccurate data; (d) request restriction of processing; (e) request deletion or anonymisation of data; (f) object to processing; (g) data portability; (h) withdraw consent at any time; (i) lodge complaints with the Data Protection Center. Health data is classified as sensitive and requires explicit consent. Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -596,7 +596,7 @@ const etPrivacy: LegalDocument = {
     {
       title: "15. Data Protection — Your Rights (Ethiopia)",
       content:
-        "Under the FDRE Constitution (Article 26 — Right to Privacy) and the Personal Data Protection Proclamation, you have the right to privacy and access to your personal data. Health data receives enhanced protections as sensitive personal data. You may request access, correction, or deletion of your personal data. Contact: privacy@onliningdoctors.com.",
+        "Under the FDRE Constitution (Article 26 — Right to Privacy) and the Personal Data Protection Proclamation, you have the right to privacy and access to your personal data. Health data receives enhanced protections as sensitive personal data. You may request access, correction, or deletion of your personal data. Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -609,7 +609,7 @@ const rwPrivacy: LegalDocument = {
     {
       title: "15. Data Protection Law — Your Rights (Rwanda)",
       content:
-        "Under Law N° 058/2021 Relating to the Protection of Personal Data and Privacy, you have the right to: (a) be informed about data processing; (b) access your personal data; (c) request rectification or erasure; (d) restrict processing; (e) object to processing; (f) data portability; (g) lodge a complaint with the National Cyber Security Authority (NCSA). Health data is classified as sensitive personal data requiring explicit consent. We report breaches to the NCSA within 72 hours. Contact: privacy@onliningdoctors.com.",
+        "Under Law N° 058/2021 Relating to the Protection of Personal Data and Privacy, you have the right to: (a) be informed about data processing; (b) access your personal data; (c) request rectification or erasure; (d) restrict processing; (e) object to processing; (f) data portability; (g) lodge a complaint with the National Cyber Security Authority (NCSA). Health data is classified as sensitive personal data requiring explicit consent. We report breaches to the NCSA within 72 hours. Contact: assist@doctorsonlining.com.",
     },
   ],
 };
@@ -627,7 +627,7 @@ const usPrivacy: LegalDocument = {
     {
       title: "16. State Privacy Laws (United States)",
       content:
-        "Depending on your state of residence, you may have additional privacy rights: (a) California (CCPA/CPRA) — right to know, delete, opt out of sale/sharing, and non-discrimination; (b) Virginia (VCDPA) — right to access, correct, delete, portability, and opt out of targeted advertising; (c) Colorado (CPA) — similar rights to Virginia with a 60-day cure period; (d) Connecticut, Utah, and other states with privacy laws — we comply with all applicable state privacy regulations. To exercise state-specific rights, contact privacy@onliningdoctors.com with your state of residence.",
+        "Depending on your state of residence, you may have additional privacy rights: (a) California (CCPA/CPRA) — right to know, delete, opt out of sale/sharing, and non-discrimination; (b) Virginia (VCDPA) — right to access, correct, delete, portability, and opt out of targeted advertising; (c) Colorado (CPA) — similar rights to Virginia with a 60-day cure period; (d) Connecticut, Utah, and other states with privacy laws — we comply with all applicable state privacy regulations. To exercise state-specific rights, contact assist@doctorsonlining.com with your state of residence.",
     },
   ],
 };
@@ -640,7 +640,7 @@ const gbPrivacy: LegalDocument = {
     {
       title: "15. UK GDPR — Your Rights (United Kingdom)",
       content:
-        "Under the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018, you have the right to: (a) access your personal data via a Subject Access Request (SAR) — free of charge, responded to within one calendar month; (b) rectification of inaccurate personal data; (c) erasure ('right to be forgotten') where data is no longer necessary; (d) restriction of processing in certain circumstances; (e) data portability in a structured, commonly used, machine-readable format; (f) object to processing based on legitimate interests or for direct marketing; (g) not be subject to automated decision-making including profiling; (h) withdraw consent at any time. Health data is 'special category data' under Article 9 and is processed only with your explicit consent. You may lodge complaints with the Information Commissioner's Office (ICO) at ico.org.uk. Contact our DPO at privacy@onliningdoctors.com.",
+        "Under the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018, you have the right to: (a) access your personal data via a Subject Access Request (SAR) — free of charge, responded to within one calendar month; (b) rectification of inaccurate personal data; (c) erasure ('right to be forgotten') where data is no longer necessary; (d) restriction of processing in certain circumstances; (e) data portability in a structured, commonly used, machine-readable format; (f) object to processing based on legitimate interests or for direct marketing; (g) not be subject to automated decision-making including profiling; (h) withdraw consent at any time. Health data is 'special category data' under Article 9 and is processed only with your explicit consent. You may lodge complaints with the Information Commissioner's Office (ICO) at ico.org.uk. Contact our DPO at assist@doctorsonlining.com.",
     },
   ],
 };
@@ -653,7 +653,7 @@ const inPrivacy: LegalDocument = {
     {
       title: "15. DPDPA — Your Rights (India)",
       content:
-        "Under the Digital Personal Data Protection Act, 2023 (DPDPA), as a 'Data Principal' you have the right to: (a) access information about your personal data processing; (b) correction and erasure of your personal data; (c) grievance redressal — we have appointed a Grievance Officer to address your complaints within 30 days; (d) nominate a person to exercise your rights in the event of your death or incapacity. You also have duties as a Data Principal including providing accurate information and not filing false complaints. Health data is treated as sensitive personal data with additional protections. We process data only with your verifiable consent. You may lodge complaints with the Data Protection Board of India. Contact our Grievance Officer at privacy@onliningdoctors.com.",
+        "Under the Digital Personal Data Protection Act, 2023 (DPDPA), as a 'Data Principal' you have the right to: (a) access information about your personal data processing; (b) correction and erasure of your personal data; (c) grievance redressal — we have appointed a Grievance Officer to address your complaints within 30 days; (d) nominate a person to exercise your rights in the event of your death or incapacity. You also have duties as a Data Principal including providing accurate information and not filing false complaints. Health data is treated as sensitive personal data with additional protections. We process data only with your verifiable consent. You may lodge complaints with the Data Protection Board of India. Contact our Grievance Officer at assist@doctorsonlining.com.",
     },
   ],
 };
