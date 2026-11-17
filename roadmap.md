@@ -9,6 +9,7 @@
 # Solo practice medical aid setup
 - [x] Replace group-only labels with practice labels and expose solo-owner registration and medical aid settings.
 - [x] Preserve existing approvals, team relationships and payout routing; solo registration/save/reload verified with synthetic phone/desktop tests. Real signed-in checks remain unavailable for external unmanaged Supabase.
+- [x] Rechecked solo registration from dashboard/menu, saved settings, team and earnings on phone/desktop in light/dark mode; repaired duplicate notification subscriptions encountered when opening the menu.
 
 # Practice pre-phase review
 - [x] Document live practice schema, policies, enums and payout relationships.
