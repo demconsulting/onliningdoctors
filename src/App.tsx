@@ -143,7 +143,7 @@ const DeferredChatWidget = () => {
       if (typeof id === "number") clearTimeout(id);
     };
   }, []);
-  if (!show || pathname.startsWith("/call/")) return null;
+  if (!show || pathname.startsWith("/call/") || pathname === "/doctor-dashboard") return null;
   return (
     <ChunkErrorBoundary compact>
       <Suspense fallback={null}>

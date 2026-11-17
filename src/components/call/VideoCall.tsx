@@ -238,10 +238,11 @@ const VideoCall = ({
   const isMuted = !call.isAudioEnabled;
   const isVideoOff = !call.isVideoEnabled;
   const showOverlay = !["connected", "poor-network", "connected-remote-camera-off"].includes(status) || soundBlocked;
+  const needsRecovery = status === "permission-denied" || isRecoveryStatus(status);
 
   return (
     <div ref={containerRef} className={`flex flex-col items-center gap-4 ${isFullscreen ? "bg-background p-4 justify-center h-full" : ""}`}>
-      <div className={`relative w-full ${isFullscreen ? "max-w-full flex-1" : "max-w-4xl"} aspect-video rounded-xl overflow-hidden bg-muted`}>
+      <div className={`relative w-full ${isFullscreen ? "max-w-full flex-1" : "max-w-4xl"} ${needsRecovery ? "min-h-[340px] sm:aspect-video" : "aspect-video"} rounded-xl overflow-hidden bg-muted`}>
         <video ref={remoteVideoRef} autoPlay playsInline className="h-full w-full object-cover" />
         {/* Dedicated remote audio element — guarantees audio playback even if the
             video element is hidden or its audio track is momentarily blocked. */}
@@ -258,7 +259,7 @@ const VideoCall = ({
             )}
 
             {status === "permission-denied" && call.mediaError && (
-              <p className="max-w-md text-sm text-destructive">{call.mediaError.message}</p>
+              <p className="max-w-md text-sm text-foreground">{call.mediaError.message}</p>
             )}
 
             {(status === "permission-denied" || isRecoveryStatus(status)) && (
@@ -302,7 +303,7 @@ const VideoCall = ({
           </div>
         )}
 
-        <div className="absolute bottom-4 right-4 w-40 aspect-video rounded-lg overflow-hidden border-2 border-background shadow-lg">
+        {!needsRecovery && <div className="absolute bottom-4 right-4 w-40 aspect-video rounded-lg overflow-hidden border-2 border-background shadow-lg">
           {isVideoOff && !isScreenSharing ? (
             <div className="flex h-full w-full items-center justify-center bg-muted-foreground/20 text-xs font-medium text-muted-foreground">
               Camera off
@@ -310,10 +311,10 @@ const VideoCall = ({
           ) : (
             <video ref={localVideoRef} autoPlay playsInline muted className={`h-full w-full object-cover ${!isScreenSharing ? "mirror" : ""}`} />
           )}
-        </div>
+        </div>}
       </div>
 
-      <Card className="flex items-center gap-3 p-3">
+      <Card className="flex max-w-full flex-wrap items-center justify-center gap-2 p-3 sm:gap-3">
         {status === "duplicate-tab" ? (
           <p className="text-sm text-destructive font-medium px-4">
             This consultation is already active in another tab or window.
