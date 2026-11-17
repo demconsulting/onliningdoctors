@@ -10,13 +10,13 @@ const AdminPracticesClinicians = () => (
     <div>
       <h2 className="font-display text-xl font-semibold">Practices &amp; Clinicians</h2>
       <p className="text-sm text-muted-foreground">
-        Approve group practices and independent doctors, and set up their Paystack payout accounts.
+        Approve practices and independent doctors, and set up their Paystack payout accounts.
       </p>
-      <div className="mt-3 flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/practice-dashboard">Group Practice &amp; Medical Aid</Link></Button><Button asChild variant="outline"><Link to="/practice/dashboard">Practice Team &amp; Earnings</Link></Button></div>
+      <div className="mt-3 flex flex-wrap gap-2"><Button asChild variant="outline"><Link to="/practice-dashboard">Practice &amp; Medical Aid</Link></Button><Button asChild variant="outline"><Link to="/practice/dashboard">Practice Team &amp; Earnings</Link></Button></div>
     </div>
     <Tabs defaultValue="group" className="space-y-4">
       <TabsList>
-        <TabsTrigger value="group" className="gap-1.5"><Building2 className="h-4 w-4" /> Group Practices</TabsTrigger>
+        <TabsTrigger value="group" className="gap-1.5"><Building2 className="h-4 w-4" /> Practices</TabsTrigger>
         <TabsTrigger value="independent" className="gap-1.5"><Stethoscope className="h-4 w-4" /> Independent Doctors</TabsTrigger>
       </TabsList>
       <TabsContent value="group"><AdminPractices /></TabsContent>

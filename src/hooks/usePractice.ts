@@ -16,6 +16,8 @@ export interface Practice {
   address: string;
   nurses_can_support_consultations: boolean;
   is_active: boolean;
+  bhf_number: string | null;
+  is_medical_aid_practice: boolean;
 }
 
 export interface PracticeMember {
@@ -35,6 +37,7 @@ export const usePractice = (userId: string | null | undefined) => {
   const [practice, setPractice] = useState<Practice | null>(null);
   const [myMember, setMyMember] = useState<PracticeMember | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
@@ -75,6 +78,7 @@ export const usePractice = (userId: string | null | undefined) => {
 
     setPractice(p);
     setMyMember(me);
+    setLoadedUserId(userId);
     setLoading(false);
   }, [userId]);
 
@@ -82,5 +86,5 @@ export const usePractice = (userId: string | null | undefined) => {
 
   const isManager = !!myMember && (myMember.role === "owner" || myMember.role === "practice_admin");
 
-  return { practice, myMember, isManager, loading, refresh };
+  return { practice, myMember, isManager, loading: loading || (!!userId && loadedUserId !== userId), refresh };
 };

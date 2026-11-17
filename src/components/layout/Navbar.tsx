@@ -86,7 +86,7 @@ const Navbar = () => {
               {isDoctor && (
                 <Button variant="ghost" size="sm" onClick={() => navigate("/practice/dashboard")}>Practice Team &amp; Earnings</Button>
               )}
-              {(isPracticeAdmin || isAdmin) && <Button variant="ghost" size="sm" onClick={() => navigate("/practice-dashboard")}>Group Practice &amp; Medical Aid</Button>}
+              {(isDoctor || isPracticeAdmin || isAdmin) && <Button variant="ghost" size="sm" onClick={() => navigate(isDoctor ? "/practice/settings" : "/practice-dashboard")}>Practice &amp; Medical Aid</Button>}
               <Button variant="ghost" size="sm" onClick={() => navigate(dashboardPath)}>
                 {dashboardLabel}
               </Button>
@@ -135,7 +135,7 @@ const Navbar = () => {
                   {isDoctor && (
                     <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice/dashboard"); setIsOpen(false); }}>Practice Team &amp; Earnings</Button>
                   )}
-                  {(isPracticeAdmin || isAdmin) && <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate("/practice-dashboard"); setIsOpen(false); }}>Group Practice &amp; Medical Aid</Button>}
+                  {(isDoctor || isPracticeAdmin || isAdmin) && <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate(isDoctor ? "/practice/settings" : "/practice-dashboard"); setIsOpen(false); }}>Practice &amp; Medical Aid</Button>}
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate(dashboardPath); setIsOpen(false); }}>{dashboardLabel}</Button>
                   <Button variant="outline" size="sm" className="w-full" onClick={() => { handleLogout(); setIsOpen(false); }}>Log out</Button>
                 </>

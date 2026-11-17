@@ -12,3 +12,4 @@
 - Doctor reminder processing uses shared checklist rules and service-role-only cron repair; never authorize scheduled email sends with the public anon key.
 - Cross-doctor consultation history must use an audited appointment-scoped RPC that verifies the treating doctor and consultation time window; never widen direct clinical-table reads or mix a guardian's history with a dependent's records.
 - Do not mount the floating support assistant on consultation routes or the doctor dashboard because it obscures clinical records and competes with consultation chat.
+- Solo-owner registration uses the existing practice setup/settings and owner-scoped policies; keep the assigned-administrator dashboard separate so medical aid setup does not change payout authorization.

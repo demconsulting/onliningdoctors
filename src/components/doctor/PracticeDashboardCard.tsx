@@ -41,11 +41,11 @@ const PracticeDashboardCard = ({ userId }: Props) => {
           <div className="flex items-center gap-3">
             <Building2 className="h-5 w-5 text-primary" />
             <div>
-              <div className="font-semibold">Run a practice?</div>
-              <div className="text-xs text-muted-foreground">Register a Practice Account to manage your team.</div>
+              <div className="font-semibold">My Practice &amp; Medical Aid</div>
+              <div className="text-xs text-muted-foreground">Solo practice registration · BHF details</div>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={() => navigate("/practice/setup")}>Set up practice <ArrowRight className="ml-1 h-4 w-4" /></Button>
+          <Button size="sm" variant="outline" onClick={() => navigate("/practice/setup")}>Register my practice <ArrowRight className="ml-1 h-4 w-4" /></Button>
         </CardContent>
       </Card>
     );
@@ -63,6 +63,7 @@ const PracticeDashboardCard = ({ userId }: Props) => {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => navigate("/practice/settings")}>My Practice &amp; Medical Aid</Button>
             <Button size="sm" variant="outline" onClick={() => navigate("/practice/dashboard")}>Practice Team &amp; Earnings</Button>
             <Button size="sm" variant="outline" onClick={() => navigate("/practice/team")}>Manage team</Button>
           </div>

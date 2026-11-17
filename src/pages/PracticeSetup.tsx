@@ -1,31 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { z } from "zod";
+import { practiceRegistrationSchema, practiceRegistrationDetails } from "@/lib/practiceRegistration";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePractice } from "@/hooks/usePractice";
 import type { User } from "@supabase/supabase-js";
-
-const schema = z.object({
-  practice_name: z.string().trim().min(2).max(200),
-  practice_number: z.string().trim().min(3).max(50),
-  bhf_number: z.string().trim().max(50).optional().or(z.literal("")),
-  owner_doctor_name: z.string().trim().min(2).max(200),
-  owner_hpcsa_number: z.string().trim().min(2).max(50),
-  email: z.string().trim().email().max(255),
-  phone: z.string().trim().min(3).max(50),
-  address: z.string().trim().min(3).max(500),
-  bank_name: z.string().trim().min(2).max(100),
-  account_name: z.string().trim().min(2).max(200),
-  account_number: z.string().trim().min(5).max(30),
-});
 
 const MAX_PHOTOS = 4;
 
@@ -49,6 +36,7 @@ const PracticeSetup = () => {
     bank_name: "",
     account_name: "",
     account_number: "",
+    is_medical_aid_practice: true,
   });
   const [photos, setPhotos] = useState<File[]>([]);
 
@@ -58,7 +46,7 @@ const PracticeSetup = () => {
       if (!session) { navigate("/login"); return; }
       setUser(session.user);
       const { data: doctor } = await supabase
-        .from("doctors").select("is_verified").eq("profile_id", session.user.id).maybeSingle();
+        .from("doctors").select("is_verified, license_number, bhf_number, physical_practice_address").eq("profile_id", session.user.id).maybeSingle();
       setIsVerifiedDoctor(!!doctor?.is_verified);
       const { data: profile } = await supabase
         .from("profiles").select("full_name").eq("id", session.user.id).maybeSingle();
@@ -66,25 +54,28 @@ const PracticeSetup = () => {
         ...f,
         owner_doctor_name: profile?.full_name || session.user.user_metadata?.full_name || "",
         email: session.user.email || "",
+        owner_hpcsa_number: doctor?.license_number || "",
+        bhf_number: doctor?.bhf_number || "",
+        address: doctor?.physical_practice_address || "",
       }));
       setChecking(false);
     })();
   }, [navigate]);
 
   useEffect(() => {
-    if (practice) navigate("/practice/team", { replace: true });
+    if (practice) navigate("/practice/settings", { replace: true });
   }, [practice, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const parsed = schema.safeParse(form);
+    const parsed = practiceRegistrationSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.errors[0]?.message || "Please check the form");
       return;
     }
     setSubmitting(true);
-    const d = parsed.data;
+    const d = practiceRegistrationDetails(parsed.data);
 
     // Upload verification photos first (auto-compressed to fit size limits)
     const photoUrls: string[] = [];
@@ -106,17 +97,7 @@ const PracticeSetup = () => {
     }
 
     const { error } = await supabase.from("practices").insert([{
-      practice_name: d.practice_name,
-      practice_number: d.practice_number,
-      bhf_number: d.bhf_number || null,
-      owner_doctor_name: d.owner_doctor_name,
-      owner_hpcsa_number: d.owner_hpcsa_number,
-      email: d.email,
-      phone: d.phone,
-      address: d.address,
-      bank_name: d.bank_name,
-      account_name: d.account_name,
-      account_number: d.account_number,
+      ...d,
       owner_id: user.id,
       photo_urls: photoUrls,
     }]);
@@ -127,7 +108,7 @@ const PracticeSetup = () => {
     }
     toast.success("Practice created");
     await refresh();
-    navigate("/practice/team");
+    navigate("/practice/settings");
   };
 
   if (checking || practiceLoading) {
@@ -165,7 +146,7 @@ const PracticeSetup = () => {
               <Building2 className="h-6 w-6 text-primary" />
               <div>
                 <CardTitle className="font-display">Register your practice</CardTitle>
-                <CardDescription>Set up a Practice Account to manage your team</CardDescription>
+                <CardDescription>Solo practice registration · Medical aid details</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -194,6 +175,12 @@ const PracticeSetup = () => {
                   />
                 </div>
               ))}
+              <div className="space-y-2 sm:col-span-2">
+                <div className="flex items-center gap-3">
+                  <Switch id="medical-aid-registration" checked={form.is_medical_aid_practice} onCheckedChange={(checked) => setForm({ ...form, is_medical_aid_practice: checked })} />
+                  <Label htmlFor="medical-aid-registration">Medical aid practice</Label>
+                </div>
+              </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="address">Address</Label>
                 <Input id="address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />

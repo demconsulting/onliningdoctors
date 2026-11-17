@@ -6,6 +6,10 @@
 - [x] Add doctor regulatory profile fields and validate the requested rules.
 - [x] Verify signed-out navigation, four tests, successful app checks and schema; authenticated end-to-end checks unavailable for external unmanaged Supabase.
 
+# Solo practice medical aid setup
+- [x] Replace group-only labels with practice labels and expose solo-owner registration and medical aid settings.
+- [x] Preserve existing approvals, team relationships and payout routing; solo registration/save/reload verified with synthetic phone/desktop tests. Real signed-in checks remain unavailable for external unmanaged Supabase.
+
 # Practice pre-phase review
 - [x] Document live practice schema, policies, enums and payout relationships.
 - [x] Verify the five group-practice security-definer functions and fix unsafe access; executed database denial tests and four frontend tests.

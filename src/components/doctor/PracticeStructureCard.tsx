@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Building2, Stethoscope, Search, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { User } from "@supabase/supabase-js";
+import { Link } from "react-router-dom";
 
 interface Props { user: User }
 
@@ -129,6 +130,7 @@ const PracticeStructureCard = ({ user }: Props) => {
           <CardDescription>Choose how you practise — this decides where consultation payments settle.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Button asChild variant="outline"><Link to="/practice/settings"><Building2 className="mr-2 h-4 w-4" />My Practice &amp; Medical Aid</Link></Button>
           <div className="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
@@ -143,7 +145,7 @@ const PracticeStructureCard = ({ user }: Props) => {
               onClick={() => setType("group_member")}
               className={`rounded-lg border p-4 text-left transition ${type === "group_member" ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"}`}
             >
-              <div className="flex items-center gap-2 font-semibold"><Building2 className="h-4 w-4 text-primary" /> Group Practice Member</div>
+              <div className="flex items-center gap-2 font-semibold"><Building2 className="h-4 w-4 text-primary" /> Practice Member</div>
               <p className="mt-1 text-xs text-muted-foreground">Payments settle into your practice's account; the practice pays you.</p>
             </button>
           </div>

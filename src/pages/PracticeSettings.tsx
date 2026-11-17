@@ -20,6 +20,7 @@ const PracticeSettings = () => {
   const [form, setForm] = useState({
     practice_name: "", email: "", phone: "", address: "",
     nurses_can_support_consultations: false, is_active: true,
+    bhf_number: "", is_medical_aid_practice: false,
   });
   const [saving, setSaving] = useState(false);
 
@@ -38,16 +39,23 @@ const PracticeSettings = () => {
       address: practice.address,
       nurses_can_support_consultations: practice.nurses_can_support_consultations,
       is_active: practice.is_active,
+      bhf_number: practice.bhf_number || "",
+      is_medical_aid_practice: practice.is_medical_aid_practice,
     });
   }, [practice]);
 
   const isOwner = myMember?.role === "owner";
 
+  useEffect(() => {
+    if (user && !loading && !practice) navigate("/practice/setup", { replace: true });
+  }, [user, loading, practice, navigate]);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!practice) return;
+    if (!practice || !isManager) return;
+    if (form.bhf_number.trim().length > 50) { toast.error("BHF number must be 50 characters or fewer"); return; }
     setSaving(true);
-    const { error } = await supabase.from("practices").update(form).eq("id", practice.id);
+    const { error } = await supabase.from("practices").update({ ...form, bhf_number: form.bhf_number.trim() || null }).eq("id", practice.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Settings saved");
@@ -57,14 +65,14 @@ const PracticeSettings = () => {
   if (loading || !user) {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
-  if (!practice) { navigate("/practice/setup"); return null; }
+  if (!practice) return null;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <main className="container mx-auto flex-1 px-4 py-8">
         <div className="mx-auto max-w-2xl">
-          <h1 className="mb-2 font-display text-3xl font-bold">Practice settings</h1>
+          <h1 className="mb-2 font-display text-3xl font-bold">My Practice &amp; Medical Aid</h1>
           <p className="mb-6 text-sm text-muted-foreground">
             {practice.practice_name} · #{practice.practice_number}
           </p>
@@ -76,6 +84,8 @@ const PracticeSettings = () => {
                 <div className="space-y-2"><Label>Email</Label><Input disabled={!isManager} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Phone</Label><Input disabled={!isManager} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
                 <div className="space-y-2"><Label>Address</Label><Input disabled={!isManager} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+                <div className="space-y-2"><Label htmlFor="practice-bhf">BHF practice number (optional — add for medical aid claims)</Label><Input id="practice-bhf" maxLength={50} disabled={!isManager} value={form.bhf_number} onChange={(e) => setForm({ ...form, bhf_number: e.target.value })} /></div>
+                <div className="flex items-center gap-3"><Switch id="practice-medical-aid" disabled={!isManager} checked={form.is_medical_aid_practice} onCheckedChange={(checked) => setForm({ ...form, is_medical_aid_practice: checked })} /><Label htmlFor="practice-medical-aid">Medical aid practice</Label></div>
               </CardContent>
             </Card>
 
@@ -112,6 +122,7 @@ const PracticeSettings = () => {
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save changes
               </Button>
             )}
+            <Button type="button" variant="outline" onClick={() => navigate("/practice/dashboard")}>Practice Team &amp; Earnings</Button>
           </form>
         </div>
       </main>
