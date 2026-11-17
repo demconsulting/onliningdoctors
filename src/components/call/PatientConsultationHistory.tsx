@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { AlertCircle, History, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, AlertTriangle, History, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { loadConsultationHistory, type ConsultationHistory } from "@/lib/consultationHistory";
@@ -128,10 +128,10 @@ export default function PatientConsultationHistory({ appointmentId }: { appointm
                     ))}
                   </ul>}
                   {prescription.allergies_noted && <p>Allergies noted: {prescription.allergies_noted}</p>}
-                  {prescription.warnings && <p className="whitespace-pre-wrap text-destructive">Warnings: {prescription.warnings}</p>}
+                  {prescription.warnings && <p className="flex items-start gap-2 whitespace-pre-wrap text-foreground"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" /><span><strong>Warnings: </strong>{prescription.warnings}</span></p>}
                   {prescription.pharmacy_notes && <p className="whitespace-pre-wrap text-muted-foreground">Pharmacy notes: {prescription.pharmacy_notes}</p>}
                   {prescription.follow_up_date && <p>Follow-up: {prescription.follow_up_date}</p>}
-                  {prescription.cancellation_reason && <p className="text-destructive">Cancellation: {prescription.cancellation_reason}</p>}
+                  {prescription.cancellation_reason && <p className="text-foreground"><strong>Cancellation: </strong>{prescription.cancellation_reason}</p>}
                 </div>
               ))}
               {!consultation.notes && !consultation.summary && consultation.prescriptions.length === 0 && <p className="text-muted-foreground">No clinical notes or prescriptions recorded.</p>}

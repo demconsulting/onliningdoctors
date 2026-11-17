@@ -23,3 +23,4 @@
 - [x] Add audited, treating-doctor-only access to previous consultations without widening direct record access; private reader and public invoker entry point introduce no new security warnings.
 - [x] Show history automatically during consultations and keep dependent records separate; uploaded documents still require explicit sharing.
 - [x] Verify access boundaries with rollback-only database checks and 34 passing app tests; synthetic phone/desktop displays and access removal passed with no runtime errors. Real signed-in consultation checks remain unavailable for external unmanaged Supabase.
+- [ ] Check the full appointment-list and consultation-screen layouts in light/dark themes at phone/desktop widths, across multiple previous consultations and the next action; report the real-account testing limitation.

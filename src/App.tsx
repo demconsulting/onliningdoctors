@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Component, lazy, Suspense, useEffect, useState, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 
 // Recover from stale chunk hashes after a redeploy: if a dynamic import
@@ -127,6 +127,7 @@ const RouteFallback = () => (
 
 const DeferredChatWidget = () => {
   const [show, setShow] = useState(false);
+  const { pathname } = useLocation();
   useEffect(() => {
     let cancelled = false;
     const trigger = () => { if (!cancelled) setShow(true); };
@@ -142,7 +143,7 @@ const DeferredChatWidget = () => {
       if (typeof id === "number") clearTimeout(id);
     };
   }, []);
-  if (!show) return null;
+  if (!show || pathname.startsWith("/call/")) return null;
   return (
     <ChunkErrorBoundary compact>
       <Suspense fallback={null}>
