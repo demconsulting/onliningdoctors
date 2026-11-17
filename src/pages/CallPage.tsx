@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/layout/Navbar";
 import VideoCall from "@/components/call/VideoCall";
 import ConsultationNotes from "@/components/call/ConsultationNotes";
+import PatientConsultationHistory from "@/components/call/PatientConsultationHistory";
 import ConsultationChat from "@/components/call/ConsultationChat";
 import DiagnosticsPanel from "@/components/call/DiagnosticsPanel";
 import { Loader2, ArrowLeft, MessageSquare } from "lucide-react";
@@ -48,7 +49,7 @@ const CallPage = () => {
 
       const { data: apt, error: aptErr } = await supabase
         .from("appointments")
-        .select("patient_id, doctor_id, status")
+        .select("patient_id, doctor_id, status, dependent_id")
         .eq("id", appointmentId)
         .single();
 
@@ -86,6 +87,13 @@ const CallPage = () => {
       setLocalName(uid === apt.doctor_id ? docLabel : (patProfile?.full_name || "Patient"));
       setRemoteName(uid === apt.doctor_id ? (patProfile?.full_name || "Patient") : docLabel);
 
+      if (apt.dependent_id) {
+        const { data: dependent } = await supabase.from("dependents").select("full_name").eq("id", apt.dependent_id).maybeSingle();
+        const name = dependent?.full_name || "Dependent patient";
+        setPatientName(name);
+        if (uid === apt.doctor_id) setRemoteName(name);
+      }
+
       setLoading(false);
     };
     init();
@@ -116,12 +124,12 @@ const CallPage = () => {
     );
   }
 
-  if (error) {
+  if (error || !appointmentId) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <Navbar />
         <main className="container mx-auto flex flex-1 flex-col items-center justify-center gap-4 px-4">
-          <p className="text-destructive font-medium">{error}</p>
+          <p className="text-destructive font-medium">{error || "No appointment specified"}</p>
           <Button variant="outline" onClick={() => navigate(-1)} className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Go Back
           </Button>
@@ -188,7 +196,7 @@ const CallPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <VideoCall
-              appointmentId={appointmentId!}
+              appointmentId={appointmentId}
               localUserId={userId}
               remoteUserId={remoteUserId}
               isInitiator={isInitiator}
@@ -205,7 +213,8 @@ const CallPage = () => {
 
           {/* Desktop: Notes and Chat share the right panel as tabs. Mobile: chat
               opens as a bottom sheet and keeps the call mounted underneath. */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 min-w-0 space-y-4">
+            {isDoctor && <PatientConsultationHistory key={appointmentId} appointmentId={appointmentId} />}
             <Tabs
               value={sideTab}
               onValueChange={(value) => {
@@ -228,7 +237,7 @@ const CallPage = () => {
               </TabsList>
               <TabsContent value="notes" className="space-y-4">
                 <ConsultationNotes
-                  appointmentId={appointmentId!}
+                  appointmentId={appointmentId}
                   doctorId={doctorId}
                   isDoctor={isDoctor}
                 />
@@ -236,7 +245,7 @@ const CallPage = () => {
                   <div className="flex gap-2">
                     <Suspense fallback={null}>
                       <PrescriptionForm
-                        appointmentId={appointmentId!}
+                        appointmentId={appointmentId}
                         doctorId={doctorId}
                         patientId={patientId}
                         patientName={patientName}

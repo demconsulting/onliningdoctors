@@ -7413,6 +7413,10 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_current_consultation_history: {
+        Args: { _appointment_id: string }
+        Returns: Json
+      }
       get_default_platform_fee_percent: { Args: never; Returns: number }
       get_doctor_blocked_slots: {
         Args: { _doctor_id: string }

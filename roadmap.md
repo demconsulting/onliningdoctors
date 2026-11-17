@@ -18,3 +18,8 @@
 - [x] Add platform-admin-only administrator removal with last-link role cleanup; rollback-only database tests passed.
 - [x] Distinguish practice dashboard navigation labels.
 - [x] Confirm authenticated private logo reads without widening writes; public browser and four unit tests passed; signed-in end-to-end checks unavailable for external unmanaged Supabase.
+
+# Current-consultation medical history
+- [x] Add audited, treating-doctor-only access to previous consultations without widening direct record access; private reader and public invoker entry point introduce no new security warnings.
+- [x] Show history automatically during consultations and keep dependent records separate; uploaded documents still require explicit sharing.
+- [x] Verify access boundaries with rollback-only database checks and 34 passing app tests; synthetic phone/desktop displays and access removal passed with no runtime errors. Real signed-in consultation checks remain unavailable for external unmanaged Supabase.

@@ -12,8 +12,9 @@ import type { User as SupaUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import PatientDocuments from "@/components/doctor/PatientDocuments";
-import PastConsultationNotes from "@/components/doctor/PastConsultationNotes";
+import PatientConsultationHistory from "@/components/call/PatientConsultationHistory";
 import ConsultationOutcomeForm from "@/components/doctor/ConsultationOutcomeForm";
+import { isConsultationHistoryActive } from "@/lib/consultationHistory";
 
 const PrescriptionForm = lazy(() => import("@/components/doctor/PrescriptionForm"));
 const PrescriptionView = lazy(() => import("@/components/doctor/PrescriptionView"));
@@ -55,6 +56,7 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   const [declining, setDeclining] = useState(false);
   const [noShowDialogId, setNoShowDialogId] = useState<string | null>(null);
   const [markingNoShow, setMarkingNoShow] = useState(false);
+  const [historyClock, setHistoryClock] = useState(Date.now());
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -110,6 +112,11 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
   };
 
   useEffect(() => { fetchAppointments(); }, [user.id]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setHistoryClock(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
 
   const updateStatus = async (id: string, status: string, cancellation_reason?: string) => {
     const updateData: any = { status };
@@ -293,13 +300,9 @@ const DoctorAppointments = ({ user }: DoctorAppointmentsProps) => {
                   </div>
                 )}
 
-                {/* Past Consultation Notes (if patient shared documents / gave permission) */}
-                {sharingMap[apt.id] && (
-                  <PastConsultationNotes
-                    patientId={apt.patient_id}
-                    currentAppointmentId={apt.id}
-                    doctorId={user.id}
-                  />
+                {/* Clinical history is appointment-scoped; uploaded documents still require sharing. */}
+                {isConsultationHistoryActive(apt, historyClock) && (
+                  <PatientConsultationHistory appointmentId={apt.id} />
                 )}
 
                 {/* Prescription (for confirmed/completed appointments) */}
