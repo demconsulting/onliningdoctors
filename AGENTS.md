@@ -1,4 +1,5 @@
 # Architecture rules
+- Consultation Paystack initialization must send the approved payout target and server-resolved fixed platform fee as transaction_charge, with the main account bearing gateway fees; preserve the fee snapshot on callbacks and exclude these payments from manual withdrawals to avoid duplicate payouts.
 - Extend existing practice tables additively; never replace the legacy team, approval or payout relationships because cash booking must remain compatible.
 - The separate group-practice dashboard uses scoped practice-admin assignments and role-checked RPCs; keep the existing practice financial dashboard independent.
 - HPCSA and individual BHF columns are generated aliases of existing license/BHF fields; edit the source fields to preserve identity approval and avoid diverging credentials.

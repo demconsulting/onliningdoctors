@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildDirectSplit, isDirectSettlement } from "./split.ts";
 
 // Only allow payment return URLs on our own domains
 function safeCallbackUrl(raw: unknown): string | undefined {
@@ -116,7 +117,7 @@ serve(async (req) => {
         // Look up the expected amount we recorded server-side at init
         const { data: existingPayment } = await serviceClient
           .from("payments")
-          .select("appointment_id, amount, currency")
+          .select("appointment_id, amount, currency, metadata")
           .eq("paystack_reference", reference)
           .maybeSingle();
 
@@ -151,7 +152,11 @@ serve(async (req) => {
             status: "success",
             paid_at: new Date().toISOString(),
             payment_method: event.data.channel,
-            metadata: event.data,
+            ...(isDirectSettlement(existingPayment.metadata) && typeof event.data.fees === "number" ? {
+              fee_amount: event.data.fees / 100,
+              processing_fee_amount: event.data.fees / 100,
+            } : {}),
+            metadata: { ...event.data, ...(isDirectSettlement(existingPayment.metadata) ? { settlement_mode: "paystack_split" } : {}) },
           })
           .eq("paystack_reference", reference);
 
@@ -334,7 +339,6 @@ serve(async (req) => {
 
       // Reuse the DoctorsOnlining gateway config loaded above
       const payConfig = paymentConfig as Record<string, unknown> | null;
-      const feeBearer = (payConfig?.fee_bearer as string) || "patient";
       const mode = envMode;
 
       // In test mode, Paystack typically only supports NGN.
@@ -355,7 +359,7 @@ serve(async (req) => {
       const reference = `pay_${appointment_id}_${Date.now()}`;
 
       // Resolve where this consultation should settle (practice or independent doctor)
-      const { data: payoutRows } = await supabaseAdmin.rpc("get_doctor_payout_target", {
+      const { data: payoutRows, error: payoutError } = await supabaseAdmin.rpc("get_doctor_payout_target", {
         _doctor_id: doctor_id,
       });
       const payout = (Array.isArray(payoutRows) ? payoutRows[0] : payoutRows) as
@@ -370,6 +374,40 @@ serve(async (req) => {
             is_ready?: boolean | null;
           }
         | null;
+
+      if (payoutError || !payout?.is_ready || !payout.subaccount_code) {
+        return new Response(JSON.stringify({ error: "This doctor or practice has no approved Paystack payout account. Please contact the practice before paying." }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Resolve and freeze the same effective plan used for earnings, before charging.
+      const { data: feeDoctor, error: feeDoctorError } = await supabaseAdmin.from("doctors")
+        .select("fee_settings_id, founding_pricing_plan_id, founding_locked, is_founding_doctor")
+        .eq("profile_id", doctor_id).single();
+      const planId = feeDoctor?.is_founding_doctor && feeDoctor.founding_locked && feeDoctor.founding_pricing_plan_id
+        ? feeDoctor.founding_pricing_plan_id : feeDoctor?.fee_settings_id;
+      const planQuery = supabaseAdmin.from("platform_fee_settings").select("id").eq("is_active", true);
+      const { data: feePlan, error: planError } = await (planId
+        ? planQuery.eq("id", planId) : planQuery.eq("is_default", true)).single();
+      if (feeDoctorError || planError || !feePlan) {
+        return new Response(JSON.stringify({ error: "Payment fee settings are unavailable. Please try again later." }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: resolvedFee, error: feeError } = await supabaseAdmin.rpc("compute_platform_fee", {
+        _amount: amount, _settings_id: feePlan.id,
+      });
+      if (feeError || resolvedFee == null) throw new Error("Could not resolve the platform fee");
+      let split;
+      try {
+        split = buildDirectSplit(amount, Number(resolvedFee), payout);
+      } catch (error) {
+        return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Invalid payment split" }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const platformFee = split.transaction_charge / 100;
+      const doctorNet = (amountInSmallestUnit - split.transaction_charge) / 100;
 
       const customFields = [
         { display_name: "Consultation ID", variable_name: "consultation_id", value: appointment_id },
@@ -404,7 +442,7 @@ serve(async (req) => {
           reference,
           callback_url: safeCallbackUrl(callback_url),
           channels: (payConfig?.payment_methods as string[]) || ["card"],
-          ...(payout?.subaccount_code ? { subaccount: payout.subaccount_code } : {}),
+          ...split,
           metadata: {
             appointment_id,
             consultation_id: appointment_id,
@@ -415,9 +453,12 @@ serve(async (req) => {
             bhf_number: payout?.bhf_number ?? null,
             practice_type: payout?.practice_type ?? null,
             patient_id: user.id,
+            settlement_mode: "paystack_split",
+            platform_fee_amount: platformFee,
+            doctor_net_amount: doctorNet,
+            fee_settings_id: feePlan.id,
             custom_fields: customFields,
           },
-          ...(feeBearer === "patient" ? { bearer: "account" } : {}),
         }),
       });
 
@@ -438,7 +479,7 @@ serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
-      await serviceClient.from("payments").insert({
+      const { error: paymentInsertError } = await serviceClient.from("payments").insert({
         business_unit: "doctorsonlining",
         payer_id: user.id,
         appointment_id,
@@ -449,9 +490,14 @@ serve(async (req) => {
         status: "pending",
         paystack_reference: reference,
         paystack_access_code: paystackData.data.access_code,
-        fee_bearer: feeBearer,
+        fee_bearer: "platform",
+        platform_fee_amount: platformFee,
+        doctor_net_amount: doctorNet,
+        processing_fee_amount: 0,
+        metadata: { settlement_mode: "paystack_split", subaccount: split.subaccount, transaction_charge: split.transaction_charge, fee_settings_id: feePlan.id },
         transaction_type: transaction_type || null,
       });
+      if (paymentInsertError) throw new Error("Could not record this payment. Please try again later.");
 
       return new Response(
         JSON.stringify({
@@ -499,7 +545,7 @@ serve(async (req) => {
       // amount before confirming.
       const { data: existingPayment } = await serviceClient
         .from("payments")
-        .select("appointment_id, amount, patient_id, doctor_id")
+        .select("appointment_id, amount, patient_id, doctor_id, metadata, platform_fee_amount, doctor_net_amount")
         .eq("paystack_reference", reference)
         .maybeSingle();
 
@@ -531,7 +577,12 @@ serve(async (req) => {
       let platformFee: number | null = null;
       let processingFee: number | null = null;
       let doctorNet: number | null = null;
-      if (newStatus === "success") {
+      const directSettlement = isDirectSettlement(existingPayment.metadata);
+      if (newStatus === "success" && directSettlement) {
+        platformFee = Number(existingPayment.platform_fee_amount);
+        doctorNet = Number(existingPayment.doctor_net_amount);
+        processingFee = typeof txData.fees === "number" ? txData.fees / 100 : null;
+      } else if (newStatus === "success") {
         try {
           let settingsId: string | null = null;
           if (existingPayment.doctor_id) {
@@ -572,7 +623,7 @@ serve(async (req) => {
           paid_at: txData.paid_at || null,
           payment_method: txData.channel || null,
           fee_amount: txData.fees ? txData.fees / 100 : null,
-          metadata: { ...txData, amount_match: amountMatches },
+          metadata: { ...txData, amount_match: amountMatches, ...(directSettlement ? { settlement_mode: "paystack_split" } : {}) },
         })
         .eq("paystack_reference", reference)
         .select("appointment_id");

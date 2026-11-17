@@ -23,6 +23,7 @@ import type { User } from "@supabase/supabase-js";
 import { getCurrencySymbol, COUNTRY_CURRENCY } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { resolveFeeSettings, calculateFees, type FeeSettings, computePlatformFee } from "@/lib/feeCalculator";
+import { isDirectSettlement } from "../../../supabase/functions/paystack-payment/split";
 
 interface Props {
   user: User;
@@ -111,9 +112,10 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
       const status = mapStatus(p);
       const gross = Number(p.amount) || 0;
       const fb = feeSettings ? calculateFees(gross, feeSettings) : { platformFee: 0, processingFee: 0, doctorNet: gross };
-      const platformFee = fb.platformFee;
+      const directSettlement = isDirectSettlement(p.metadata);
+      const platformFee = p.platform_fee_amount != null ? Number(p.platform_fee_amount) : fb.platformFee;
       const processingFee = status === "paid" ? (Number(p.fee_amount) || fb.processingFee) : 0;
-      const net = +(gross - platformFee - processingFee).toFixed(2);
+      const net = p.doctor_net_amount != null ? Number(p.doctor_net_amount) : +(gross - platformFee - processingFee).toFixed(2);
       return {
         id: p.id,
         date: p.paid_at || p.created_at,
@@ -123,6 +125,7 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
         status,
         paid_at: p.paid_at,
         appointment_id: p.appointment_id,
+        directSettlement,
       };
     });
   }, [payments, feeSettings]);
@@ -132,7 +135,7 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
     (filterType === "all" || t.type === filterType),
   );
 
-  const paidPaymentIds = useMemo(() => transactions.filter(t => t.status === "paid").map(t => t.id), [transactions]);
+  const paidPaymentIds = useMemo(() => transactions.filter(t => t.status === "paid" && !t.directSettlement).map(t => t.id), [transactions]);
   const totalPayoutsAmount = useMemo(() =>
     payouts.filter(p => p.status === "paid").reduce((s, p) => s + Number(p.amount), 0)
   , [payouts]);
@@ -149,7 +152,7 @@ const DoctorWallet = ({ user, doctorCountry }: Props) => {
     const totalPlatform = paid.reduce((s, t) => s + t.platformFee, 0);
     const pendingNet = pending.reduce((s, t) => s + t.net, 0);
     const availableNet = paid
-      .filter(t => !lockedInPayoutIds.has(t.id))
+      .filter(t => !t.directSettlement && !lockedInPayoutIds.has(t.id))
       .reduce((s, t) => s + t.net, 0);
     return {
       available: Math.max(0, availableNet),

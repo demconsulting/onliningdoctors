@@ -1,4 +1,6 @@
 # Group practice foundation
+- [x] Configure direct Paystack fee splits with approved doctor/practice recipients; split rule tests passed and direct payments excluded from manual payouts.
+- [ ] Verify a real patient payment and bank settlement: external Supabase sign-in unavailable; independent doctors currently have no Paystack subaccounts.
 - [x] Repair authenticated automatic doctor reminders; scheduled runs and delivery confirmations verified for four incomplete doctors.
 - [x] Align scheduling completion checks; six reminder regression tests passed and app checks succeeded (external Supabase admin UI testing unavailable).
 - [x] Extend existing practice schema and secure practice-admin access without changing cash booking.
